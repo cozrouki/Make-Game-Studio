@@ -1,0 +1,41 @@
+using UnityEngine;
+using UnityEngine.U2D.Animation;
+
+/// <summary>
+/// Sprite Library 기반 캐릭터 스킨 교체 컨트롤러.
+/// </summary>
+public class SpriteSwapController : MonoBehaviour
+{
+    [SerializeField] private SpriteLibrary spriteLibrary;
+
+    private void Awake()
+    {
+        if (spriteLibrary == null)
+            spriteLibrary = GetComponent<SpriteLibrary>();
+    }
+
+    /// <summary>
+    /// 지정 카테고리의 특정 라벨로 스프라이트를 교체한다.
+    /// </summary>
+    public void SwapSkin(string category, string label)
+    {
+        var resolvers = GetComponentsInChildren<SpriteResolver>();
+        foreach (var resolver in resolvers)
+        {
+            if (resolver.GetCategory() == category)
+                resolver.SetCategoryAndLabel(category, label);
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터 전체 스킨을 동일 라벨명으로 일괄 교체한다.
+    /// </summary>
+    public void SwapAllSkins(string label)
+    {
+        var resolvers = GetComponentsInChildren<SpriteResolver>();
+        foreach (var resolver in resolvers)
+        {
+            resolver.SetCategoryAndLabel(resolver.GetCategory(), label);
+        }
+    }
+}

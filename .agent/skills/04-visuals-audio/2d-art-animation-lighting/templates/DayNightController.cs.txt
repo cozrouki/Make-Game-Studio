@@ -1,0 +1,36 @@
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+
+/// <summary>
+/// 2D 낮/밤 사이클 컨트롤러.
+/// Global Light 2D의 색상과 강도를 시간에 따라 변경한다.
+/// </summary>
+public class DayNightController : MonoBehaviour
+{
+    [Header("Light Reference")]
+    [SerializeField] private Light2D globalLight;
+
+    [Header("Cycle Settings")]
+    [SerializeField] private float cycleDurationSeconds = 120f;
+    [SerializeField] private Gradient dayNightColorGradient;
+    [SerializeField] private AnimationCurve intensityCurve;
+
+    private float _elapsedTime;
+
+    private void Awake()
+    {
+        if (globalLight == null)
+            globalLight = FindFirstObjectByType<Light2D>();
+    }
+
+    private void Update()
+    {
+        _elapsedTime += Time.deltaTime;
+        float t = Mathf.Repeat(_elapsedTime / cycleDurationSeconds, 1f);
+
+        globalLight.color = dayNightColorGradient.Evaluate(t);
+        globalLight.intensity = intensityCurve.Evaluate(t);
+    }
+
+    public float GetCurrentTimeNormalized() => Mathf.Repeat(_elapsedTime / cycleDurationSeconds, 1f);
+}

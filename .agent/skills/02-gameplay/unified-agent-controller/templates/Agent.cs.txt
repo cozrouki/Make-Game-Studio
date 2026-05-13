@@ -1,0 +1,53 @@
+// Agent.cs
+// Namespace: {NAMESPACE}.Agent
+// Shared base for Player and NPC agents.
+// Subclasses implement CreateMover() to inject the appropriate movement strategy.
+
+using UnityEngine;
+
+namespace {NAMESPACE}.Agent
+{
+    [RequireComponent(typeof(CharacterController))]
+    [RequireComponent(typeof(Animator))]
+    public abstract class Agent : MonoBehaviour
+    {
+        [SerializeField] private float moveSpeed = 5f;
+
+        public float MoveSpeed => moveSpeed;
+
+        // Shared subsystems
+        protected StateMachine<Agent> StateMachine { get; private set; }
+        protected StateFactory        StateFactory  { get; private set; }
+        public    IAgentMover         Mover         { get; private set; }
+        public    Animator            AgentAnimator { get; private set; }
+
+        public Vector3 MoveDirection { get; protected set; }
+
+        private static readonly int SpeedHash = Animator.StringToHash("Speed");
+
+        protected virtual void Awake()
+        {
+            AgentAnimator = GetComponent<Animator>();
+            Mover         = CreateMover();
+            StateFactory  = new StateFactory(this);
+            StateMachine  = new StateMachine<Agent>(this);
+        }
+
+        protected virtual void Start()
+        {
+            StateMachine.ChangeState(StateFactory.CreateIdleState());
+        }
+
+        protected virtual void Update()       => StateMachine.Update();
+        protected virtual void FixedUpdate()  => StateMachine.FixedUpdate();
+
+        /// <summary>
+        /// 서브클래스에서 InputAgentMover 또는 NavMeshAgentMover를 반환한다.
+        /// Awake() 호출 전에 필요한 컴포넌트를 먼저 캐싱해야 한다.
+        /// </summary>
+        protected abstract IAgentMover CreateMover();
+
+        public void SetAnimatorSpeed(float speed)
+            => AgentAnimator.SetFloat(SpeedHash, speed);
+    }
+}

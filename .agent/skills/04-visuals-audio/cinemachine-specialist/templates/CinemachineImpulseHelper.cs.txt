@@ -1,0 +1,79 @@
+// =============================================================================
+// CinemachineImpulseHelper.cs — Cinemachine 3.x Impulse 패턴
+// ImpulseSource 발생 + ImpulseListener 수신 조합.
+// =============================================================================
+
+using UnityEngine;
+using Unity.Cinemachine;
+
+namespace YourGame.Gameplay
+{
+    /// <summary>
+    /// 카메라 충격(화면 흔들림)을 발생시키는 헬퍼 컴포넌트.
+    /// 피격, 착지, 폭발 등 게임플레이 이벤트에 연결한다.
+    ///
+    /// 씬 설정:
+    ///  - CinemachineCamera GO에 CinemachineImpulseListener Extension 추가
+    ///  - 이 GO에 CinemachineImpulseSource 추가 (또는 충돌 처리 GO에 CollisionImpulseSource)
+    /// </summary>
+    public class CinemachineImpulseHelper : MonoBehaviour
+    {
+        [Header("Impulse Sources")]
+        [SerializeField] private CinemachineImpulseSource _lightImpulse;   // 피격, 발소리
+        [SerializeField] private CinemachineImpulseSource _heavyImpulse;   // 폭발, 강한 착지
+        [SerializeField] private CinemachineImpulseSource _directedImpulse; // 방향성 충격
+
+        [Header("Intensity Multiplier")]
+        [SerializeField] private float _lightMultiplier  = 0.3f;
+        [SerializeField] private float _heavyMultiplier  = 1.0f;
+
+        // ─────────────────────────────────────────────────────────────
+        //  Public API
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>가벼운 화면 흔들림 (피격, 발소리 등).</summary>
+        public void ShakeLight()
+        {
+            _lightImpulse?.GenerateImpulse(_lightMultiplier);
+        }
+
+        /// <summary>강한 화면 흔들림 (폭발, 강착지 등).</summary>
+        public void ShakeHeavy()
+        {
+            _heavyImpulse?.GenerateImpulse(_heavyMultiplier);
+        }
+
+        /// <summary>데미지 수치에 비례한 흔들림.</summary>
+        public void ShakeByDamage(float damage, float maxDamage = 100f)
+        {
+            float normalizedIntensity = Mathf.Clamp01(damage / maxDamage);
+            _heavyImpulse?.GenerateImpulse(normalizedIntensity * _heavyMultiplier);
+        }
+
+        /// <summary>방향성 충격 (날아온 방향 반대로 카메라 반응).</summary>
+        public void ShakeDirected(Vector3 direction, float intensity = 1f)
+        {
+            _directedImpulse?.GenerateImpulse(direction.normalized * intensity);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  CollisionImpulseSource 설정 가이드 (코드 불필요)
+        // ─────────────────────────────────────────────────────────────
+        // CinemachineCollisionImpulseSource 컴포넌트를 충돌 오브젝트에 추가.
+        // OnCollisionEnter, OnTriggerEnter 자동 감지 후 Impulse 발생.
+        // → 플레이어 착지, 총알 충돌 등에 적합.
+    }
+
+    // ==========================================================================
+    // ImpulseListener 설정 가이드 (Inspector 전용, 코드 불필요)
+    // ==========================================================================
+    // CinemachineCamera의 Add Extension → CinemachineImpulseListener
+    //
+    // 주요 파라미터:
+    //   Gain           : 수신 강도 (기본 1)
+    //   Use 2D Distance: true → 2D 게임에서 거리 감쇠 적용
+    //   React to Channel: 특정 채널 Impulse만 수신 (기본 All)
+    //   Reaction Settings:
+    //     Duration     : 흔들림 지속 시간
+    //     Envelope Curve: 감쇠 커브 (기본 EaseOut)
+}

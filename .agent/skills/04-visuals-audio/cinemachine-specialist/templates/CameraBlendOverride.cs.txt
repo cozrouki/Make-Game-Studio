@@ -1,0 +1,115 @@
+// =============================================================================
+// CameraBlendOverride.cs — 런타임 블렌드 오버라이드 패턴 (Cinemachine 3.x)
+// 특정 카메라 전환에 커스텀 블렌드 타입/시간을 동적으로 적용한다.
+// =============================================================================
+
+using System.Collections.Generic;
+using UnityEngine;
+using Unity.Cinemachine;
+
+namespace YourGame.Core
+{
+    /// <summary>
+    /// CinemachineCore.GetBlendOverride 델리게이트를 활용해
+    /// 카메라 쌍별로 블렌드 스타일/시간을 런타임에 재정의한다.
+    ///
+    /// 사용법:
+    ///  1. 씬의 적절한 GO(예: GameManager)에 부착한다.
+    ///  2. Inspector에서 OverrideRules를 설정한다.
+    ///  3. 또는 AddRule() / RemoveRule()로 코드에서 동적 추가/제거한다.
+    /// </summary>
+    public class CameraBlendOverride : MonoBehaviour
+    {
+        [System.Serializable]
+        public class BlendRule
+        {
+            [Tooltip("전환 대상 카메라 이름 (비워두면 모든 전환에 적용)")]
+            public string ToCameraName;
+
+            [Tooltip("전환 출발 카메라 이름 (비워두면 모든 출발에 적용)")]
+            public string FromCameraName;
+
+            public CinemachineBlendDefinition.Styles Style =
+                CinemachineBlendDefinition.Styles.EaseInOut;
+
+            [Min(0f)]
+            public float Duration = 1f;
+        }
+
+        [Header("Blend Override Rules")]
+        [SerializeField] private List<BlendRule> _rules = new();
+
+        // ─────────────────────────────────────────────────────────────
+        //  Unity Lifecycle
+        // ─────────────────────────────────────────────────────────────
+
+        private void OnEnable()
+        {
+            CinemachineCore.GetBlendOverride += HandleBlendOverride;
+        }
+
+        private void OnDisable()
+        {
+            CinemachineCore.GetBlendOverride -= HandleBlendOverride;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Delegate Handler
+        // ─────────────────────────────────────────────────────────────
+
+        private CinemachineBlendDefinition HandleBlendOverride(
+            ICinemachineCamera fromCam,
+            ICinemachineCamera toCam,
+            CinemachineBlendDefinition defaultBlend,
+            MonoBehaviour owner)
+        {
+            foreach (var rule in _rules)
+            {
+                bool toMatch   = string.IsNullOrEmpty(rule.ToCameraName)
+                              || (toCam   != null && toCam.Name   == rule.ToCameraName);
+                bool fromMatch = string.IsNullOrEmpty(rule.FromCameraName)
+                              || (fromCam != null && fromCam.Name == rule.FromCameraName);
+
+                if (toMatch && fromMatch)
+                    return new CinemachineBlendDefinition(rule.Style, rule.Duration);
+            }
+
+            return defaultBlend;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Public API (코드에서 동적 추가/제거)
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>블렌드 규칙을 런타임에 추가한다.</summary>
+        public void AddRule(BlendRule rule) => _rules.Add(rule);
+
+        /// <summary>특정 ToCameraName을 가진 규칙을 제거한다.</summary>
+        public void RemoveRule(string toCameraName)
+        {
+            _rules.RemoveAll(r => r.ToCameraName == toCameraName);
+        }
+
+        public void ClearAllRules() => _rules.Clear();
+    }
+
+    // ==========================================================================
+    // 사용 예시
+    // ==========================================================================
+    //
+    // // 보스룸 진입 시 느린 블렌드 적용
+    // blendOverride.AddRule(new CameraBlendOverride.BlendRule
+    // {
+    //     ToCameraName = "BossCamera",
+    //     Style        = CinemachineBlendDefinition.Styles.EaseInOut,
+    //     Duration     = 2.0f
+    // });
+    //
+    // // 즉시 컷 (Cut씬 복귀)
+    // blendOverride.AddRule(new CameraBlendOverride.BlendRule
+    // {
+    //     ToCameraName = "MainCamera",
+    //     Style        = CinemachineBlendDefinition.Styles.Cut,
+    //     Duration     = 0f
+    // });
+}

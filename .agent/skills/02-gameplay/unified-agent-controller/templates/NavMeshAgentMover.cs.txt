@@ -1,0 +1,41 @@
+// NavMeshAgentMover.cs
+// Namespace: {NAMESPACE}.Agent
+// IAgentMover implementation for NPC movement via NavMeshAgent.
+// Move() is a no-op — NavMesh controls its own velocity.
+// Use SetDestination() externally (e.g., from NPCAgent or an AIBrain).
+
+using UnityEngine;
+using UnityEngine.AI;
+
+namespace {NAMESPACE}.Agent
+{
+    public class NavMeshAgentMover : IAgentMover
+    {
+        private readonly NavMeshAgent _navAgent;
+
+        public NavMeshAgentMover(NavMeshAgent navAgent) => _navAgent = navAgent;
+
+        public bool IsMoving => _navAgent.velocity.sqrMagnitude > 0.0001f;
+
+        /// <summary>
+        /// NavMeshAgent는 자체 속도 계산을 사용한다.
+        /// 이 메서드는 NavMesh 이동 중에는 호출 불필요.
+        /// NPC 상태에서 멈출 때 ResetPath()를 호출할 것.
+        /// </summary>
+        public void Move(Vector3 velocity)
+        {
+            // NavMeshAgent manages its own velocity via SetDestination
+            // If velocity is zero, stop the agent
+            if (velocity.sqrMagnitude < 0.0001f)
+                _navAgent.ResetPath();
+        }
+
+        /// <summary>목표 위치를 NavMesh 목적지로 설정한다.</summary>
+        public void RotateTo(Vector3 targetPosition)
+            => _navAgent.SetDestination(targetPosition);
+
+        /// <summary>외부에서 직접 목적지를 설정할 때 사용.</summary>
+        public void SetDestination(Vector3 destination)
+            => _navAgent.SetDestination(destination);
+    }
+}

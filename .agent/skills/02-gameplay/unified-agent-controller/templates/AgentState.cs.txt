@@ -1,0 +1,69 @@
+// AgentState.cs
+// Namespace: {NAMESPACE}.Agent
+// Abstract base for all agent states.
+// States access movement through _agent.Mover — never cast to concrete type.
+
+namespace {NAMESPACE}.Agent
+{
+    public abstract class AgentState
+    {
+        protected readonly Agent        _agent;
+        protected readonly StateFactory _factory;
+
+        protected AgentState(Agent agent, StateFactory factory)
+        {
+            _agent   = agent;
+            _factory = factory;
+        }
+
+        public virtual void Enter()       { }
+        public virtual void Exit()        { }
+        public virtual void Update()      { }
+        public virtual void FixedUpdate() { }
+    }
+
+    // ── Idle ──────────────────────────────────────────────────────────────────
+    public class AgentIdleState : AgentState
+    {
+        public AgentIdleState(Agent agent, StateFactory factory) : base(agent, factory) { }
+
+        public override void Enter()
+        {
+            _agent.SetAnimatorSpeed(0f);
+        }
+
+        public override void Update()
+        {
+            if (_agent.MoveDirection.sqrMagnitude > 0.01f)
+                _agent.StateMachine.ChangeState(_factory.CreateMoveState());
+        }
+    }
+
+    // ── Move ──────────────────────────────────────────────────────────────────
+    public class AgentMoveState : AgentState
+    {
+        public AgentMoveState(Agent agent, StateFactory factory) : base(agent, factory) { }
+
+        public override void FixedUpdate()
+        {
+            _agent.Mover.Move(_agent.MoveDirection);
+            _agent.SetAnimatorSpeed(_agent.Mover.IsMoving ? 1f : 0f);
+
+            if (_agent.MoveDirection.sqrMagnitude < 0.01f)
+                _agent.StateMachine.ChangeState(_factory.CreateIdleState());
+        }
+    }
+
+    // ── Jump / Fall — 필요에 따라 확장 ──────────────────────────────────────
+    public class AgentJumpState : AgentState
+    {
+        public AgentJumpState(Agent agent, StateFactory factory) : base(agent, factory) { }
+        // TODO: jump velocity, apex detection → transition to FallState
+    }
+
+    public class AgentFallState : AgentState
+    {
+        public AgentFallState(Agent agent, StateFactory factory) : base(agent, factory) { }
+        // TODO: fall speed, landing detection → transition to IdleState
+    }
+}
