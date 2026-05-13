@@ -1,0 +1,18 @@
+// IAgentMover.cs
+// Namespace: {NAMESPACE}.Agent
+// Strategy interface — decouples movement from agent logic (DIP)
+
+namespace {NAMESPACE}.Agent
+{
+    public interface IAgentMover
+    {
+        /// <summary>이동 벡터를 받아 실제 이동을 수행한다.</summary>
+        void Move(UnityEngine.Vector3 velocity);
+
+        /// <summary>목표 위치를 향해 회전한다.</summary>
+        void RotateTo(UnityEngine.Vector3 targetPosition);
+
+        /// <summary>현재 이동 중 여부.</summary>
+        bool IsMoving { get; }
+    }
+}

@@ -1,0 +1,26 @@
+# OS junk
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Backup directories
+.claude.backup-*
+*.bak
+
+# Local-only settings (per-machine — should be created by each user)
+.claude/settings.local.json
+
+# Operational data (created at runtime by hooks)
+production/session-logs/
+production/session-state/active.md
+*.log
+
+# Build artifacts
+dist/
+build/
+node_modules/

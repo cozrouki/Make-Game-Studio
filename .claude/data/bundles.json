@@ -1,0 +1,190 @@
+{
+  "$schema": "https://example.com/tikiproject-bundles.schema.json",
+  "version": 1,
+  "generatedAt": "2026-05-13",
+  "bundles": [
+    {
+      "id": "unity-fullstack-core",
+      "name": "Unity 풀스택 코어",
+      "description": "필수 — 모든 게임에 적용. 진입점·기본 docs·MCP 가이드.",
+      "required": true,
+      "skills": [
+        "unity-fullstack",
+        "start",
+        "help",
+        "onboard",
+        "adopt",
+        "project-stage-detect"
+      ],
+      "rules": [
+        "gameplay-code",
+        "doc-writing",
+        "test-standards",
+        "design-docs"
+      ],
+      "docs": [
+        "mcp-unity-guide",
+        "editor-automation-decision",
+        "ATTRIBUTION"
+      ],
+      "agents": [
+        "technical-director",
+        "lead-programmer",
+        "unity-specialist"
+      ]
+    },
+    {
+      "id": "unity-fullstack-gameplay",
+      "name": "게임플레이 시스템",
+      "description": "전투·FSM·인벤토리·어빌리티·AI 등 게임플레이 코드 패턴 8종.",
+      "required": false,
+      "skillforge": [
+        "02-gameplay/ability-skill-system",
+        "02-gameplay/advanced-character-controller",
+        "02-gameplay/ai-behavior-trees",
+        "02-gameplay/damage-health-framework",
+        "02-gameplay/dialogue-quest-system",
+        "02-gameplay/inventory-crafting-logic",
+        "02-gameplay/save-load-serialization",
+        "02-gameplay/status-effect-system",
+        "02-gameplay/unified-agent-controller",
+        "01-architecture/state-machine-architect",
+        "01-architecture/event-bus-system"
+      ],
+      "skills": [
+        "ko-prototype",
+        "ko-story-cycle"
+      ],
+      "agents": [
+        "gameplay-programmer",
+        "systems-designer",
+        "ai-programmer",
+        "narrative-director"
+      ]
+    },
+    {
+      "id": "unity-fullstack-perf",
+      "name": "성능 최적화",
+      "description": "Jobs/Burst, GPU instancing, profiling, 모바일 최적화, Addressables.",
+      "required": false,
+      "skillforge": [
+        "06-performance/gpu-instancing-expert",
+        "06-performance/job-system-burst",
+        "06-performance/lod-occlusion-culling",
+        "06-performance/memory-profiler-expert",
+        "06-performance/mobile-optimization",
+        "06-performance/object-pooling-system",
+        "06-performance/texture-streaming-expert",
+        "06-performance/addressables-asset-management"
+      ],
+      "skills": [
+        "ko-perf-profile",
+        "perf-profile",
+        "tech-debt"
+      ],
+      "agents": [
+        "performance-analyst",
+        "unity-dots-specialist",
+        "unity-addressables-specialist"
+      ]
+    },
+    {
+      "id": "unity-fullstack-process",
+      "name": "개발 프로세스",
+      "description": "Game-Studios 스프린트·리뷰·게이트·릴리스 워크플로 + 한국어 wrapper.",
+      "required": false,
+      "skills": [
+        "ko-sprint-plan",
+        "ko-story-cycle",
+        "ko-code-review",
+        "sprint-plan",
+        "sprint-status",
+        "story-readiness",
+        "dev-story",
+        "story-done",
+        "code-review",
+        "gate-check",
+        "milestone-review",
+        "retrospective",
+        "release-checklist",
+        "patch-notes",
+        "launch-checklist",
+        "hotfix",
+        "bug-report",
+        "bug-triage"
+      ],
+      "rules": [
+        "doc-writing",
+        "design-docs",
+        "test-standards"
+      ],
+      "agents": [
+        "producer",
+        "lead-programmer",
+        "qa-lead",
+        "release-manager",
+        "community-manager"
+      ]
+    },
+    {
+      "id": "unity-fullstack-visuals-ui",
+      "name": "비주얼 및 UI",
+      "description": "Cinemachine, 라이팅, 셰이더, UI Toolkit, 입력 시스템, 접근성.",
+      "required": false,
+      "skillforge": [
+        "04-visuals-audio/cinemachine-specialist",
+        "04-visuals-audio/lighting-post-processing",
+        "04-visuals-audio/audio-soundscape-architect",
+        "04-visuals-audio/juice-game-feel",
+        "04-visuals-audio/shader-graph-expert",
+        "04-visuals-audio/vfx-graph-shuriken",
+        "05-ui-ux/ui-toolkit-modern",
+        "05-ui-ux/mvvm-binding-system",
+        "05-ui-ux/input-system-new",
+        "05-ui-ux/accessibility-hci",
+        "05-ui-ux/responsive-ui-design"
+      ],
+      "skills": [
+        "ux-design",
+        "ux-review",
+        "art-bible"
+      ],
+      "agents": [
+        "art-director",
+        "ui-programmer",
+        "ux-designer",
+        "technical-artist",
+        "unity-ui-specialist",
+        "unity-shader-specialist",
+        "accessibility-specialist"
+      ]
+    },
+    {
+      "id": "unity-fullstack-devops",
+      "name": "DevOps · 빌드 · 배포",
+      "description": "빌드 파이프라인, CI, 백엔드 (PlayFab/UGS/광고), 분석.",
+      "required": false,
+      "skillforge": [
+        "09-devops-automation/build-pipeline-manager",
+        "09-devops-automation/unity-build-commander",
+        "07-tools-pipeline/version-control-git",
+        "07-tools-pipeline/automated-unit-testing",
+        "08-backend-monetization/playfab-economy-v2",
+        "08-backend-monetization/ads-mediation-ironsource",
+        "08-backend-monetization/analytics-heatmaps"
+      ],
+      "skills": [
+        "release-checklist",
+        "launch-checklist",
+        "changelog",
+        "patch-notes"
+      ],
+      "agents": [
+        "devops-engineer",
+        "release-manager",
+        "analytics-engineer",
+        "security-engineer"
+      ]
+    }
+  ]
+}

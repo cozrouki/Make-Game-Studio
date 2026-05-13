@@ -1,0 +1,136 @@
+{
+  "$schema": "https://example.com/tikiproject-workflows.schema.json",
+  "version": 1,
+  "generatedAt": "2026-05-13",
+  "workflows": [
+    {
+      "id": "concept-to-prototype",
+      "name": "컨셉 → 프로토타입",
+      "description": "한 줄 아이디어부터 플레이 가능한 프로토타입 폴더까지.",
+      "category": "ideation",
+      "relatedBundles": ["unity-fullstack-core", "unity-fullstack-gameplay"],
+      "steps": [
+        {
+          "title": "브레인스토밍",
+          "goal": "아이디어 변형 3-5개 도출",
+          "recommendedSkill": "brainstorm",
+          "notes": "한국어 wrapper: /ko-prototype 이 이 단계부터 자동 체이닝"
+        },
+        {
+          "title": "간이 디자인",
+          "goal": "코어 루프 + 위험 가정 문서화",
+          "recommendedSkill": "quick-design",
+          "notes": "산출: prototypes/<tag>-<slug>/CONCEPT.md"
+        },
+        {
+          "title": "디자인 시스템 매핑",
+          "goal": "관련 시스템 의존성 도출",
+          "recommendedSkill": "design-system",
+          "notes": "선택 — 단순 프로토타입이면 생략 가능"
+        },
+        {
+          "title": "프로토타입 폴더 생성",
+          "goal": "Unity Assets 하위 실험 폴더 + README 작성",
+          "recommendedSkill": "prototype",
+          "notes": "rules/prototype-code.md 적용 (느슨한 표준)"
+        },
+        {
+          "title": "초기 플레이테스트",
+          "goal": "위험 가정 검증",
+          "recommendedSkill": "playtest-report",
+          "notes": "검증 실패 시 design-system으로 돌아감"
+        }
+      ]
+    },
+    {
+      "id": "feature-implementation",
+      "name": "기능 구현 사이클",
+      "description": "스토리부터 머지까지의 표준 사이클.",
+      "category": "development",
+      "relatedBundles": ["unity-fullstack-core", "unity-fullstack-process"],
+      "steps": [
+        {
+          "title": "스토리 준비 점검",
+          "goal": "Acceptance Criteria + 의존성 점검",
+          "recommendedSkill": "story-readiness",
+          "notes": "한국어 wrapper: /ko-story-cycle 이 이 단계부터 시작"
+        },
+        {
+          "title": "스프린트 배치",
+          "goal": "현재 스프린트에 스토리 할당",
+          "recommendedSkill": "ko-sprint-plan",
+          "notes": "또는 /sprint-plan, /sprint-status"
+        },
+        {
+          "title": "SkillForge 패턴 탐색",
+          "goal": "해당 도메인의 기존 C# 패턴 확인",
+          "ref": "skillforge-lookup",
+          "notes": "/sf-list <카테고리> 후 /sf-info <skill>. 패턴 발견 시 /sf-add 로 주입"
+        },
+        {
+          "title": "구현",
+          "goal": "기능 코드 작성",
+          "recommendedSkill": "dev-story",
+          "notes": "gameplay-code.md 룰 자동 적용. MCPForUnity 도구로 씬·프리팹 동시 작업 가능"
+        },
+        {
+          "title": "코드 리뷰",
+          "goal": "CRITICAL/WARNING/INFO 분류",
+          "recommendedSkill": "ko-code-review",
+          "notes": "또는 /code-review. --solo / --lean 플래그 가능"
+        },
+        {
+          "title": "완료 처리",
+          "goal": "스토리 종료 + 문서 업데이트",
+          "recommendedSkill": "story-done",
+          "notes": "work_log.md, active.md, task.md 업데이트 제안"
+        }
+      ]
+    },
+    {
+      "id": "release-cycle",
+      "name": "릴리스 사이클",
+      "description": "게이트 점검부터 패치 노트 / 런치 직전까지.",
+      "category": "release",
+      "relatedBundles": ["unity-fullstack-core", "unity-fullstack-process"],
+      "steps": [
+        {
+          "title": "게이트 점검",
+          "goal": "릴리스 게이트 기준 충족 확인",
+          "recommendedSkill": "gate-check",
+          "notes": "필수 섹션 / ADR / 테스트 커버리지 검증"
+        },
+        {
+          "title": "회귀 테스트 스위트",
+          "goal": "프로덕션 회귀 테스트 일괄 실행",
+          "recommendedSkill": "regression-suite",
+          "notes": "MCPForUnity run_tests 와 연계 가능"
+        },
+        {
+          "title": "성능 프로파일",
+          "goal": "릴리스 전 성능 베이스라인 확보",
+          "recommendedSkill": "ko-perf-profile",
+          "notes": "/perf-profile full + SkillForge 06-performance 매칭"
+        },
+        {
+          "title": "릴리스 체크리스트",
+          "goal": "배포 직전 모든 항목 확인",
+          "recommendedSkill": "release-checklist",
+          "notes": "팀 사이즈에 따라 항목 선별"
+        },
+        {
+          "title": "패치 노트 작성",
+          "goal": "사용자 대상 변경 사항 정리",
+          "recommendedSkill": "patch-notes",
+          "notes": "게임 태그별 그룹화 권장"
+        },
+        {
+          "title": "런치 직전 확인",
+          "goal": "마지막 sanity check",
+          "recommendedSkill": "launch-checklist",
+          "notes": "Day-1 패치 가능성 / 핫픽스 절차 사전 점검"
+        }
+      ]
+    }
+  ]
+}

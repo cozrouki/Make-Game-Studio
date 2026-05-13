@@ -1,0 +1,48 @@
+// =============================================================================
+// IInitializable.cs - Bootstrap Pattern Interface
+// Part of: advanced-game-bootstrapper skill
+// =============================================================================
+
+using System.Threading.Tasks;
+
+namespace {{NAMESPACE}}.Core
+{
+    /// <summary>
+    /// Interface for systems that require async initialization.
+    /// Used by the Bootstrapper to ensure deterministic startup order.
+    /// </summary>
+    public interface IInitializable
+    {
+        /// <summary>
+        /// Priority order for initialization (lower = earlier).
+        /// Use: 0-10 for core systems, 11-50 for gameplay, 51+ for UI/polish.
+        /// </summary>
+        int InitializationOrder { get; }
+        
+        /// <summary>
+        /// Whether this system has completed initialization.
+        /// </summary>
+        bool IsInitialized { get; }
+        
+        /// <summary>
+        /// Async initialization logic. Called once during bootstrap.
+        /// </summary>
+        Task InitializeAsync();
+    }
+
+    /// <summary>
+    /// Optional interface for systems that need cleanup on shutdown.
+    /// </summary>
+    public interface IShutdownable
+    {
+        /// <summary>
+        /// Priority order for shutdown (higher = earlier, opposite of init).
+        /// </summary>
+        int ShutdownOrder { get; }
+        
+        /// <summary>
+        /// Async cleanup logic. Called during game shutdown.
+        /// </summary>
+        Task ShutdownAsync();
+    }
+}

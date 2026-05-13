@@ -1,0 +1,69 @@
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.Rendering.RenderGraphModule;
+
+/// <summary>
+/// URP Render Graph 기반 커스텀 Renderer Feature 템플릿 (Unity 6).
+/// 커스텀 포스트 프로세싱 패스, X-ray 실루엣 등에 활용.
+///
+/// 사용법: URP Renderer Data > Add Renderer Feature > CustomRendererFeature
+/// </summary>
+public class CustomRendererFeature : ScriptableRendererFeature
+{
+    [System.Serializable]
+    public class Settings
+    {
+        public RenderPassEvent renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+        public Material overrideMaterial;
+        public LayerMask layerMask = -1;
+    }
+
+    [SerializeField] private Settings _settings = new();
+    private CustomRenderPass _pass;
+
+    public override void Create()
+    {
+        _pass = new CustomRenderPass(_settings)
+        {
+            renderPassEvent = _settings.renderPassEvent
+        };
+    }
+
+    public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+    {
+        if (_settings.overrideMaterial == null) return;
+        renderer.EnqueuePass(_pass);
+    }
+
+    // ─────────────────────────────────────────
+    class CustomRenderPass : ScriptableRenderPass
+    {
+        private readonly Settings _settings;
+
+        public CustomRenderPass(Settings settings) => _settings = settings;
+
+        private class PassData
+        {
+            public Material material;
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            var resourceData = frameData.Get<UniversalResourceData>();
+
+            using var builder = renderGraph.AddRasterRenderPass<PassData>("CustomRendererFeaturePass", out var passData);
+
+            passData.material = _settings.overrideMaterial;
+
+            builder.SetRenderAttachment(resourceData.activeColorTexture, 0);
+            builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture);
+
+            builder.SetRenderFunc((PassData data, RasterGraphContext ctx) =>
+            {
+                // 실제 렌더링 커맨드 작성
+                ctx.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3);
+            });
+        }
+    }
+}

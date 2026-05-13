@@ -1,0 +1,94 @@
+// =============================================================================
+// CinemachineInputAdapter.cs — 커스텀 입력 → Cinemachine 3.x 연동
+// CinemachineInputAxisController를 비활성화하고,
+// 게임별 InputReader 값을 Cinemachine 축에 직접 주입하는 패턴.
+// =============================================================================
+
+using UnityEngine;
+using Unity.Cinemachine;
+
+namespace YourGame.Gameplay.Camera
+{
+    /// <summary>
+    /// 게임별 입력 시스템과 CinemachineOrbitalFollow / CinemachinePanTilt를
+    /// 연결하는 어댑터.
+    ///
+    /// 사용법:
+    ///  1. CinemachineCamera GO에 이 컴포넌트를 추가한다.
+    ///  2. CinemachineInputAxisController 컴포넌트를 비활성화한다.
+    ///  3. InputReader(또는 PlayerInput)에서 OnLook 이벤트를 이 어댑터에 연결한다.
+    /// </summary>
+    [RequireComponent(typeof(CinemachineCamera))]
+    public class CinemachineInputAdapter : MonoBehaviour
+    {
+        [Header("Input Scale")]
+        [SerializeField] private float _horizontalSensitivity = 300f;
+        [SerializeField] private float _verticalSensitivity   = 200f;
+        [SerializeField] private bool  _invertY               = false;
+
+        private CinemachineOrbitalFollow _orbitalFollow;
+        private CinemachinePanTilt       _panTilt;
+        private Vector2                  _lookInput;
+
+        private void Awake()
+        {
+            TryGetComponent(out _orbitalFollow);
+            TryGetComponent(out _panTilt);
+
+            // InputAxisController가 있으면 비활성화 — 이 어댑터가 직접 제어
+            if (TryGetComponent<CinemachineInputAxisController>(out var axisCtrl))
+                axisCtrl.enabled = false;
+        }
+
+        private void OnDestroy()
+        {
+            // 이벤트 구독 해제는 이 어댑터를 소유하는 시스템에서 처리
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  외부 입력 수신 (InputReader 이벤트 또는 폴링에서 호출)
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Look 입력 값을 설정한다. (-1 ~ 1 정규화된 델타 값)
+        /// InputReader.OnLook 이벤트에 연결하거나 Update에서 폴링한다.
+        /// </summary>
+        public void SetLookInput(Vector2 input)
+        {
+            _lookInput = input;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  Cinemachine 축에 주입
+        // ─────────────────────────────────────────────────────────────
+
+        private void Update()
+        {
+            ApplyToOrbitalFollow();
+            ApplyToPanTilt();
+        }
+
+        private void ApplyToOrbitalFollow()
+        {
+            if (_orbitalFollow == null) return;
+
+            // OrbitalFollow의 Horizontal/Vertical 축 값 직접 설정
+            _orbitalFollow.HorizontalAxis.Value +=
+                _lookInput.x * _horizontalSensitivity * Time.deltaTime;
+
+            float vertical = _invertY ? _lookInput.y : -_lookInput.y;
+            _orbitalFollow.VerticalAxis.Value +=
+                vertical * _verticalSensitivity * Time.deltaTime;
+        }
+
+        private void ApplyToPanTilt()
+        {
+            if (_panTilt == null) return;
+
+            _panTilt.PanAxis.Value  += _lookInput.x * _horizontalSensitivity * Time.deltaTime;
+
+            float tilt = _invertY ? _lookInput.y : -_lookInput.y;
+            _panTilt.TiltAxis.Value += tilt * _verticalSensitivity * Time.deltaTime;
+        }
+    }
+}

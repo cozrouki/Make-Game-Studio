@@ -1,0 +1,18 @@
+// StateFactory.cs
+// Namespace: {NAMESPACE}.Agent
+// Centralizes state creation. States never instantiate other states directly.
+
+namespace {NAMESPACE}.Agent
+{
+    public class StateFactory
+    {
+        private readonly Agent _agent;
+
+        public StateFactory(Agent agent) => _agent = agent;
+
+        public AgentState CreateIdleState() => new AgentIdleState(_agent, this);
+        public AgentState CreateMoveState() => new AgentMoveState(_agent, this);
+        public AgentState CreateJumpState() => new AgentJumpState(_agent, this);
+        public AgentState CreateFallState() => new AgentFallState(_agent, this);
+    }
+}

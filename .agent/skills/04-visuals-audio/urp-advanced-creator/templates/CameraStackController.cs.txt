@@ -1,0 +1,47 @@
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+
+/// <summary>
+/// URP Camera Stacking 런타임 제어.
+/// UI 카메라, 인벤토리 오버레이, 미니맵 등 오버레이 카메라를
+/// 동적으로 추가/제거할 때 사용한다.
+/// </summary>
+[RequireComponent(typeof(Camera))]
+public class CameraStackController : MonoBehaviour
+{
+    [SerializeField] private Camera[] defaultOverlayCameras;
+
+    private UniversalAdditionalCameraData _cameraData;
+
+    private void Awake()
+    {
+        _cameraData = GetComponent<UniversalAdditionalCameraData>();
+    }
+
+    private void Start()
+    {
+        foreach (var cam in defaultOverlayCameras)
+            AddOverlay(cam);
+    }
+
+    /// <summary>오버레이 카메라를 스택에 추가.</summary>
+    public void AddOverlay(Camera overlayCamera)
+    {
+        if (overlayCamera == null) return;
+        if (!_cameraData.cameraStack.Contains(overlayCamera))
+            _cameraData.cameraStack.Add(overlayCamera);
+    }
+
+    /// <summary>오버레이 카메라를 스택에서 제거.</summary>
+    public void RemoveOverlay(Camera overlayCamera)
+    {
+        if (overlayCamera == null) return;
+        _cameraData.cameraStack.Remove(overlayCamera);
+    }
+
+    /// <summary>특정 인덱스의 오버레이 카메라 활성/비활성.</summary>
+    public void SetOverlayActive(Camera overlayCamera, bool active)
+    {
+        overlayCamera.gameObject.SetActive(active);
+    }
+}

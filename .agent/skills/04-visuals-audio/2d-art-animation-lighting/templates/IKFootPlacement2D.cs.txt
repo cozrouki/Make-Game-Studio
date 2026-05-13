@@ -1,0 +1,46 @@
+using UnityEngine;
+using UnityEngine.U2D.IK;
+
+/// <summary>
+/// 2D 발 IK 배치 컨트롤러.
+/// 지면 감지 후 IK 타겟을 지면에 맞게 이동시킨다.
+/// </summary>
+public class IKFootPlacement2D : MonoBehaviour
+{
+    [Header("IK Targets")]
+    [SerializeField] private Transform leftFootTarget;
+    [SerializeField] private Transform rightFootTarget;
+
+    [Header("Ground Detection")]
+    [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float raycastDistance = 1f;
+    [SerializeField] private float footOffset = 0.1f;
+
+    [Header("Smoothing")]
+    [SerializeField] private float smoothSpeed = 10f;
+
+    private void Awake()
+    {
+        // LayerMask는 반드시 Awake/Start에서 초기화
+        if (groundLayer == 0)
+            groundLayer = LayerMask.GetMask("Ground");
+    }
+
+    private void LateUpdate()
+    {
+        PlaceFoot(leftFootTarget);
+        PlaceFoot(rightFootTarget);
+    }
+
+    private void PlaceFoot(Transform footTarget)
+    {
+        if (footTarget == null) return;
+
+        var hit = Physics2D.Raycast(footTarget.position + Vector3.up, Vector2.down, raycastDistance, groundLayer);
+        if (hit.collider != null)
+        {
+            var targetPos = new Vector3(footTarget.position.x, hit.point.y + footOffset, footTarget.position.z);
+            footTarget.position = Vector3.Lerp(footTarget.position, targetPos, Time.deltaTime * smoothSpeed);
+        }
+    }
+}

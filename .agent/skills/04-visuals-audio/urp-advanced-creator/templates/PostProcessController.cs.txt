@@ -1,0 +1,60 @@
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+
+/// <summary>
+/// URP Volume 기반 포스트 프로세싱 코드 제어.
+/// 피격 비네트, 보스 등장 Bloom 등 게임플레이 연출에 활용.
+/// </summary>
+[RequireComponent(typeof(Volume))]
+public class PostProcessController : MonoBehaviour
+{
+    private Volume _volume;
+    private Bloom _bloom;
+    private Vignette _vignette;
+    private ColorAdjustments _colorAdjustments;
+
+    private void Awake()
+    {
+        _volume = GetComponent<Volume>();
+        _volume.profile.TryGet(out _bloom);
+        _volume.profile.TryGet(out _vignette);
+        _volume.profile.TryGet(out _colorAdjustments);
+    }
+
+    /// <summary>피격 시 붉은 비네트 효과. intensity 0~1.</summary>
+    public void OnDamaged(float intensity = 0.6f)
+    {
+        if (_vignette == null) return;
+        _vignette.color.Override(Color.red);
+        _vignette.intensity.Override(Mathf.Clamp01(intensity));
+    }
+
+    /// <summary>비네트 초기화 (서서히 복구하려면 DOTween 등과 조합).</summary>
+    public void ResetVignette()
+    {
+        if (_vignette == null) return;
+        _vignette.color.Override(Color.black);
+        _vignette.intensity.Override(0f);
+    }
+
+    /// <summary>Bloom 강도 설정. 보스 등장, 마법 연출 등에 활용.</summary>
+    public void SetBloomIntensity(float value)
+    {
+        if (_bloom != null)
+            _bloom.intensity.Override(value);
+    }
+
+    /// <summary>채도 조정. 0: 무채색, 100: 기본, -100: 흑백.</summary>
+    public void SetSaturation(float value)
+    {
+        if (_colorAdjustments != null)
+            _colorAdjustments.saturation.Override(Mathf.Clamp(value, -100f, 100f));
+    }
+
+    /// <summary>Volume Weight로 효과 전체 강도 제어 (0~1).</summary>
+    public void SetVolumeWeight(float weight)
+    {
+        _volume.weight = Mathf.Clamp01(weight);
+    }
+}
