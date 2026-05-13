@@ -53,6 +53,50 @@ param(
 $ErrorActionPreference = "Stop"
 $pkg = Split-Path -Parent $PSScriptRoot
 
+# === 한국어 안내 재삽입 함수 ===
+# 7개 11-game-design overlap skill (L1과 L2 양쪽 존재) 의 SKILL.md 본문 상단에
+# 한국어 상세 안내 한 줄을 frontmatter 종료 직후에 삽입한다.
+# 이미 안내가 있으면 skip (idempotent).
+function Add-KoreanNoteIfMissing {
+    param(
+        [Parameter(Mandatory)] [string]$FilePath,
+        [Parameter(Mandatory)] [string]$Slug,
+        [Parameter(Mandatory)] [string]$Extra
+    )
+    if (-not (Test-Path $FilePath)) { return $false }
+    $raw = Get-Content $FilePath -Raw
+    if ($raw -match "한국어 상세 버전") { return $false }
+
+    $lines = $raw -split "(?:\r\n|\r|\n)"
+    $dashCount = 0
+    $endIdx = -1
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i].Trim() -eq '---') {
+            $dashCount++
+            if ($dashCount -eq 2) { $endIdx = $i; break }
+        }
+    }
+    if ($endIdx -lt 0) { return $false }
+
+    $note = "> 📘 한국어 상세 버전 — ``/sf-info $Slug`` (SkillForge ``.agent/skills/11-game-design/$Slug/``)$Extra"
+
+    $beforeEnd = $lines[0..$endIdx]
+    $afterEnd = if ($endIdx + 1 -lt $lines.Count) { $lines[($endIdx + 1)..($lines.Count - 1)] } else { @() }
+
+    # frontmatter 직후가 빈 줄이면 그 빈 줄 유지 + note + 빈 줄. 아니면 빈 줄 + note + 빈 줄.
+    $newLines = if ($afterEnd.Count -gt 0 -and $afterEnd[0] -eq "") {
+        $beforeEnd + @("") + @($note) + @("") + $afterEnd[1..($afterEnd.Count - 1)]
+    } else {
+        $beforeEnd + @("") + @($note) + @("") + $afterEnd
+    }
+
+    $newContent = ($newLines -join "`n")
+    # UTF-8 no BOM (Windows PowerShell 5.1 호환)
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText($FilePath, $newContent, $utf8NoBom)
+    return $true
+}
+
 Write-Host ""
 Write-Host "=== Unity 풀스택 — Upstream 동기화 ===" -ForegroundColor Cyan
 Write-Host "패키지 루트:        $pkg"             -ForegroundColor Gray
@@ -114,6 +158,27 @@ if (Test-Path $gsSkillsSrc) {
     }
     $cnt = (Get-ChildItem $gsSkillsSrc -Directory).Count
     Write-Host "  skills: $cnt GS skill 미러 (ko-/sf-/unity-fullstack 보존)" -ForegroundColor Green
+
+    # 3a-후처리: 7개 11-game-design overlap skill 의 한국어 안내 자동 재삽입
+    if (-not $DryRun) {
+        $koreanNotes = [ordered]@{
+            'brainstorm'      = '. MDA/SDT/Bartle 프레임워크와 `game-concept.md`/`game-pillars.md` 산출물에 대한 한국어 가이드를 원하면 그쪽 사용.'
+            'design-review'   = '. GDD 8섹션 체크리스트의 한국어 버전을 원하면 그쪽 사용.'
+            'design-system'   = '. 단일 시스템 GDD를 Overview→Rules→Formulas→EdgeCases→Dependencies 순서로 한국어 작성하려면 그쪽 사용.'
+            'map-systems'     = '. Foundation→Core→Content→Polish 계층별 systems-index 생성을 한국어로 원하면 그쪽 사용.'
+            'playtest-report' = '. `new`/`analyze` 모드와 Pain Points/Delight/Bugs/Insights 분류 한국어 가이드는 그쪽 사용.'
+            'balance-check'   = '. 전투/경제/진행/전리품 밸런스 분석과 Bloat Score 한국어 가이드는 그쪽 사용.'
+            'scope-check'     = '. Bloat Score와 컷/연기/유지 권장 한국어 가이드는 그쪽 사용.'
+        }
+        $restored = 0
+        foreach ($slug in $koreanNotes.Keys) {
+            $skillFile = Join-Path $gsSkillsDst (Join-Path $slug "SKILL.md")
+            if (Add-KoreanNoteIfMissing -FilePath $skillFile -Slug $slug -Extra $koreanNotes[$slug]) {
+                $restored++
+            }
+        }
+        Write-Host "  korean notes: $restored / 7 재삽입 (이미 있는 파일은 skip)" -ForegroundColor Green
+    }
 }
 
 # 3b. agents — 다 복사 후 Godot/UE 제거
