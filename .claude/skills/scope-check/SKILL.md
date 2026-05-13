@@ -7,9 +7,9 @@ allowed-tools: Read, Glob, Grep, Bash
 model: haiku
 ---
 
-# Scope Check
-
 > 📘 한국어 상세 버전 — `/sf-info scope-check` (SkillForge `.agent/skills/11-game-design/scope-check/`). Bloat Score와 컷/연기/유지 권장 한국어 가이드는 그쪽 사용.
+
+# Scope Check
 
 This skill is read-only — it reports findings but writes no files.
 
