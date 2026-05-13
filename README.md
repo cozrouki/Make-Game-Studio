@@ -131,6 +131,80 @@ claude
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
 
+## Upstream 자동 동기화 — `scripts/sync-upstream.ps1`
+
+두 upstream의 미러 영역을 한 번에 갱신하는 PowerShell 스크립트입니다.
+
+### 전제 조건
+
+다음 위치에 upstream clone이 있어야 합니다 (기본값, `-GameStudiosClone`/`-SkillForgeClone` 으로 변경 가능):
+
+- `D:\works\projects\github\Claude-Code-Game-Studios`
+- `D:\works\projects\github\Unity3D-AntiGravitySkills`
+
+처음 clone:
+
+```powershell
+git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git D:\works\projects\github\Claude-Code-Game-Studios
+git clone https://github.com/nlelouche/Unity-SkillForge.git        D:\works\projects\github\Unity3D-AntiGravitySkills
+```
+
+### 사용
+
+```powershell
+# 기본: upstream pull + 미러 갱신
+.\scripts\sync-upstream.ps1
+
+# 미리보기 (실제 변경 없음)
+.\scripts\sync-upstream.ps1 -DryRun
+
+# upstream pull 생략 (이미 최신이라 확신할 때)
+.\scripts\sync-upstream.ps1 -SkipPull
+
+# clone 경로 변경
+.\scripts\sync-upstream.ps1 -GameStudiosClone "C:\src\game-studios" -SkillForgeClone "C:\src\skillforge"
+```
+
+### 자동 갱신되는 미러 영역
+
+- `.agent/skills/` — SkillForge 전체 (102+ SKILL.md + templates + skills-index.json)
+- `.claude/skills/<GS-skill>/` — Game-Studios 72개 skill (한국어 wrapper `ko-*/sf-*/unity-fullstack` 은 자동 보존)
+- `.claude/agents/` — 39개 (Godot/UE 패턴 자동 제외)
+- `.claude/docs/gs-*` — 6개 GS docs
+- `.claude/rules/<10 GS rules>` — `gameplay-code.md` 자동 보존
+- `.claude/hooks/<10 GS hooks>` — `session-start.sh`/`session-stop.sh` 자동 보존
+
+### 자동 갱신 안 되는 fork 영역
+
+다음 4개 파일은 한국어 톤·로컬 컨텍스트가 머지되어 있어 **수동 검토**가 필요합니다:
+
+| 파일 | 설명 |
+|---|---|
+| `.claude/hooks/session-start.sh` | 한국어 본문 + GS 코드헬스/스프린트 섹션 머지 |
+| `.claude/hooks/session-stop.sh` | 한국어 체크리스트 + GS archival 머지 |
+| `.claude/rules/gameplay-code.md` | Unity-specific 본문 + GS 원칙 append |
+| `.claude/settings.json` | 권한 머지 + 12 hook wiring |
+
+업스트림에서 이 파일들이 의미 있게 변경되었으면 (예: GS의 새 hook 이벤트 추가) 수동으로 우리 fork에 반영해야 합니다. sync 스크립트는 이 영역을 건드리지 않으므로 안전합니다.
+
+### 권장 주기
+
+- **월 1회** — Game-Studios 와 SkillForge 모두 활발한 개발 단계가 아니므로 빈번한 동기화 불필요
+- **새 게임 프로젝트 시작 전** — 가장 최신 상태로 받아 시작
+
+### 자동화 옵션 (선택)
+
+`Windows 작업 스케줄러` 에 등록해 매주 자동 실행 후 변경이 있으면 notification:
+
+```powershell
+$action = New-ScheduledTaskAction -Execute "powershell.exe" `
+    -Argument "-NoProfile -File `"D:\works\projects\CodeAI\UnityGame\scripts\sync-upstream.ps1`""
+$trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 09:00
+Register-ScheduledTask -TaskName "ClaudeSkillsUpstreamSync" -Action $action -Trigger $trigger
+```
+
+스크립트는 git commit/push 까지 자동 진행하지 않습니다 — 변경 확인 후 사용자가 직접 결정.
+
 ## 마스터 진입
 
 새 세션에서 `/unity-fullstack` — 4계층 메뉴 한국어 안내.
