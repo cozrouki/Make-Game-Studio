@@ -1,0 +1,26 @@
+# Force LF for shell scripts — Windows CRLF would break bash hook execution
+*.sh             text eol=lf
+*.bash           text eol=lf
+
+# Markdown / JSON / YAML — keep LF for consistent rendering and parser safety
+*.md             text eol=lf
+*.json           text eol=lf
+*.yaml           text eol=lf
+*.yml            text eol=lf
+
+# C# templates (SkillForge .cs.txt) — LF for Unity / dotnet consistency
+*.cs             text eol=lf
+*.cs.txt         text eol=lf
+
+# Default: detect text, convert on checkin/checkout per OS
+*                text=auto
+
+# Binary types (no conversion)
+*.png            binary
+*.jpg            binary
+*.jpeg           binary
+*.gif            binary
+*.ico            binary
+*.zip            binary
+*.dll            binary
+*.exe            binary
