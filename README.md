@@ -5,6 +5,21 @@ Unity 게임 개발용 Claude Code 통합 환경. 4개 외부 저장소를 흡�
 원본 통합 시점: **2026-05-13**
 원본 적용 프로젝트: `D:\works\projects\github\TikiProject\`
 
+## Windows 기여자 — 최초 clone 후 설정
+
+이 저장소는 `.gitattributes` 로 `.sh` 등 텍스트 파일을 LF 로 저장합니다. 그러나 사용자 전역 git 설정이 `core.autocrlf=true` (Git for Windows 기본값) 이면 clone 시점에 워킹트리에 CRLF 로 풀려 hook bash 스크립트가 `'\r': command not found` 류로 실패합니다. 이 저장소에 한정해 LF 를 유지하도록 한 줄 설정하세요:
+
+```powershell
+git config core.autocrlf input
+```
+
+이미 CRLF 로 풀린 경우 워킹트리를 재구성:
+
+```powershell
+git rm --cached -r .claude/hooks
+git checkout -- .claude/hooks
+```
+
 ## 4계층 구성
 
 | 계층 | 무엇 | 위치 | 진입 |
