@@ -22,7 +22,7 @@ agent: lead-programmer
 
 - `$1` = 스토리 ID (예: `STORY-042`, `[GAME1]-S012`)
 - 스토리 문서를 찾는다: `production/stories/$1.md` 또는 `doc/*/task.md` 내부 참조
-- 게임 태그를 파싱 (`[GAME3][GAME1][GAME4][GAME5][GAME2][CORE]`)
+- 게임 태그를 파싱 (프로젝트에서 정의한 태그 셋, 예: `[GAME1][GAME2][CORE]`)
 
 ## Phase 2: 준비 점검 (story-readiness)
 

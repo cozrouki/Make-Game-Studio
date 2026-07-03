@@ -1,0 +1,18 @@
+{
+  "//": "이 파일을 .mcp.json 으로 복사한 뒤 command 경로와 port 를 자기 환경에 맞게 수정하세요.",
+  "//command": "uvx 가 PATH 에 있으면 \"uvx\" 만 써도 됩니다. 절대경로가 필요하면 <UVX_PATH> 를 실제 경로로 (예: C:/Users/<you>/.local/bin/uvx.exe).",
+  "//port": "MCPForUnity 브리지 포트와 일치시키세요 (Unity: Window > MCP for Unity 에서 확인).",
+  "mcpServers": {
+    "unity-mcp": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--prerelease", "explicit",
+        "--from", "mcpforunityserver>=0.0.0a0",
+        "mcp-for-unity",
+        "--transport", "stdio",
+        "--port", "6401"
+      ]
+    }
+  }
+}

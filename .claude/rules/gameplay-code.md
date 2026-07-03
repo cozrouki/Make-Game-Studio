@@ -6,7 +6,7 @@ globs:
   - "src/gameplay/**"
 ---
 
-# Gameplay 코드 규칙 (원본 프로젝트)
+# Gameplay 코드 규칙
 
 Unity C# 스크립트에 적용되는 코딩 기준.
 
@@ -33,8 +33,8 @@ animator.SetFloat("Speed", value);
 
 ```
 {GamePrefix}.{Category}.{Subsystem}
-예: Game2.Gameplay.Player
-    Game1.Core.Stage
+예: YourGame.Gameplay.Player
+    YourGame.Core.Stage
     SharedCore.Data
 ```
 

@@ -44,8 +44,10 @@
 
 [CmdletBinding()]
 param(
-    [string]$GameStudiosClone = "D:\works\projects\github\Claude-Code-Game-Studios",
-    [string]$SkillForgeClone  = "D:\works\projects\github\Unity3D-AntiGravitySkills",
+    # 기본값: upstream clone 이 이 패키지 저장소의 형제 폴더에 있다고 가정.
+    # 다른 위치면 -GameStudiosClone / -SkillForgeClone 로 override.
+    [string]$GameStudiosClone = (Join-Path $PSScriptRoot "..\..\Claude-Code-Game-Studios"),
+    [string]$SkillForgeClone  = (Join-Path $PSScriptRoot "..\..\Unity3D-AntiGravitySkills"),
     [switch]$DryRun,
     [switch]$SkipPull
 )
