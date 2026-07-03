@@ -49,10 +49,10 @@ git checkout -- .claude/hooks
 | **페르소나·표준·문서규칙** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` |
 | **glob 자동적용 룰** | `.claude/rules/` | `.cursor/rules/*.mdc` | `.agent/rules/*.md` | — |
 | **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 |
-| **슬래시 워크플로** | `.claude/skills/` ✅ | ❌ (자체 명령) | `.agent/workflows/` (미포함) | ❌ |
+| **슬래시 워크플로** | `.claude/skills/` 81개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 6개 ✅ | ❌ |
 | **훅 / 서브에이전트** | `.claude/` ✅ | ❌ | ❌ | ❌ |
 
-> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층**(슬래시 스킬·훅·서브에이전트)은 Claude Code 네이티브이고, 다른 도구에선 각자 규약으로 변환이 필요하다. 이 패키지는 콘텐츠 층 + 룰 자동적용까지 3개 도구를 커버한다.
+> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 6개 = `ko-*` 5 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
 
 ### AGENTS.md 정본 구조
 
@@ -71,6 +71,14 @@ python scripts/gen-rule-mirrors.py
 ```
 
 룰을 고칠 때는 **`.claude/rules/` 만 수정 후 재생성**한다. `.agent/rules/`·`.cursor/rules/` 는 생성물이므로 직접 편집 금지.
+
+### Antigravity 워크플로 (슬래시 커맨드)
+
+`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 6종을 포팅:
+
+- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/unity-fullstack`
+
+각 워크플로는 Claude Code의 `.claude/skills/<name>/` 절차를 참조하되, Antigravity용으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 훅·서브에이전트가 필요한 나머지 75개 skill은 Claude Code 전용으로 남는다.
 
 ## 다른 Unity 프로젝트에 적용하는 방법
 
@@ -277,6 +285,7 @@ scripts/
 
 .cursor/rules/                   12개 .mdc (Cursor — .claude/rules 에서 생성)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
+.agent/workflows/                6개 (Antigravity 슬래시 — ko-* 5 + unity-fullstack)
 
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
