@@ -1,2 +1,2 @@
-Read AGENT.md
+Read AGENTS.md — 그것이 공통 정본이다.
 항상 한국어로 설명하고 문서 정리도 한국어로 한다.

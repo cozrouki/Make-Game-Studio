@@ -38,18 +38,65 @@ git checkout -- .claude/hooks
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 3개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
 
+## 크로스툴 호환 (Claude Code · Cursor · Antigravity)
+
+이 패키지는 **Claude Code 전용이 아니다.** `AGENTS.md` 오픈 표준(Agentic AI Foundation)을 정본으로 삼아 여러 에이전트 도구에서 쓸 수 있게 구성돼 있다.
+
+### 도구별로 무엇을 읽는가
+
+| 자산 | Claude Code | Cursor | Antigravity | Gemini CLI |
+|---|---|---|---|---|
+| **페르소나·표준·문서규칙** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` |
+| **glob 자동적용 룰** | `.claude/rules/` | `.cursor/rules/*.mdc` | `.agent/rules/*.md` | — |
+| **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 |
+| **슬래시 워크플로** | `.claude/skills/` ✅ | ❌ (자체 명령) | `.agent/workflows/` (미포함) | ❌ |
+| **훅 / 서브에이전트** | `.claude/` ✅ | ❌ | ❌ | ❌ |
+
+> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층**(슬래시 스킬·훅·서브에이전트)은 Claude Code 네이티브이고, 다른 도구에선 각자 규약으로 변환이 필요하다. 이 패키지는 콘텐츠 층 + 룰 자동적용까지 3개 도구를 커버한다.
+
+### AGENTS.md 정본 구조
+
+- **`AGENTS.md`** — 도구 중립 정본 (페르소나 §1–§7). Claude Code·Cursor·Antigravity·Windsurf·Codex 가 공통으로 읽음.
+- **`CLAUDE.md`** — `AGENTS.md` 를 가리키고 그 위에 Claude Code 전용 계층(§7 세션·§8 4계층·훅·서브에이전트)만 얹음.
+- **`GEMINI.md` / `AGENT.md`(단수)** — `AGENTS.md` 로 가는 얇은 포인터.
+
+### 룰 미러 — 단일 소스에서 파생
+
+`.claude/rules/*.md` 가 **소스 오브 트루스**이며, 스크립트로 두 도구용 미러를 생성한다:
+
+```bash
+python scripts/gen-rule-mirrors.py
+#  .claude/rules/*.md  →  .agent/rules/*.md    (Antigravity, verbatim)
+#                      →  .cursor/rules/*.mdc  (Cursor, frontmatter 변환)
+```
+
+룰을 고칠 때는 **`.claude/rules/` 만 수정 후 재생성**한다. `.agent/rules/`·`.cursor/rules/` 는 생성물이므로 직접 편집 금지.
+
 ## 다른 Unity 프로젝트에 적용하는 방법
 
 ### 1단계: 자산 복사
 
-대상 Unity 프로젝트 루트에 `.claude/` 와 `.agent/` 를 복사:
+대상 Unity 프로젝트 루트에 자산을 복사. 쓰는 도구에 맞춰 선택 복사:
 
 ```powershell
 $src = "<이 저장소를 clone 한 경로>"      # 예: 이 저장소 루트
 $dst = "D:\path\to\YourUnityProject"
-Copy-Item "$src\.claude" $dst -Recurse -Force
-Copy-Item "$src\.agent"  $dst -Recurse -Force
-Copy-Item "$src\README.md" $dst -Force   # 선택
+
+# 공통(모든 도구) — 페르소나 정본 + L2 코드 패턴 카탈로그 + 룰 소스
+Copy-Item "$src\AGENTS.md" $dst -Force
+Copy-Item "$src\.agent"    $dst -Recurse -Force   # skills/ + rules/(Antigravity)
+
+# Claude Code 사용 시
+Copy-Item "$src\CLAUDE.md" $dst -Force
+Copy-Item "$src\.claude"   $dst -Recurse -Force
+
+# Cursor 사용 시
+Copy-Item "$src\.cursor"   $dst -Recurse -Force
+
+# Gemini CLI / 단수 AGENT.md 폴백 (선택)
+Copy-Item "$src\GEMINI.md" $dst -Force
+Copy-Item "$src\AGENT.md"  $dst -Force
+Copy-Item "$src\README.md" $dst -Force            # 선택
 ```
 
 ### 2단계: 프로젝트에 맞게 게임 태그 채우기
@@ -58,7 +105,7 @@ Copy-Item "$src\README.md" $dst -Force   # 선택
 
 | 파일 | 채울 부분 |
 |---|---|
-| `CLAUDE.md` / `AGENT.md` | §6 "게임 폴더 매핑" 표의 `[GAME1]/YourFirstGame` 등을 실제 게임/태그로 |
+| `AGENTS.md` | §6 "게임 폴더 매핑" 표의 `[GAME1]/YourFirstGame` 등을 실제 게임/태그로 (정본 — 이 한 곳만 고치면 전 도구 반영) |
 | `.claude/rules/doc-writing.md` | 게임 태그 예시(`[GAME1][GAME2][CORE]`)를 실제 태그로 (선택) |
 | `.claude/rules/gameplay-code.md` | 네임스페이스 예시 `YourGame.Gameplay.Player` 를 실제 네임스페이스로 (선택) |
 | `.claude/settings.json` | `additionalDirectories` (빈 배열) 에 프로젝트 밖 참조 경로가 필요하면 추가 (선택) |
@@ -220,6 +267,17 @@ Register-ScheduledTask -TaskName "ClaudeSkillsUpstreamSync" -Action $action -Tri
 ## 디렉토리 구조
 
 ```
+AGENTS.md                        ★ 크로스툴 정본 (페르소나·표준·문서규칙)
+CLAUDE.md                        Claude Code 계층 (→AGENTS.md + 스킬/훅/서브에이전트)
+GEMINI.md / AGENT.md             AGENTS.md 포인터 (Gemini CLI / 단수 폴백)
+.mcp.json.template               MCPForUnity 설정 템플릿
+scripts/
+├── sync-upstream.ps1            upstream 2종 동기화
+└── gen-rule-mirrors.py          .claude/rules → .agent/rules + .cursor/rules 생성
+
+.cursor/rules/                   12개 .mdc (Cursor — .claude/rules 에서 생성)
+.agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
+
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
 ├── statusline.sh                상태줄 (한국어)
