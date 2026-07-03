@@ -1,26 +1,70 @@
-# Force LF for shell scripts — Windows CRLF would break bash hook execution
-*.sh             text eol=lf
-*.bash           text eol=lf
+# TikiProject .gitattributes — Unity 줄바꿈/바이너리 정규화
+# 목적: Windows(core.autocrlf=true)에서 Unity YAML이 CRLF로 체크아웃돼 프리팹/씬 전체가
+#       diff로 잡히는 대량 재기록 방지. Unity 네이티브(LF)에 맞춰 텍스트를 LF로 통일.
+# text=auto: 바이너리는 자동 감지해 그대로 두고(정규화 X), 텍스트만 LF 적용.
 
-# Markdown / JSON / YAML — keep LF for consistent rendering and parser safety
-*.md             text eol=lf
-*.json           text eol=lf
-*.yaml           text eol=lf
-*.yml            text eol=lf
+* text=auto eol=lf
 
-# C# templates (SkillForge .cs.txt) — LF for Unity / dotnet consistency
-*.cs             text eol=lf
-*.cs.txt         text eol=lf
+# ── C# ──
+*.cs        text eol=lf diff=csharp
 
-# Default: detect text, convert on checkin/checkout per OS
-*                text=auto
+# ── 항상 텍스트인 Unity YAML/코드 애셋 (오감지 방지, LF 명시) ──────────────────
+*.shader    text eol=lf
+*.shadergraph text eol=lf
+*.shadersubgraph text eol=lf
+*.cginc     text eol=lf
+*.hlsl      text eol=lf
+*.compute   text eol=lf
+*.uss       text eol=lf
+*.uxml      text eol=lf
+*.unity     text eol=lf
+*.prefab    text eol=lf
+*.mat       text eol=lf
+*.anim      text eol=lf
+*.controller text eol=lf
+*.overrideController text eol=lf
+*.meta      text eol=lf
+*.asmdef    text eol=lf
+*.asmref    text eol=lf
+*.json      text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.xml       text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
 
-# Binary types (no conversion)
-*.png            binary
-*.jpg            binary
-*.jpeg           binary
-*.gif            binary
-*.ico            binary
-*.zip            binary
-*.dll            binary
-*.exe            binary
+# 주의: *.asset / *.unity3d 등은 명시하지 않는다 — LightingData/NavMesh 등 바이너리 .asset이 섞여 있어
+#       text=auto 자동 감지에 맡긴다(바이너리는 정규화 제외, YAML .asset은 LF 적용).
+
+# ── 바이너리 (정규화/diff 금지 — 손상 방지) ───────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.bmp   binary
+*.tga   binary
+*.tif   binary
+*.tiff  binary
+*.psd   binary
+*.exr   binary
+*.hdr   binary
+*.cubemap binary
+*.fbx   binary
+*.obj   binary
+*.blend binary
+*.dae   binary
+*.3ds   binary
+*.max   binary
+*.wav   binary
+*.mp3   binary
+*.ogg   binary
+*.aif   binary
+*.aiff  binary
+*.ttf   binary
+*.otf   binary
+*.dll   binary
+*.so    binary
+*.a     binary
+*.dylib binary
+*.bytes binary
+*.unitypackage binary

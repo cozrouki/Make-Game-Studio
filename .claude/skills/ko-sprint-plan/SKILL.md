@@ -37,7 +37,7 @@ Game-Studios의 `sprint-plan` skill을 한국어 인터페이스로 래핑합니
 
 `.claude/skills/sprint-plan/SKILL.md`의 절차에 따라 진행하되, 다음을 한국어로 출력:
 - 스프린트 목표 (한 줄)
-- 게임 태그별 작업 (`[NZS][EA][MMC][NJM][KC][CORE]`)
+- 게임 태그별 작업 (프로젝트에서 정의한 태그 셋, 예: `[GAME1][GAME2][CORE]`)
 - 인수받은 기간에 맞춘 스프린트 capacity 추정
 - 리스크 / 의존성
 

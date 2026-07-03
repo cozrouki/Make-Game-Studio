@@ -78,7 +78,7 @@ UniversalRenderPipelineAsset_Renderer  ← 렌더링 로직, Renderer Features
 | MSAA | ✅ | ✅ | ❌ |
 | 권장 상황 | 간단한 씬 | 복잡한 조명 씬 | 대규모 PC 씬 |
 
-> **TikiProject 권장**: 다수 조명이 필요한 씬 → **Forward+**
+> **권장**: 다수 조명이 필요한 씬 → **Forward+**
 
 ---
 

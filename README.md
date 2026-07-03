@@ -2,8 +2,7 @@
 
 Unity 게임 개발용 Claude Code 통합 환경. 4개 외부 저장소를 흡수해 만든 **4계층 스킬 셋**입니다.
 
-원본 통합 시점: **2026-05-13**
-원본 적용 프로젝트: `D:\works\projects\github\TikiProject\`
+원본 통합 시점: **2026-05-13** (Unity 멀티 게임 프로젝트에서 추출·일반화)
 
 ## Windows 기여자 — 최초 clone 후 설정
 
@@ -46,29 +45,26 @@ git checkout -- .claude/hooks
 대상 Unity 프로젝트 루트에 `.claude/` 와 `.agent/` 를 복사:
 
 ```powershell
-$src = "D:\works\projects\CodeAI\UnityGame"
+$src = "<이 저장소를 clone 한 경로>"      # 예: 이 저장소 루트
 $dst = "D:\path\to\YourUnityProject"
 Copy-Item "$src\.claude" $dst -Recurse -Force
 Copy-Item "$src\.agent"  $dst -Recurse -Force
 Copy-Item "$src\README.md" $dst -Force   # 선택
 ```
 
-### 2단계: TikiProject 특화 부분 일반화
+### 2단계: 프로젝트에 맞게 게임 태그 채우기
 
-다음 파일들은 **TikiProject 컨텍스트**를 가지고 있어 다른 프로젝트에서 수정이 필요합니다:
+이 패키지는 **일반화(placeholder)** 상태로 배포됩니다. 특정 게임(EA/NZS/KC 등) 하드코딩은 모두 제거되어 있으므로, clone 후 바로 사용 가능합니다. 멀티 게임 프로젝트라면 아래 **한 곳**만 자기 프로젝트에 맞게 채우면 됩니다:
 
-| 파일 | 일반화 필요 부분 |
+| 파일 | 채울 부분 |
 |---|---|
-| `.claude/settings.json` | `additionalDirectories` 항목의 `Assets\SharedAssets\Scripts\Runtime` 경로를 자기 프로젝트 경로로 |
-| `.claude/rules/doc-writing.md` | 게임 태그 `[NZS][EA][MMC][NJM][KC][CORE]` 를 자기 프로젝트 태그로 (또는 통째로 삭제) |
-| `.claude/rules/gameplay-code.md` | 네임스페이스 예시 `KickleCubicle.Gameplay.Player` 를 자기 프로젝트 네임스페이스로 |
-| `.claude/skills/ko-code-review/SKILL.md` | 게임 태그 자동 분류 표 (Tiki 5게임) 를 자기 프로젝트 폴더 구조로 |
-| `.claude/skills/ko-prototype/SKILL.md` | 게임 태그 `[KC][EA]` 예시 |
-| `.claude/skills/unity-fullstack/SKILL.md` | 게임 태그 안내 한 줄 |
-| `.claude/docs/mcp-unity-guide.md` | 결정 매트릭스의 `Assets/KickleCubicle/` `Assets/ElevatorAction/` 경로 |
-| `.claude/docs/ATTRIBUTION.md` | "TikiProject" 언급들 |
+| `CLAUDE.md` / `AGENT.md` | §6 "게임 폴더 매핑" 표의 `[GAME1]/YourFirstGame` 등을 실제 게임/태그로 |
+| `.claude/rules/doc-writing.md` | 게임 태그 예시(`[GAME1][GAME2][CORE]`)를 실제 태그로 (선택) |
+| `.claude/rules/gameplay-code.md` | 네임스페이스 예시 `YourGame.Gameplay.Player` 를 실제 네임스페이스로 (선택) |
+| `.claude/settings.json` | `additionalDirectories` (빈 배열) 에 프로젝트 밖 참조 경로가 필요하면 추가 (선택) |
 
-단일 게임 프로젝트면 게임 태그 시스템 자체를 제거하면 됩니다.
+- **단일 게임 프로젝트**면 게임 태그 시스템 자체를 무시하거나 삭제하면 됩니다.
+- `ko-code-review`, `ko-perf-profile`, `unity-fullstack`, `sf-add`, `mcp-unity-guide.md`, `ATTRIBUTION.md` 등은 이미 placeholder(`YourGame`, `[GAME1]`)로 일반화되어 별도 수정 불필요합니다.
 
 ### 3단계: 로컬 설정 추가 (settings.local.json)
 
@@ -99,7 +95,7 @@ Copy-Item "$src\README.md" $dst -Force   # 선택
   ```json
   "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main"
   ```
-- 프로젝트 루트에 `.mcp.json` 작성하여 stdio 서버 설정
+- 프로젝트 루트의 `.mcp.json.template` 을 `.mcp.json` 으로 복사한 뒤 `command` 경로/포트를 자기 환경에 맞게 수정 (실제 `.mcp.json` 은 `.gitignore` 처리됨 — 머신별 경로 포함)
 
 ### 5단계: 새 Claude Code 세션 시작
 
@@ -152,16 +148,13 @@ SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
 
 ### 전제 조건
 
-다음 위치에 upstream clone이 있어야 합니다 (기본값, `-GameStudiosClone`/`-SkillForgeClone` 으로 변경 가능):
+두 upstream 저장소를 clone 해두어야 합니다. 스크립트 **기본값은 이 패키지 저장소의 형제 폴더**(`..\Claude-Code-Game-Studios`, `..\Unity3D-AntiGravitySkills`)이며, 다른 위치면 `-GameStudiosClone`/`-SkillForgeClone` 으로 지정합니다.
 
-- `D:\works\projects\github\Claude-Code-Game-Studios`
-- `D:\works\projects\github\Unity3D-AntiGravitySkills`
-
-처음 clone:
+처음 clone (형제 폴더 규칙을 따르는 예 — `<PARENT>` 는 이 패키지 저장소의 상위 폴더):
 
 ```powershell
-git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git D:\works\projects\github\Claude-Code-Game-Studios
-git clone https://github.com/nlelouche/Unity-SkillForge.git        D:\works\projects\github\Unity3D-AntiGravitySkills
+git clone https://github.com/Donchitos/Claude-Code-Game-Studios.git <PARENT>\Claude-Code-Game-Studios
+git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unity3D-AntiGravitySkills
 ```
 
 ### 사용
@@ -213,7 +206,7 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        D:\works\proj
 
 ```powershell
 $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-    -Argument "-NoProfile -File `"D:\works\projects\CodeAI\UnityGame\scripts\sync-upstream.ps1`""
+    -Argument "-NoProfile -File `"<PACKAGE_ROOT>\scripts\sync-upstream.ps1`""   # <PACKAGE_ROOT> = 이 저장소를 clone 한 경로
 $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday -At 09:00
 Register-ScheduledTask -TaskName "ClaudeSkillsUpstreamSync" -Action $action -Trigger $trigger
 ```

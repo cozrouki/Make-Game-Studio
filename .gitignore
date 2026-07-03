@@ -15,10 +15,22 @@ desktop.ini
 # Local-only settings (per-machine — should be created by each user)
 .claude/settings.local.json
 
+# Machine-specific MCP config — copy .mcp.json.template → .mcp.json and edit paths
+.mcp.json
+
+# Runtime state / locks (created at runtime by hooks & scheduler)
+.claude/scheduled_tasks.lock
+production/stage.txt
+
 # Operational data (created at runtime by hooks)
 production/session-logs/
 production/session-state/active.md
 *.log
+
+# Project-specific design docs (do NOT ship in the reusable template)
+# EA_TechSpec 등은 원본 프로젝트 전용. 자기 프로젝트 spec 은 자유롭게 추가하되
+# 이 템플릿 저장소에는 커밋하지 않는 것을 권장.
+production/spec/
 
 # Build artifacts
 dist/

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# statusline.sh — Claude Code 터미널 상태줄 (TikiProject)
+# statusline.sh — Claude Code 터미널 상태줄
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE_FILE="$REPO_ROOT/production/stage.txt"

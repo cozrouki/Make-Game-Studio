@@ -1,0 +1,578 @@
+{
+  "dialogue-quest-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/dialogue-quest-system/SKILL.md",
+    "category": "02-gameplay",
+    "description": "분기 대화, 퀘스트 단계, 이벤트 트리거를 갖춘 완전한 대화·퀘스트 시스템."
+  },
+  "inventory-crafting-logic": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/inventory-crafting-logic/SKILL.md",
+    "category": "02-gameplay",
+    "description": "슬롯 기반 저장, 아이템 스택, 레시피 기반 제작을 갖춘 완전한 인벤토리 시스템."
+  },
+  "replay-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/replay-system/SKILL.md",
+    "category": "02-gameplay",
+    "description": "결정론적 입력 기반 리플레이 시스템 구현. 매 프레임 플레이어 입력을 기록한다."
+  },
+  "day-night-cycle": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/day-night-cycle/SKILL.md",
+    "category": "02-gameplay",
+    "description": "시간 진행, 방향성 조명 회전, 새벽·황혼 이벤트 트리거."
+  },
+  "juice-game-feel": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/juice-game-feel/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "만족스러운 피드백, 애니메이션, 폴리시를 위한 게임 피드백 및 주스 전문가."
+  },
+  "2d-art-animation-lighting": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/2d-art-animation-lighting/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "Unity 6.3 LTS 기반 2D 게임 아트, 스켈레탈 애니메이션, 조명 시스템 전문 스킬. URP 2D Renderer, Sprite 워크플로우, 2D Lighting, VFX까지 아우르는 종합 2D 비주얼 스킬."
+  },
+  "urp-advanced-creator": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/urp-advanced-creator/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "Unity 6 URP 심화 스킬. Forward+/Deferred 렌더링, 조명/그림자, Renderer Features, Render Graph, 포스트 프로세싱, Camera Stacking, GPU Resident Drawer, STP 등 Unity 6 URP 전체를 커버한다."
+  },
+  "gpu-instancing-expert": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/gpu-instancing-expert/SKILL.md",
+    "category": "06-performance",
+    "description": "GPU 인스턴싱과 간접 렌더링으로 수천 개의 동일 메시를 효율적으로 렌더링한다."
+  },
+  "job-system-burst": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/job-system-burst/SKILL.md",
+    "category": "06-performance",
+    "description": "Unity Job System과 Burst Compiler를 활용한 고성능 병렬 CPU 작업 구현."
+  },
+  "ai-code-reviewer": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/ai-code-reviewer/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "Unity C# 스크립트 에이전트 코드 리뷰 체크리스트. SOLID 위반, GC 할당, Unity 안티패턴 식별."
+  },
+  "custom-editor-scripting": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/custom-editor-scripting/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "개발 가속화를 위한 Unity 에디터 도구, 인스펙터 확장, 프로퍼티 드로어 전문 제작."
+  },
+  "ui-toolkit-architect-legacy": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/ui-toolkit-architect-legacy/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "MVVM을 따르는 UI Toolkit 에셋(UXML, USS)과 C# 컨트롤러 생성."
+  },
+  "cinemachine-specialist": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/cinemachine-specialist/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "다이나믹 카메라, 컷씬, 시네마틱 게임플레이를 위한 Unity Cinemachine 전문가."
+  },
+  "interface-driven-development": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/interface-driven-development/SKILL.md",
+    "category": "01-architecture",
+    "description": "계약 기반 모듈성을 위한 수석 아키텍트. 느슨한 결합과 테스트 가능한 Unity 시스템용 인터페이스 설계."
+  },
+  "unity-build-commander": {
+    "tdd_first": true,
+    "path": ".agent/skills/09-devops-automation/unity-build-commander/SKILL.md",
+    "category": "09-devops-automation",
+    "description": "대상 플랫폼(Windows/Android/iOS)용 헤드리스 Unity 빌드 실행 및 빌드 로그 파싱."
+  },
+  "accessibility-hci": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/accessibility-hci/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "Unity 게임의 접근성(A11y) 표준 구현: WCAG 2.1 색상 대비, 폰트 스케일링, 입력 리매핑."
+  },
+  "status-effect-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/status-effect-system/SKILL.md",
+    "category": "02-gameplay",
+    "description": "스택, 시간 기반 효과, 틱 데미지/회복, 스탯 수정자를 갖춘 완전한 버프·디버프 시스템."
+  },
+  "context-discovery-agent": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/context-discovery-agent/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "Unity 프로젝트 환경(버전, 렌더 파이프라인, 설치된 패키지)을 자동 감지한다."
+  },
+  "playfab-economy-v2": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/playfab-economy-v2/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "PlayFab Economy v2 완전 통합 가이드: 카탈로그, 인벤토리, 가상 화폐, 스토어."
+  },
+  "advanced-design-patterns": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/advanced-design-patterns/SKILL.md",
+    "category": "01-architecture",
+    "description": "Unity 3D에서 SOLID 원칙과 GoF 패턴을 적용하는 수석 아키텍트. 복잡한 시스템과 확장 가능한 아키텍처 설계."
+  },
+  "audio-soundscape-architect": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/audio-soundscape-architect/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "몰입감 있는 사운드스케이프, 음악, 오디오 관리를 위한 Unity 오디오 시스템 전문가."
+  },
+  "unit-population-ai": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/unit-population-ai/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "대규모 군중이나 집단을 처리하는 최적화 AI 관리자. 시간 분할 업데이트 사용."
+  },
+  "analytics-heatmaps": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/analytics-heatmaps/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "플레이어 행동 분석을 위한 종합 분석 추적 및 히트맵 데이터 수집 구현."
+  },
+  "environment-hazard-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/environment-hazard-system/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "허기, 갈증, 온도, 대기 위험 등 생존 메카닉 구현."
+  },
+  "input-system-new": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/input-system-new/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "다중 기기 입력 처리를 위한 ScriptableObject 이벤트 기반 Unity 새 입력 시스템 래퍼."
+  },
+  "lighting-post-processing": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/lighting-post-processing/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "분위기, 무드, 시각적 완성도를 위한 Unity 라이팅 및 포스트 프로세싱 전문가."
+  },
+  "ability-skill-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/ability-skill-system/SKILL.md",
+    "category": "02-gameplay",
+    "description": "ScriptableObject 정의, 쿨다운, 자원 비용, 타게팅을 갖춘 데이터 드리븐 어빌리티 시스템."
+  },
+  "ads-mediation-ironsource": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/ads-mediation-ironsource/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "IronSource/LevelPlay 미디에이션 완전 통합 가이드: 배너, 전면, 보상형 광고."
+  },
+  "lod-occlusion-culling": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/lod-occlusion-culling/SKILL.md",
+    "category": "06-performance",
+    "description": "3D 환경 렌더링 최적화를 위한 LOD 그룹과 오클루전 컬링."
+  },
+  "scriptableobject-architecture": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/scriptableobject-architecture/SKILL.md",
+    "category": "01-architecture",
+    "description": "ScriptableObject를 활용한 데이터 드리븐 설계 전문 아키텍트. SO 기반 이벤트 채널과 런타임 세트 생성."
+  },
+  "metadata-validator": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/metadata-validator/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "2026 표준 준수를 위해 레포지토리 내 모든 SKILL.md 파일을 감사한다. 누락 필드 리포트."
+  },
+  "physics-logic": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/physics-logic/SKILL.md",
+    "category": "02-gameplay",
+    "description": "Rigidbody, 충돌, 트리거, 레이어, 물리 쿼리(Raycast/Overlap) 등 Unity 물리 시스템."
+  },
+  "advanced-character-controller": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/advanced-character-controller/SKILL.md",
+    "category": "02-gameplay",
+    "description": "지면 감지, 점프, 경사면, 상태 기반 이동을 포함한 완전한 3D 캐릭터 컨트롤러."
+  },
+  "unified-agent-controller": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/unified-agent-controller/SKILL.md",
+    "category": "02-gameplay",
+    "description": "Player와 NPC가 동일한 Agent 베이스를 공유하며 IAgentMover 전략으로 입력/NavMesh를 교체하는 통합 에이전트 아키텍처."
+  },
+  "build-pipeline-manager": {
+    "tdd_first": true,
+    "path": ".agent/skills/09-devops-automation/build-pipeline-manager/SKILL.md",
+    "category": "09-devops-automation",
+    "description": "Unity 빌드(Android, iOS, Windows) 자동화를 위한 CLI 래퍼."
+  },
+  "responsive-ui-design": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/responsive-ui-design/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "UI Toolkit flexbox와 미디어 쿼리를 활용한 다중 기기 지원 반응형·적응형 UI 설계."
+  },
+  "shader-graph-expert": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/shader-graph-expert/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "HLSL 없이 커스텀 셰이더, 머티리얼, 시각 효과를 만드는 Unity Shader Graph 전문가."
+  },
+  "virtual-production-lead": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-meta-skills/virtual-production-lead/SKILL.md",
+    "category": "00-meta-skills",
+    "description": "프로젝트 디렉터 역할. GDD를 읽고 프로덕션 로드맵과 스프린트 계획을 생성한다."
+  },
+  "asset-import-pipeline": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/asset-import-pipeline/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "에셋(텍스처, 모델, 오디오)을 정제하고 최적화하는 자동화 AssetPostprocessor 로직."
+  },
+  "lighting-nav-baker": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/lighting-nav-baker/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "정적 라이팅(라이트맵)과 AI 내비게이션(NavMesh)을 하나의 워크플로우로 굽는 자동화 도구."
+  },
+  "project-scaffolder": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-meta-skills/project-scaffolder/SKILL.md",
+    "category": "00-meta-skills",
+    "description": "초기 폴더 구조 생성, 필수 패키지(Manifest) 설치, 프로젝트 설정 구성을 자동화한다."
+  },
+  "csharp12-features-guide": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-core-engineering/csharp12-features-guide/SKILL.md",
+    "category": "00-core-engineering",
+    "description": "Unity 6 / CoreCLR 환경에서 C#12·C#13 언어 기능을 실전 활용하는 가이드."
+  },
+  "mvvm-binding-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/mvvm-binding-system/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "Unity UI Toolkit을 위한 완전한 Model-View-ViewModel(MVVM) 아키텍처 구현."
+  },
+  "minimap-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/minimap-system/SKILL.md",
+    "category": "02-gameplay",
+    "description": "두 번째 직교 카메라로 RenderTexture에 렌더링하는 런타임 미니맵 구현."
+  },
+  "command-pattern-undo": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/command-pattern-undo/SKILL.md",
+    "category": "01-architecture",
+    "description": "완전한 Undo/Redo 히스토리 스택을 갖춘 커맨드 패턴 구현."
+  },
+  "backend-integration": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/backend-integration/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "PlayFab, Firebase, 커스텀 API 등 BaaS 플랫폼과의 통합."
+  },
+  "service-layer-generator": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/service-layer-generator/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "깔끔한 백엔드 분리를 위한 백엔드 서비스 인터페이스와 구현체를 생성한다."
+  },
+  "oop-patterns-architect": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/oop-patterns-architect/SKILL.md",
+    "category": "01-architecture",
+    "description": "깔끔하고 유지보수 가능한 Unity 아키텍처를 위한 객체 지향 설계 패턴 전문가."
+  },
+  "tech-tree-research": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/tech-tree-research/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "DAG 기반 기술 트리. 언락 상태, 선행 조건, 연구 진행도를 관리한다."
+  },
+  "resource-management-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/resource-management-system/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "ScriptableObject 데이터를 활용한 정수 기반 자원(골드, 나무, 식량) 추적 경제 시스템."
+  },
+  "texture-streaming-expert": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/texture-streaming-expert/SKILL.md",
+    "category": "06-performance",
+    "description": "Unity의 Mip Streaming 시스템과 스트리밍 예산 설정으로 텍스처 메모리 관리."
+  },
+  "dots-system-architect": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/dots-system-architect/SKILL.md",
+    "category": "01-architecture",
+    "description": "ECS, Jobs, Burst Compiler 성능 시스템을 위한 Unity DOTS 아키텍처 전문가."
+  },
+  "automated-unit-testing": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/automated-unit-testing/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "Unity의 EditMode·PlayMode 시나리오를 커버하는 NUnit 테스트 구현."
+  },
+  "mobile-optimization": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/mobile-optimization/SKILL.md",
+    "category": "06-performance",
+    "description": "프레임레이트, 해상도, 열 관리, 드로우콜을 포함한 Android/iOS 모바일 최적화."
+  },
+  "di-container-manager": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/di-container-manager/SKILL.md",
+    "category": "01-architecture",
+    "description": "DI 컨테이너를 활용한 느슨한 결합과 테스트 가능한 Unity 아키텍처 전문가."
+  },
+  "menu-navigation-flow": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/menu-navigation-flow/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "스택 기반 플로우, 전환, 히스토리를 갖춘 UI 내비게이션 및 화면 관리."
+  },
+  "unified-style-guide": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-core-engineering/unified-style-guide/SKILL.md",
+    "category": "00-core-engineering",
+    "description": "Unity 프로젝트의 일관된 C# 코딩 스타일을 정립하고 강제한다. .editorconfig 설정 포함."
+  },
+  "advanced-game-bootstrapper": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/advanced-game-bootstrapper/SKILL.md",
+    "category": "01-architecture",
+    "description": "Bootstrap Scene 패턴 구현. 전역 서비스의 결정론적 초기화를 보장한다."
+  },
+  "navmesh-pathfinding": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/navmesh-pathfinding/SKILL.md",
+    "category": "02-gameplay",
+    "description": "에이전트, 장애물, 오프메쉬 링크를 갖춘 Unity NavMesh AI 경로탐색 통합."
+  },
+  "save-load-serialization": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/save-load-serialization/SKILL.md",
+    "category": "02-gameplay",
+    "description": "ISaveable 인터페이스, JSON 직렬화, 저장 슬롯, 암호화를 갖춘 완전한 저장·불러오기 시스템."
+  },
+  "event-bus-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/event-bus-system/SKILL.md",
+    "category": "01-architecture",
+    "description": "크로스 시스템 통신을 위한 전역 이벤트 버스 구현. 제로 할당 구조체 이벤트."
+  },
+  "multiplayer-netcode": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/multiplayer-netcode/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "Unity Netcode for GameObjects(NGO) 설정. 연결, 동기화, RPC, 로비 처리."
+  },
+  "unity-mcp-connector": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/unity-mcp-connector/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "MCP(Model Context Protocol)를 통한 AI 에이전트와 Unity Editor 간 오케스트레이션 브리지."
+  },
+  "unity-gaming-services": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/unity-gaming-services/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "UGS 완전 설정 가이드: Authentication, Lobby, Relay, 리더보드, CloudCode."
+  },
+  "memory-profiler-expert": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/memory-profiler-expert/SKILL.md",
+    "category": "06-performance",
+    "description": "병목 지점 식별과 런타임 최적화를 위한 Unity 메모리·성능 프로파일링 전문가."
+  },
+  "coreclr-gc-watchdog": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-core-engineering/coreclr-gc-watchdog/SKILL.md",
+    "category": "00-core-engineering",
+    "description": "Unity(CoreCLR)의 가비지 컬렉터 압박을 감지·진단·제거한다."
+  },
+  "procedural-generation": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/procedural-generation/SKILL.md",
+    "category": "02-gameplay",
+    "description": "BSP 던전, Wave Function Collapse, Perlin Noise 등 절차적 콘텐츠 생성 알고리즘 구현."
+  },
+  "asynchronous-programming": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/asynchronous-programming/SKILL.md",
+    "category": "01-architecture",
+    "description": "Unity에서 async/await 패턴 마스터. 로딩, 네트워크 요청, 논블로킹 작업 처리."
+  },
+  "state-machine-architect": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/state-machine-architect/SKILL.md",
+    "category": "01-architecture",
+    "description": "플레이어 컨트롤러, AI, 상태 기반 로직에 활용하는 유연한 상태 머신 시스템 생성."
+  },
+  "ui-toolkit-modern": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/ui-toolkit-modern/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "UXML과 USS를 활용한 전문적이고 확장 가능한 반응형 런타임 UI를 위한 Unity UI Toolkit 전문가."
+  },
+  "ai-behavior-trees": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/ai-behavior-trees/SKILL.md",
+    "category": "02-gameplay",
+    "description": "컴포짓, 데코레이터, 액션 노드를 갖춘 모듈식 행동 트리로 AI 의사결정 구현."
+  },
+  "grid-based-building-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/grid-based-building-system/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "도시 건설 및 RTS 게임용 강력한 격자 배치 시스템. 스냅, 충돌 감지, 유효성 검사 처리."
+  },
+  "monetization-iap": {
+    "tdd_first": true,
+    "path": ".agent/skills/08-backend-monetization/monetization-iap/SKILL.md",
+    "category": "08-backend-monetization",
+    "description": "Unity Purchasing을 활용한 인앱 결제 설정. 상품 카탈로그, 영수증 검증 처리."
+  },
+  "vfx-graph-shuriken": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/vfx-graph-shuriken/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "놀라운 시각 효과를 만드는 Unity VFX Graph 및 파티클 시스템 전문가."
+  },
+  "unity-compile-fixer": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-core-engineering/unity-compile-fixer/SKILL.md",
+    "category": "00-core-engineering",
+    "description": "C# 컴파일 오류를 자동 수복하는 에이전트 루프. 컴파일러 출력을 읽고 오류를 유형별로 분류한다."
+  },
+  "skill-creator": {
+    "tdd_first": true,
+    "path": ".agent/skills/00-meta-skills/skill-creator/SKILL.md",
+    "category": "00-meta-skills",
+    "description": "새 프로덕션 등급 스킬을 생성하는 메타 스킬. 스킬 생태계 전반의 일관성을 보장한다."
+  },
+  "object-pooling-system": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/object-pooling-system/SKILL.md",
+    "category": "06-performance",
+    "description": "GC 스파이크와 할당 오버헤드를 제거하는 고성능 GameObject 오브젝트 풀링."
+  },
+  "localization-specialist": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/localization-specialist/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "테이블, 스마트 문자열을 포함한 다국어 지원을 위한 Unity Localization 패키지 통합."
+  },
+  "procedural-animation-ik": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/procedural-animation-ik/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "다이나믹하고 반응적인 캐릭터 모션을 위한 절차적 애니메이션 및 IK 전문가."
+  },
+  "service-locator-pattern": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/service-locator-pattern/SKILL.md",
+    "category": "01-architecture",
+    "description": "경량 타입 안전 서비스 로케이터를 분리 브리지로 구현한다."
+  },
+  "loot-rng-management": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/loot-rng-management/SKILL.md",
+    "category": "02-gameplay",
+    "description": "가중치 드롭률, 희귀도 티어, 절차적 생성을 갖춘 전리품 테이블 시스템."
+  },
+  "repository-pattern": {
+    "tdd_first": true,
+    "path": ".agent/skills/01-architecture/repository-pattern/SKILL.md",
+    "category": "01-architecture",
+    "description": "게임 데이터 접근을 비즈니스 로직에서 분리하는 리포지토리 패턴 구현."
+  },
+  "dynamic-audio-mixers": {
+    "tdd_first": true,
+    "path": ".agent/skills/04-visuals-audio/dynamic-audio-mixers/SKILL.md",
+    "category": "04-visuals-audio",
+    "description": "다이나믹 오디오 이펙트, 스냅샷, 더킹을 위한 고급 Unity AudioMixer 설정."
+  },
+  "version-control-git": {
+    "tdd_first": true,
+    "path": ".agent/skills/07-tools-pipeline/version-control-git/SKILL.md",
+    "category": "07-tools-pipeline",
+    "description": "Unity Git 워크플로우, LFS 설정, 브랜치 전략 모범 사례."
+  },
+  "horde-wave-logic": {
+    "tdd_first": true,
+    "path": ".agent/skills/03-simulation-strategy/horde-wave-logic/SKILL.md",
+    "category": "03-simulation-strategy",
+    "description": "타워 디펜스·생존 게임용 웨이브 스폰 시스템. 설정 가능한 웨이브, 적 유형, 난이도 스케일링."
+  },
+  "damage-health-framework": {
+    "tdd_first": true,
+    "path": ".agent/skills/02-gameplay/damage-health-framework/SKILL.md",
+    "category": "02-gameplay",
+    "description": "IDamageable 인터페이스, 데미지 유형, 저항, 사망 이벤트를 갖춘 완전한 데미지·체력 시스템."
+  },
+  "canvas-performance": {
+    "tdd_first": true,
+    "path": ".agent/skills/05-ui-ux/canvas-performance/SKILL.md",
+    "category": "05-ui-ux",
+    "description": "UGUI Canvas와 UI Toolkit 런타임 모두의 UI 성능 최적화."
+  },
+  "addressables-asset-management": {
+    "tdd_first": true,
+    "path": ".agent/skills/06-performance/addressables-asset-management/SKILL.md",
+    "category": "06-performance",
+    "description": "비동기 에셋 로딩, 메모리 관리, 원격 콘텐츠 배포를 위한 Unity Addressables."
+  },
+  "unity-asset-organization": {
+    "tdd_first": true,
+    "path": ".agent/skills/10-unity-asset-organization/SKILL.md",
+    "category": "10-unity-asset-organization",
+    "description": "에셋 폴더 구조, 명명 규칙, 프리팹 조직화 모범 사례."
+  },
+  "brainstorm": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/brainstorm/SKILL.md",
+    "category": "11-game-design",
+    "description": "MDA/SDT/Bartle 프레임워크로 게임 컨셉을 발굴하고 game-concept.md와 game-pillars.md를 생성한다."
+  },
+  "design-system": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/design-system/SKILL.md",
+    "category": "11-game-design",
+    "description": "단일 게임 시스템의 GDD를 섹션별 승인 방식으로 작성한다. Overview→Rules→Formulas→EdgeCases→Dependencies→Tuning→AC 순서."
+  },
+  "design-review": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/design-review/SKILL.md",
+    "category": "11-game-design",
+    "description": "GDD의 완성도·일관성·구현 가능성·프로젝트 표준 준수 여부를 8개 섹션 체크리스트로 검토한다."
+  },
+  "balance-check": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/balance-check/SKILL.md",
+    "category": "11-game-design",
+    "description": "전투/경제/진행/전리품 밸런스 데이터와 수식을 분석해 이상값·퇴화 전략·경제 불균형을 감지한다."
+  },
+  "map-systems": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/map-systems/SKILL.md",
+    "category": "11-game-design",
+    "description": "게임 컨셉을 개별 시스템으로 분해하고 의존성을 매핑해 Foundation→Core→Content→Polish 계층별 systems-index.md를 생성한다."
+  },
+  "scope-check": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/scope-check/SKILL.md",
+    "category": "11-game-design",
+    "description": "피처 또는 스프린트의 범위 팽창을 원래 계획과 비교해 감지한다. Bloat Score와 컷/연기/유지 권장 사항을 제공한다."
+  },
+  "playtest-report": {
+    "tdd_first": false,
+    "path": ".agent/skills/11-game-design/playtest-report/SKILL.md",
+    "category": "11-game-design",
+    "description": "플레이테스트 보고서 템플릿 생성(new) 또는 기존 메모를 Pain Points/Delight/Bugs/Insights로 분석(analyze)한다."
+  }
+}

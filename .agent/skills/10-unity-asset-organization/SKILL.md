@@ -12,7 +12,7 @@ Standards for organizing assets, naming conventions, and folder structure to mai
 
 ```
 Assets/
-├── NewzealandStory/              # Project-specific assets (underscore keeps at top)
+├── YourGame/                     # Project-specific assets (per-game folder)
 │   ├── Data/
 │   │   ├── Materials/
 │   │   ├── Textures/

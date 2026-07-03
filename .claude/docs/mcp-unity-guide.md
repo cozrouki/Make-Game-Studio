@@ -1,12 +1,12 @@
 # MCPForUnity 사용 가이드 (한국어)
 
-TikiProject에 이미 설치된 **MCPForUnity** (CoplayDev/unity-mcp) 의 35+ 도구를 카테고리별로 정리하고 사용 시나리오를 안내합니다.
+**MCPForUnity** (CoplayDev/unity-mcp) 의 35+ 도구를 카테고리별로 정리하고 사용 시나리오를 안내합니다. (별도 설치 필요 — README 4단계 참조)
 
 ## 개요
 
 - **레포**: https://github.com/CoplayDev/unity-mcp
-- **TikiProject 설치 경로**: `Packages/manifest.json` 의 `com.coplaydev.unity-mcp`
-- **MCP 설정**: `.mcp.json` (stdio 전송, 포트 6401)
+- **설치 경로**: `Packages/manifest.json` 의 `com.coplaydev.unity-mcp`
+- **MCP 설정**: `.mcp.json` (`.mcp.json.template` 복사 후 수정, stdio 전송, 포트 6401)
 - **권한 설정**: `.claude/settings.local.json` 의 `mcp__UnityMCP__*` 항목
 
 Unity Editor가 켜져있을 때만 도구 호출이 성공합니다. Editor가 꺼져있으면 stdio 연결 실패.

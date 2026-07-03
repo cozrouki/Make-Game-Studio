@@ -21,7 +21,7 @@ agent: prototyper
 
 ## Phase 1: 인수
 
-- `$1` = 게임 태그 (`[NZS][EA][MMC][NJM][KC]`) 또는 `NEW` (신규 게임)
+- `$1` = 게임 태그 (프로젝트 `CLAUDE.md` 게임 폴더 매핑 표의 태그) 또는 `NEW` (신규 게임)
 - `$2..` = 컨셉 설명 (자유서술)
 
 ## Phase 2: 브레인스토밍 (brainstorm)

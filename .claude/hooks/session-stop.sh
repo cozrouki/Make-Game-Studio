@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# session-stop.sh — 세션 종료 시 체크리스트 출력 (TikiProject)
+# session-stop.sh — 세션 종료 시 체크리스트 출력
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PROJECT_NAME="$(basename "$REPO_ROOT")"
 ACTIVE_FILE="$REPO_ROOT/production/session-state/active.md"
 
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║            TikiProject — 세션 종료                    ║"
+printf "║  %-50s║\n" "${PROJECT_NAME} — 세션 종료"
 echo "╚══════════════════════════════════════════════════════╝"
 
 # ── active.md 업데이트 상태 확인 ─────────────────────────────

@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 
 # /unity-fullstack — Unity 풀스택 통합 진입점
 
-TikiProject의 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 적절한 레이어로 안내합니다.
+Unity 풀스택 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 적절한 레이어로 안내합니다.
 
 ## 레이어 선택
 
@@ -35,7 +35,7 @@ TikiProject의 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 적
 - **새 기능 구현 사이클**: `/ko-story-cycle <스토리-id>` (L1 process) + `/sf-info <관련-skill>` (L2 code 참조)
 - **성능 문제 진단**: `/ko-perf-profile <범위>` + `.agent/skills/06-performance/` 카탈로그
 - **씬·에셋 자동화**: MCPForUnity 도구 (`.claude/docs/mcp-unity-guide.md` 참조)
-- **새 게임 온보딩**: `/onboard` → `/start` → 게임 태그 결정 (`[NZS][EA][MMC][NJM][KC][CORE]`)
+- **새 게임 온보딩**: `/onboard` → `/start` → 게임 태그 결정 (프로젝트 `CLAUDE.md`의 게임 폴더 매핑 표 참조)
 - **프로토타입 만들기**: `/ko-prototype <게임-태그> <컨셉>`
 
 ## 관련 문서

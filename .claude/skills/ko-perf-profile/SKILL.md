@@ -15,7 +15,7 @@ Unity 게임의 성능 병목을 진단하고 SkillForge 카탈로그의 해결 
 
 ```
 /ko-perf-profile scene             # 활성 씬만
-/ko-perf-profile system KC         # KickleCubicle 게임 한정
+/ko-perf-profile system GAME1      # 특정 게임 한정 (멀티 게임 프로젝트)
 /ko-perf-profile full              # 전체 프로젝트
 ```
 

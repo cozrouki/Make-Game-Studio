@@ -2,14 +2,14 @@
 globs: ["doc/**/*.md", "production/**/*.md"]
 ---
 
-# 문서 작성 규칙 (TikiProject)
+# 문서 작성 규칙
 
 ## 공통 규칙
 
 - **언어**: 한국어 (코드 블록 내 주석 포함)
-- **게임 태그**: `work_log.md` 항목에 반드시 포함
-  - `[NZS]` NewzealandStory, `[EA]` ElevatorAction, `[MMC]` Momoco
-  - `[NJM]` Ninjajamaru, `[KC]` KickleCubicle, `[CORE]` SharedCore
+- **게임 태그**: `work_log.md` 항목에 반드시 포함 (멀티 게임 프로젝트)
+  - 태그 셋은 프로젝트에서 정의한다. 예: `[GAME1]`, `[GAME2]`, `[CORE]` SharedCore
+  - 단일 게임 프로젝트면 태그를 생략하거나 `[GAME]`/`[CORE]` 만 사용
 - **날짜 형식**: `YYYY-MM-DD`
 
 ## task.md 형식

@@ -9,13 +9,13 @@ agent: lead-programmer
 
 # /ko-code-review — 한국어 코드 리뷰
 
-Game-Studios의 `code-review` skill에 TikiProject 멀티 게임 컨텍스트를 더한 한국어 리뷰.
+Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한국어 리뷰.
 
 ## 사용법
 
 ```
 /ko-code-review PR-42
-/ko-code-review feature/EA-elevator-v2
+/ko-code-review feature/my-feature-v2
 /ko-code-review HEAD --solo   # 1인 개발 약식 리뷰
 ```
 
@@ -27,11 +27,11 @@ Game-Studios의 `code-review` skill에 TikiProject 멀티 게임 컨텍스트를
 
 ## Phase 2: 게임 태그 분류
 
-변경된 파일 경로에서 게임 태그를 추출:
-- `Assets/KickleCubicle/...` → `[KC]`
-- `Assets/ElevatorAction/...` → `[EA]`
+변경된 파일 경로에서 게임 태그를 추출 (멀티 게임 프로젝트):
+- `Assets/{GameName}/...` → 해당 게임 태그 (예: `[GAME1]`, `[GAME2]`)
 - `Assets/SharedCore/...` → `[CORE]`
-- `Assets/NZS/...` → `[NZS]` (그 외 [MMC][NJM][EA])
+- 태그 매핑은 프로젝트 `CLAUDE.md`의 "게임 폴더 매핑" 표를 따른다.
+- 단일 게임 프로젝트면 이 단계를 생략한다.
 
 게임별로 그룹화해서 출력 헤더에 표시.
 
@@ -46,7 +46,7 @@ Game-Studios의 `code-review` skill에 TikiProject 멀티 게임 컨텍스트를
 - [ ] `GetComponent` 가 `Awake()` 캐싱 되어 있는지
 - [ ] `Animator.StringToHash` 캐싱
 
-### 멀티게임 어셈블리 (TikiProject 고유)
+### 멀티게임 어셈블리 (멀티 게임 프로젝트)
 - [ ] 네임스페이스 `{GamePrefix}.{Category}.{Subsystem}` 준수
 - [ ] **Game → SharedCore 단방향** 의존만 — 역방향 / 게임 간 직접 참조 금지
 - [ ] Editor 코드는 `Scripts/Editor/` + Editor asmdef 내부
@@ -59,9 +59,9 @@ Game-Studios의 `code-review` skill에 TikiProject 멀티 게임 컨텍스트를
 ```
 🔴 CRITICAL N건 / 🟡 WARNING N건 / 🔵 INFO N건
 
-[EA]
+[GAME1]
   - <file:line> — <문제> — <제안>
-[KC]
+[GAME2]
   - ...
 ```
 

@@ -5,37 +5,38 @@ Unity-SkillForge (nlelouche/Unity-SkillForge) 의 C# 코드 패턴 카탈로그 
 ## 출처
 
 - **Upstream**: https://github.com/nlelouche/Unity-SkillForge
-- **로컬 클론**: `D:\works\projects\github\Unity3D-AntiGravitySkills\`
+- **로컬 클론**: 임의 위치 (sync 스크립트 기본값 = 이 패키지 저장소의 형제 폴더 `..\Unity3D-AntiGravitySkills\`)
 - **복제 시점**: 2026-05-13
 - **라이선스**: 상류 저장소 LICENSE 준수 (MIT 기반)
 
 ## 동기화 절차
 
-업스트림 업데이트를 가져오는 표준 절차:
+> **권장**: 저장소 루트의 `scripts/sync-upstream.ps1` 을 사용하면 두 upstream 을 한 번에 갱신한다.
+> 아래는 수동 절차. `<PACKAGE_ROOT>` 는 이 패키지 저장소 루트(clone 위치)로 치환한다.
 
 ```powershell
-# 1. 로컬 클론 업데이트
-git -C "D:\works\projects\github\Unity3D-AntiGravitySkills" pull
+# 1. 로컬 클론 업데이트 (<SKILLFORGE_CLONE> = SkillForge upstream clone 경로)
+git -C "<SKILLFORGE_CLONE>" pull
 
-# 2. TikiProject 미러 재복사
-$src = "D:\works\projects\github\Unity3D-AntiGravitySkills"
-$dst = "D:\works\projects\github\TikiProject\.agent\skills"
+# 2. 이 패키지 저장소 미러 재복사
+$src = "<SKILLFORGE_CLONE>"
+$dst = "<PACKAGE_ROOT>\.agent\skills"
 Copy-Item "$src\.agent\skills\*" $dst -Recurse -Force
 Copy-Item "$src\skills-index.json" "$dst\skills-index.json" -Force
 
 # 3. 변경 확인
-git -C "D:\works\projects\github\TikiProject" diff .agent/skills
+git -C "<PACKAGE_ROOT>" diff .agent/skills
 ```
 
 Bash (Git Bash) 등가:
 
 ```bash
-SRC="/d/works/projects/github/Unity3D-AntiGravitySkills"
-DST="/d/works/projects/github/TikiProject/.agent/skills"
+SRC="<SKILLFORGE_CLONE>"           # SkillForge upstream clone 경로
+DST="<PACKAGE_ROOT>/.agent/skills"
 git -C "$SRC" pull
 cp -R "$SRC/.agent/skills/." "$DST/"
 cp "$SRC/skills-index.json" "$DST/skills-index.json"
-git -C "/d/works/projects/github/TikiProject" diff .agent/skills
+git -C "<PACKAGE_ROOT>" diff .agent/skills
 ```
 
 ## 절대 수정 금지
@@ -58,8 +59,8 @@ git -C "/d/works/projects/github/TikiProject" diff .agent/skills
 `skills-index.json` 의 모든 `path` 가 실제 파일을 가리키는지 확인:
 
 ```bash
-# 모든 path 추출 후 존재 여부 검증
-DST="/d/works/projects/github/TikiProject"
+# 모든 path 추출 후 존재 여부 검증 (DST = 이 패키지 저장소 루트)
+DST="<PACKAGE_ROOT>"
 python3 -c "
 import json, os, sys
 idx = json.load(open('$DST/.agent/skills/skills-index.json'))
@@ -79,5 +80,5 @@ print(f'TOTAL {len(idx)} / MISSING {len(missing)}')
 ## 분기 정책
 
 - **상류 push 가능한 개선**: upstream에 PR
-- **TikiProject 고유 변형**: `.claude/skills/ko-*/` 에 별도 skill로 작성, `.agent/skills/`는 건드리지 않음
+- **프로젝트 고유 변형**: `.claude/skills/ko-*/` 에 별도 skill로 작성, `.agent/skills/`는 건드리지 않음
 - **버그 픽스**: upstream 이슈 등록 + 임시 패치는 `.claude/skills/sf-patch-<이슈번호>/` 에 wrapper로

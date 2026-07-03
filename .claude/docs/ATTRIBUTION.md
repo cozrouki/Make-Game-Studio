@@ -11,17 +11,17 @@
   - 72 skills (`.claude/skills/<name>/SKILL.md`) — **직접 복사, 원본 그대로**
   - 49 → 39 agents (Godot/UE specialist 10개 제외) — **직접 복사**
   - 12 hooks 중 10개 (`session-*` 제외) — **직접 복사**
-  - `session-start.sh`, `session-stop.sh` — **로컬 fork (TikiProject 한국어 톤에 머지)**
+  - `session-start.sh`, `session-stop.sh` — **로컬 fork (한국어 톤에 머지)**
   - 11 rules 중 10개 (`gameplay-code.md` 제외) — **직접 복사**
-  - `gameplay-code.md` — **로컬 fork (Tiki 기존 룰 + GS 원칙 머지)**
+  - `gameplay-code.md` — **로컬 fork (한국어 룰 + GS 원칙 머지)**
   - 6 docs (`gs-` prefix로 복사) — **직접 복사**
-  - `settings.json` hook wiring — **로컬 fork (TikiProject 권한 + GS hook 머지)**
+  - `settings.json` hook wiring — **로컬 fork (권한 + GS hook 머지)**
 - **분기 정책**: hooks/settings/gameplay-code.md 는 로컬 fork 상태. 다른 모든 자산은 직접 복사 — 업스트림 변경 시 수동 sync.
 
 ## 2. Unity-SkillForge / Unity3D-AntiGravitySkills (L2 C# 코드 패턴)
 
 - **저장소**: https://github.com/nlelouche/Unity-SkillForge
-- **로컬 클론**: `D:\works\projects\github\Unity3D-AntiGravitySkills\`
+- **로컬 클론**: 임의 위치 (sync 스크립트 기본값 = 이 패키지 저장소의 형제 폴더 `..\Unity3D-AntiGravitySkills\`)
 - **라이선스**: MIT (상류 LICENSE 확인 — 미발견 시 클론 디렉토리에서 검증 필요)
 - **사용 유형**: **정적 미러 (오프라인 복사)**
 - **차용 자산**:

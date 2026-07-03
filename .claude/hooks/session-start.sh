@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# session-start.sh — 세션 시작 시 컨텍스트 요약 출력 (TikiProject)
+# session-start.sh — 세션 시작 시 컨텍스트 요약 출력
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+PROJECT_NAME="$(basename "$REPO_ROOT")"
 ACTIVE_FILE="$REPO_ROOT/production/session-state/active.md"
 
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
-echo "║            TikiProject — 세션 시작                    ║"
+printf "║  %-50s║\n" "${PROJECT_NAME} — 세션 시작"
 echo "╚══════════════════════════════════════════════════════╝"
 
 # ── 1. 브랜치 & 최근 커밋 ────────────────────────────────────

@@ -3,7 +3,7 @@ name: design-review
 description: "GDD(게임 디자인 문서)의 완성도·일관성·구현 가능성·프로젝트 표준 준수 여부를 검토한다. 프로그래머에게 넘기기 전 필수 실행."
 version: 1.0.0
 tags: ["game-design", "GDD", "review", "quality", "documentation"]
-argument-hint: "[GDD 파일 경로] (예: doc/KickleCubicle/combat-system.md)"
+argument-hint: "[GDD 파일 경로] (예: doc/YourGame/combat-system.md)"
 user-invocable: true
 tdd_first: false
 allowed-tools:

@@ -14,7 +14,7 @@ allowed-tools: Read, Write, Bash, AskUserQuestion
 
 ```
 /sf-add ability-skill-system
-/sf-add advanced-character-controller Assets/KickleCubicle/Scripts/Player
+/sf-add advanced-character-controller Assets/YourGame/Scripts/Player
 /sf-add job-system-burst Assets/SharedCore/Scripts/Performance
 ```
 
@@ -29,7 +29,7 @@ allowed-tools: Read, Write, Bash, AskUserQuestion
 ## Phase 2: 컨텍스트 발견
 
 skill의 SKILL.md frontmatter에서:
-- `requirements.unity_version` — TikiProject Unity 버전과 비교
+- `requirements.unity_version` — 프로젝트 Unity 버전(`ProjectSettings/ProjectVersion.txt`)과 비교
 - `requirements.render_pipeline` — `Packages/manifest.json` 의 URP/HDRP 확인
 - `requirements.dependencies` — 누락 패키지 있는지 manifest.json 스캔
 
@@ -41,10 +41,9 @@ skill의 SKILL.md frontmatter에서:
 
 ```
 대상 경로를 선택하세요:
-1) Assets/KickleCubicle/Scripts/<권장 서브폴더>/
-2) Assets/ElevatorAction/Scripts/<권장 서브폴더>/
-3) Assets/SharedCore/Scripts/<권장 서브폴더>/
-4) 직접 입력
+1) Assets/<GameName>/Scripts/<권장 서브폴더>/   (프로젝트의 각 게임 폴더)
+2) Assets/SharedCore/Scripts/<권장 서브폴더>/
+3) 직접 입력
 ```
 
 권장 서브폴더는 skill의 카테고리에서 유추 (02-gameplay → Gameplay, 06-performance → Performance, 01-architecture → Core/Patterns).
@@ -58,7 +57,7 @@ skill의 SKILL.md frontmatter에서:
 ## Phase 5: 복사 실행
 
 `templates/` 의 `.cs.txt` 파일들을 대상 경로로 복사:
-- `{{NAMESPACE}}` placeholder 치환 — 게임 prefix 기반 자동 결정 (`KickleCubicle.<Category>.<Subsystem>` 등)
+- `{{NAMESPACE}}` placeholder 치환 — 게임 prefix 기반 자동 결정 (`<GamePrefix>.<Category>.<Subsystem>` 등)
 - `.cs.txt` → `.cs` 로 확장자 변경
 - 사용자 승인 후 Write 도구로 각 파일 생성
 
