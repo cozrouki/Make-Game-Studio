@@ -15,7 +15,7 @@ allowed-tools: Read, Write, Bash, AskUserQuestion
 ```
 /sf-add ability-skill-system
 /sf-add advanced-character-controller Assets/YourGame/Scripts/Player
-/sf-add job-system-burst Assets/SharedCore/Scripts/Performance
+/sf-add job-system-burst Assets/<SharedModule>/Scripts/Performance
 ```
 
 ## Phase 1: 인수 + 검증
@@ -42,7 +42,7 @@ skill의 SKILL.md frontmatter에서:
 ```
 대상 경로를 선택하세요:
 1) Assets/<GameName>/Scripts/<권장 서브폴더>/   (프로젝트의 각 게임 폴더)
-2) Assets/SharedCore/Scripts/<권장 서브폴더>/
+2) Assets/<SharedModule>/Scripts/<권장 서브폴더>/
 3) 직접 입력
 ```
 

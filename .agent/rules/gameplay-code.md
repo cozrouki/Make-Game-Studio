@@ -1,7 +1,7 @@
 ---
 globs:
   - "Assets/*/Scripts/**/*.cs"
-  - "Assets/SharedCore/Scripts/**/*.cs"
+  - "Assets/<SharedModule>/Scripts/**/*.cs"
   - "Assets/SharedAssets/Scripts/**/*.cs"
   - "src/gameplay/**"
 ---
@@ -35,12 +35,12 @@ animator.SetFloat("Speed", value);
 {GamePrefix}.{Category}.{Subsystem}
 예: YourGame.Gameplay.Player
     YourGame.Core.Stage
-    SharedCore.Data
+    <SharedModule>.Data
 ```
 
 ## Assembly Definition
 
-- 의존 방향: **Game → SharedCore** (단방향만 허용)
+- 의존 방향: **Game → <SharedModule>** (단방향만 허용)
 - 게임 간 직접 참조 금지
 - Editor 코드는 `Scripts/Editor/` + Editor asmdef에 격리
 

@@ -29,7 +29,7 @@ Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한�
 
 변경된 파일 경로에서 게임 태그를 추출 (멀티 게임 프로젝트):
 - `Assets/{GameName}/...` → 해당 게임 태그 (예: `[GAME1]`, `[GAME2]`)
-- `Assets/SharedCore/...` → `[CORE]`
+- `Assets/<SharedModule>/...` → `[CORE]`
 - 태그 매핑은 프로젝트 `CLAUDE.md`의 "게임 폴더 매핑" 표를 따른다.
 - 단일 게임 프로젝트면 이 단계를 생략한다.
 
@@ -48,7 +48,7 @@ Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한�
 
 ### 멀티게임 어셈블리 (멀티 게임 프로젝트)
 - [ ] 네임스페이스 `{GamePrefix}.{Category}.{Subsystem}` 준수
-- [ ] **Game → SharedCore 단방향** 의존만 — 역방향 / 게임 간 직접 참조 금지
+- [ ] **Game → <SharedModule> 단방향** 의존만 — 역방향 / 게임 간 직접 참조 금지
 - [ ] Editor 코드는 `Scripts/Editor/` + Editor asmdef 내부
 
 ### 일반 (engine-agnostic)
