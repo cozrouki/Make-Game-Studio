@@ -41,13 +41,13 @@ agent: lead-programmer
 
 ## Phase 4: 코드 리뷰 (옵션)
 
-`--skip-review`가 없으면 `.claude/skills/code-review/SKILL.md` 호출. Tiki 컨텍스트 추가:
+`--skip-review`가 없으면 `.claude/skills/code-review/SKILL.md` 호출. 멀티게임 컨텍스트 추가:
 - 변경된 게임 태그를 출력 헤더에 표시
 - 네임스페이스 위반 / 어셈블리 의존 역전 추가 점검
 
 ## Phase 5: 완료 처리 (story-done)
 
-`.claude/skills/story-done/SKILL.md` 호출 + Tiki 후처리:
+`.claude/skills/story-done/SKILL.md` 호출 + 문서 후처리:
 - `doc/{ActiveGame}/task.md` 해당 항목을 완료로 마크 (Edit 도구, 사용자 승인)
 - `doc/work_log.md` 끝에 한 줄 요약 추가 (게임 태그 포함)
 - `active.md`의 "완료된 항목" 섹션 업데이트 제안

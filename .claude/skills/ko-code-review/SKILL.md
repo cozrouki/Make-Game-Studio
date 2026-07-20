@@ -1,6 +1,6 @@
 ---
 name: ko-code-review
-description: 코드 리뷰 (한국어 wrapper) — Tiki 게임 태그·어셈블리 컨텍스트 추가
+description: 코드 리뷰 (한국어 wrapper) — 멀티 게임 태그·어셈블리 컨텍스트 추가
 argument-hint: "<PR-번호 또는 브랜치명> [--lean | --solo]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Bash

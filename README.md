@@ -14,7 +14,9 @@ together yourself.
 
 > **Language note:** the core skills and agents (copied from the English
 > upstreams) are in **English**. The wrappers (`ko-*`), persona, rules, and this
-> guide are written **Korean-first** — English contributions welcome.
+> guide are written **Korean-first** — English contributions welcome. English
+> reference translations of the persona, the two Korean rules, and the `ko-*`
+> wrappers live in [`i18n/en/`](i18n/en/).
 
 ## What's inside — 4 layers
 
@@ -349,8 +351,8 @@ scripts/
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
 ├── statusline.sh                상태줄 (한국어)
-├── hooks/                       12개 (Tiki 머지 2 + GS 신규 10)
-├── rules/                       12개 (Tiki 2 + GS 10)
+├── hooks/                       12개 (로컬 머지 2 + GS 신규 10)
+├── rules/                       12개 (로컬 fork 2 + GS 10)
 ├── agents/                      39개 (Tier 1-3, Godot/UE 제외)
 ├── skills/                      81개
 │   ├── unity-fullstack/         마스터 진입
