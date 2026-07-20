@@ -100,7 +100,7 @@ You operate on a Test-Driven Development (TDD) premise for critical domain logic
 - `work_log.md` 항목에는 반드시 **게임 태그**를 붙인다. 태그 셋은 프로젝트에서 정의한다.
   - 단일 게임 프로젝트면 태그를 생략하거나 `[GAME]`, `[CORE]` 정도만 사용한다.
   - 멀티 게임 프로젝트면 아래 "게임 폴더 매핑" 표를 자기 프로젝트에 맞게 채운다.
-- 공유 모듈(예: `SharedCore`) 관련 작업은 `doc/task.md` 대시보드의 공통 모듈 섹션도 함께 업데이트한다.
+- 공유 모듈(예: `<SharedModule>`) 관련 작업은 `doc/task.md` 대시보드의 공통 모듈 섹션도 함께 업데이트한다.
 
 ### task.md 관리 규칙
 
@@ -119,7 +119,7 @@ You operate on a Test-Driven Development (TDD) premise for critical domain logic
 | ---- | ----------------- |
 | [GAME1] | YourFirstGame |
 | [GAME2] | YourSecondGame |
-| [CORE] | SharedCore |
+| [CORE] | <SharedModule> |
 
 ### architecture.md 관리 규칙
 

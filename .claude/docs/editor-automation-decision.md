@@ -87,7 +87,7 @@
 | SkillForge SKILL.md를 그대로 수정 | 업스트림과 분기 | `.claude/skills/ko-*/` 에 wrapper |
 | C# 코드 패턴을 그때그때 새로 작성 | "Vibe Coding" 회피 | `/sf-list` 먼저 확인 |
 | 같은 작업을 매 세션마다 반복 | 워크플로 미정의 | `.claude/data/workflows.json` 에 등록 |
-| 게임 간 직접 참조 | Assembly 의존 역전 | `SharedCore` 경유, `gameplay-code.md` 룰 확인 |
+| 게임 간 직접 참조 | Assembly 의존 역전 | `<SharedModule>` 경유, `gameplay-code.md` 룰 확인 |
 
 ## 관련 문서
 

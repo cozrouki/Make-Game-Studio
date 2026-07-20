@@ -1,4 +1,4 @@
-# TikiProject .gitattributes — Unity 줄바꿈/바이너리 정규화
+# Unity .gitattributes — 줄바꿈/바이너리 정규화
 # 목적: Windows(core.autocrlf=true)에서 Unity YAML이 CRLF로 체크아웃돼 프리팹/씬 전체가
 #       diff로 잡히는 대량 재기록 방지. Unity 네이티브(LF)에 맞춰 텍스트를 LF로 통일.
 # text=auto: 바이너리는 자동 감지해 그대로 두고(정규화 X), 텍스트만 LF 적용.

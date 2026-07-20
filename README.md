@@ -115,7 +115,7 @@ Copy-Item "$src\README.md" $dst -Force            # 선택
 |---|---|
 | `AGENTS.md` | §6 "게임 폴더 매핑" 표의 `[GAME1]/YourFirstGame` 등을 실제 게임/태그로 (정본 — 이 한 곳만 고치면 전 도구 반영) |
 | `.claude/rules/doc-writing.md` | 게임 태그 예시(`[GAME1][GAME2][CORE]`)를 실제 태그로 (선택) |
-| `.claude/rules/gameplay-code.md` | 네임스페이스 예시 `YourGame.Gameplay.Player` 를 실제 네임스페이스로 (선택) |
+| `.claude/rules/gameplay-code.md` | 네임스페이스 예시 `YourGame.Gameplay.Player` 와 공유 모듈 `<SharedModule>` 을 실제 값으로 (선택) |
 | `.claude/settings.json` | `additionalDirectories` (빈 배열) 에 프로젝트 밖 참조 경로가 필요하면 추가 (선택) |
 
 - **단일 게임 프로젝트**면 게임 태그 시스템 자체를 무시하거나 삭제하면 됩니다.
