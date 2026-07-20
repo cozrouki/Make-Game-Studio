@@ -5,7 +5,7 @@
 ## 1. Claude-Code-Game-Studios (L1 프로세스)
 
 - **저장소**: https://github.com/Donchitos/Claude-Code-Game-Studios
-- **라이선스**: 상류 LICENSE 파일 (MIT 추정 — 원 저장소에서 확인 필요)
+- **라이선스**: **MIT** ✅ (2026-07-20 GitHub API 확인 — `Copyright (c) 2026 Donchitos`). 고지는 `THIRD_PARTY_LICENSES.md`에 보존.
 - **사용 유형**: 일부 직접 복사 + 일부 로컬 fork
 - **차용 자산**:
   - 72 skills (`.claude/skills/<name>/SKILL.md`) — **직접 복사, 원본 그대로**
@@ -22,7 +22,7 @@
 
 - **저장소**: https://github.com/nlelouche/Unity-SkillForge
 - **로컬 클론**: 임의 위치 (sync 스크립트 기본값 = 이 패키지 저장소의 형제 폴더 `..\Unity3D-AntiGravitySkills\`)
-- **라이선스**: MIT (상류 LICENSE 확인 — 미발견 시 클론 디렉토리에서 검증 필요)
+- **라이선스**: **MIT** ✅ (2026-07-20 GitHub API 확인 — `Copyright (c) 2025 AntiGravity Contributors`). 고지는 `THIRD_PARTY_LICENSES.md`에 보존.
 - **사용 유형**: **정적 미러 (오프라인 복사)**
 - **차용 자산**:
   - `.agent/skills/` 하위 102개 SKILL.md + templates/ — **직접 미러**
@@ -65,17 +65,17 @@
 - **Phase 1-2 완료**: 2026-05-13
 - **Phase 3-5 완료**: 2026-05-13
 
-## 라이선스 의무 이행
+## 라이선스 의무 이행 (2026-07-20 완료)
 
-- 각 상류 저장소의 LICENSE 파일을 보존하는 것이 권장됨:
-  - Game-Studios: 본 미러는 복사된 파일 일부만 포함 — LICENSE는 상류 참조
-  - SkillForge: `.agent/skills/LICENSE` 가 상류에 있으면 미러에 포함 (확인 필요)
-  - MCPForUnity: UPM 패키지로 설치되므로 패키지 내부에 라이선스 포함
-
-LICENSE 누락이 발견되면 다음 sync 사이클에 포함시킬 것.
+- **재배포 대상(콘텐츠 번들) 2종 모두 MIT 확인** → 저작권+허가 고지 보존 의무를 루트 `THIRD_PARTY_LICENSES.md`에 이행:
+  - Game-Studios (L1): MIT — 고지 포함 ✅
+  - SkillForge (L2): MIT — 고지 포함 ✅
+- **미재배포(설치/참조만)**: MCPForUnity(UPM 설치, 패키지 내부 라이선스), Besty0728(미설치), sickn33(포맷만) — 재배포 의무 없음, 크레딧만 표기.
+- 저장소 자체 원저작물(통합 레이어·wrapper·스크립트·문서)은 루트 `LICENSE`(MIT).
 
 ## 변경 이력
 
 | 일자 | 변경 | 비고 |
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
+| 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |

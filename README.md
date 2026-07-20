@@ -1,4 +1,63 @@
-# Unity 풀스택 통합 스킬 패키지
+# Unity Full-Stack Claude Skills
+
+A turnkey agentic scaffolding for **Unity game development** with
+[Claude Code](https://claude.com/claude-code) (also works with Cursor,
+Antigravity, Codex, and Gemini). It integrates four upstream skill repositories
+into a single, generalized **4-layer skill set** so you don't have to wire them
+together yourself.
+
+> **This is an integration/distribution, not original skills.** The substantive
+> skills come from the upstreams below (all MIT); the value added here is the
+> integration, generalization, cross-tool mirroring, and onboarding. Credits and
+> licenses: [`LICENSE`](LICENSE) · [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) ·
+> [`.claude/docs/ATTRIBUTION.md`](.claude/docs/ATTRIBUTION.md).
+
+> **Language note:** the core skills and agents (copied from the English
+> upstreams) are in **English**. The wrappers (`ko-*`), persona, rules, and this
+> guide are written **Korean-first** — English contributions welcome.
+
+## What's inside — 4 layers
+
+| Layer | What | Entry |
+|---|---|---|
+| **L1 — Process** | 81 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
+| **L2 — C# code patterns** | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
+| **L3 — Editor automation** | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
+| **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |
+
+Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
+
+## Quick start
+
+```bash
+git clone https://github.com/cozrouki/unity-fullstack-claude-skills
+# copy .claude/ and .agent/ into your Unity project root
+```
+
+Then fill **one place** — the game-folder mapping table in `AGENTS.md` §6 (the
+single source of truth; every tool derives from it). Everything else ships
+pre-generalized with `<GameName>` / `<GamePrefix>` / `<SharedModule>`
+placeholders. Single-game project? Just ignore the game-tag system.
+
+See the Korean guide below for the full step-by-step (settings, MCP install,
+cross-tool mirrors, upstream sync via `scripts/sync-upstream.ps1`).
+
+## Credits (upstreams — all MIT)
+
+- [Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) — L1 process skills
+- [Unity-SkillForge](https://github.com/nlelouche/Unity-SkillForge) — L2 code-pattern skills
+- [unity-mcp / MCPForUnity](https://github.com/CoplayDev/unity-mcp) — L3 Editor backend (installed as a UPM package)
+- antigravity-awesome-skills — L4 packaging format (format only)
+
+## License
+
+[MIT](LICENSE) for the original integration work. Bundled upstream components
+remain under their own MIT licenses — see
+[`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+
+---
+
+# Unity 풀스택 통합 스킬 패키지 (한국어)
 
 Unity 게임 개발용 Claude Code 통합 환경. 4개 외부 저장소를 흡수해 만든 **4계층 스킬 셋**입니다.
 
