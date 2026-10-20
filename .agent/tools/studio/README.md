@@ -143,10 +143,26 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 |---|---|
 | planning | `design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones` |
 | art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/ArtGen`, `art-source` (아티스트 원본, human 모드) |
-| dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`CLAUDE.md` Technology Stack 섹션만 · `.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
+| dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
+| **director** (사람) | 프로토콜 · 지침 · 도구: `CLAUDE.md` · `AGENTS.md` · `.claude/**` · `.agent/tools` · `.agent/rules` · `.agent/workflows` · 도구별 미러(`.cursor` · `.github/instructions` 등). dev 가 `/setup-engine` 으로 `CLAUDE.md` Technology Stack 을 고치면 **디렉터가 확인 후 커밋**한다 |
 | 공유 | `production/studio` (티켓 · 게이트), `doc/work_log.md` (최상단에 한 줄 추가만) |
 
-다른 역할의 영역을 고쳐야 하면 **그 역할에 티켓을 보낸다.** 정의 정본은 `studio.config.json` 이다.
+다른 역할의 영역을 고쳐야 하면 **그 역할에 티켓을 보낸다.** 정의 정본은 `studio.config.json` 이다 (`roles.*.owns` · `directorOwns` · `shared` · `allowedOverlaps`).
+
+## 유지보수 — 감사 · 프로토콜 변경 · 업그레이드
+
+리허설에서 쓰기 영역 문제가 반복된 원인은 세 가지였다: 주인 없는 프로토콜 파일, 커밋 시점에야 드러나는 영역 밖 쓰기, 기록 없는 템플릿 덮어쓰기. 그래서 다음을 둔다.
+
+| 기능 | 명령 | 하는 일 |
+|---|---|---|
+| **감사** | `studio.py audit` | 미커밋 변경 중 **어느 영역에도 없는 파일**(주인 없음)과 **여러 역할에 겹치는 파일**을 보여 준다. 의도된 겹침(`allowedOverlaps`, 기본 `production/epics`)은 제외. 현황판에 건수가 뜬다 |
+| **프로토콜 변경 기록** | `studio.py protocol` · `protocol ack --by director --note "…"` | 설정 · 도구 · 헌장 · 프롬프트 · `CLAUDE.md` · `AGENTS.md` 의 지문을 `production/studio/protocol.json` 에 기록한다. 바뀌면 inbox · 현황판에 "미승인 변경" 이 표시되고, 디렉터가 확인(ack)하면 누가 · 언제 · 왜가 남는다 |
+| **템플릿 업그레이드** | `studio.py upgrade --from <템플릿 저장소> [--dry-run]` | 스튜디오 · artgen 도구와 스튜디오 스킬을 갱신한다. 설정 파일은 **깊은 병합**(템플릿 기반 + 프로젝트 값 우선) — 디렉터 결정은 보존되고 새 키만 추가된다. `*.local.json` 은 건드리지 않는다. 끝나면 지문을 승인하고 역할마다 `info` 공지 티켓을 낸다 |
+
+**세션의 반응 규칙**
+- inbox 에 "프로토콜 미승인 변경" 이 보이면 **헌장 · README · 업무 루프를 다시 읽고 그대로 진행**한다. 수상한 변경으로 반복 보고하지 않는다 (디렉터가 현황판에서 확인한다).
+- 실행 중인 프로젝트의 도구 파일을 손으로 덮어쓰지 않는다. 갱신은 `upgrade` 로만 한다.
+- 티켓을 완료하기 전에 `studio.py audit` 을 보고, 자기가 만든 주인 없는 파일이 있으면 완료 note 에 경로와 함께 적는다 (디렉터가 영역을 정하거나 직접 커밋).
 
 ## 커밋 (게이트 통과 · 티켓 완료 시 각자)
 
@@ -156,6 +172,7 @@ python .agent/tools/studio/studio.py commit art -m "[studio:art] T-0012 전투 V
 - 자기 쓰기 영역과 공유 영역의 변경만 파일을 명시해 커밋한다. 다른 세션이 스테이징한 파일은 섞이지 않는다.
 - 다른 세션이 git 을 쓰고 있어 `index.lock` 이 잡혀 있으면 자동으로 재시도한다.
 - `Assets/` 파일에 `.meta` 가 없으면 경고한다. 아트는 dev 가 Unity 임포트를 확인한 뒤(다음 커밋 때) `.meta` 와 함께 커밋한다.
+- 디렉터 영역(프로토콜 · 지침 · `CLAUDE.md`)은 `studio.py commit director -m "…"` 로 디렉터가 커밋한다 (`/studio-status commit`).
 - **푸시는 디렉터가 직접 한다.**
 
 ## CLI 요약
@@ -172,7 +189,10 @@ $S update T-0001 --by R [--status S] [--to R] [--note "…"]
 $S gate list | request G1 --by planning | approve G1 --by director --note "…" | reject … | add M1 --name … --artifacts … --unlocks …
 $S status                        $S pause --reason "…" | resume
 $S changes <role>                # 내 영역 미커밋 변경 + 진행 중 티켓 (중단 후 재개 점검)
-$S commit <role> -m "…" [--dry-run]
+$S audit                         # 주인 없는 변경 · 역할 겹침
+$S protocol [ack --by director --note "…"]   # 프로토콜 변경 확인 · 승인
+$S upgrade --from <템플릿> [--dry-run]         # 도구 갱신 (설정 보존 · 공지 티켓)
+$S commit <role|director> -m "…" [--dry-run]
 ```
 모든 명령은 `--json` 을 지원한다. `new` 와 `update` 의 JSON 출력에는 알림을 보낼 세션 이름(`notifySession`)이 들어 있다.
 

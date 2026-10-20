@@ -32,6 +32,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
 다음을 반복한다:
 
 1. `S inbox <역할>` 을 실행한다.
+   - `protocolChanged` 가 있으면: README · 역할 헌장을 **다시 읽고 그대로 진행**한다. 디렉터가 upgrade 나 직접 수정으로 바꾼 것이고, 현황판에서 디렉터가 확인한다. **수상한 변경으로 보고하거나 되돌리지 않는다** (같은 내용을 반복 보고하지 않음).
    - `paused` 가 있으면: "⏸ 디렉터 정지 중 — <사유>" 를 알리고 **루프를 종료**한다. 진행 중이던 티켓은 안전한 지점까지 마무리한 뒤 note 를 남기고 멈춘다.
 2. 처리할 티켓을 고른다. 진행 중(`in-progress`)인 티켓이 먼저이고, 그다음은 `ready: true` 인 첫 티켓이다.
    - 없으면 대기 사유별로 요약한다 (게이트 대기 N · 의존 대기 N). 그다음 **감시를 걸고 턴을 끝낸다:**
@@ -56,7 +57,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
    처리: python .agent/tools/studio/studio.py show T-0012
    ```
    `notifySession` 이 없으면 알림 없이 둔다. 대상이 다른 AI 도구(dispatch) · IDE 에이전트(manual)이거나 미등록이면, 그쪽이 파일 감시로 깨어나거나 합류할 때 처리한다. 대상이 `director` 면 알림을 보내지 않는다. 디렉터는 `/studio-status` 로 확인한다.
-6. 완료: `S update <id> --by <역할> --status done --note "<산출물 경로 · 결정 · 남은 일>"`.
+6. 완료: 먼저 `S audit` 으로 이 티켓에서 만든 **주인 없는 파일**(어느 영역에도 없음)이 있는지 본다. 있으면 note 에 경로를 함께 적는다 — 디렉터가 영역을 정하거나 직접 커밋한다. 그다음 `S update <id> --by <역할> --status done --note "<산출물 경로 · 결정 · 남은 일>"`.
    - 결과의 `notifySession`(요청자)에 완료를 알린다: `[studio] T-0012 done (art): <한 줄 요약>`. 요청자가 director 면 알리지 않는다.
    - `doc/work_log.md` 최상단의 오늘 날짜 아래에 한 줄을 추가한다: `- [<게임태그>] studio/<역할> <id>: <제목>`.
    - 커밋한다: `python .agent/tools/studio/studio.py commit <역할> -m "[studio:<역할>] <id> <제목>"` 에 프로젝트 커밋 서명 줄을 붙인다. **이 커밋이 이 티켓의 마지막 파일 변경이다** — 커밋 뒤에 티켓을 고치지 않는다(note 에 커밋 해시를 쓰지 않음). 커밋 출력의 경고는 다음 티켓 note 나 대화로 보고한다. 푸시는 하지 않는다.

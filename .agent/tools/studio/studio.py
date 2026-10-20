@@ -2,7 +2,8 @@
 """studio — 기획 · 아트 · 개발 세션 협업 프로토콜의 결정적 부분 (티켓 · 게이트 · 로스터 · 역할별 커밋).
 
 세션 간 알림(SendMessage)은 스킬이 하고, 이 도구는 파일 상태만 다룬다.
-여러 AI 도구 혼합(감시 · 헤드리스 디스패치)은 studio_dispatch.py.
+여러 AI 도구 혼합(감시 · 헤드리스 디스패치)은 studio_dispatch.py,
+쓰기 영역 감사 · 프로토콜 변경 기록 · 템플릿 업그레이드는 studio_maint.py.
 Unity 프로젝트 루트에서 실행:
     python .agent/tools/studio/studio.py status
 상세: .agent/tools/studio/README.md
@@ -355,11 +356,16 @@ class Studio:
         director_queue = [{"id": t["id"], "title": t["title"], "from": t["from"], "type": t["type"]}
                           for t in tickets if t["to"] == DIRECTOR and t["status"] in ACTIVE]
         gates = [{"id": g["id"], "name": g["name"], "status": g["status"], "unlocks": g["unlocks"]} for g in self.gates()]
+        maint = _maint()
         return {"artMode": self.art_mode, "paused": self.paused(), "roster": self.roster(), "gates": gates, "roles": per_role,
-                "directorQueue": director_queue, "stale": stale, "total": len(tickets)}
+                "directorQueue": director_queue, "stale": stale, "total": len(tickets),
+                "audit": maint.audit(self), "protocol": maint.protocol_state(self)}
 
     # ------------------------------------------------------------ 커밋
     def pathspecs(self, role):
+        """역할(또는 director) 쓰기 영역 + 공유 영역. director 는 프로토콜 · 지침 · 도구 미러 (directorOwns)."""
+        if role == DIRECTOR:
+            return list(self.cfg.get("directorOwns", [])) + list(self.cfg.get("shared", []))
         self.check_role(role)
         return list(self.cfg["roles"][role]["owns"]) + list(self.cfg.get("shared", []))
 
@@ -375,8 +381,14 @@ class Studio:
         return p
 
     def changed_files(self, role):
-        """역할 쓰기 영역 + 공유 영역의 변경 파일. status 는 매칭 없는 pathspec 에도 실패하지 않는다."""
-        p = self._git("status", "--porcelain", "-z", "-uall", "--no-renames", "--", *self.pathspecs(role))
+        """역할 쓰기 영역 + 공유 영역의 변경 파일."""
+        return self.changed_files_for(self.pathspecs(role))
+
+    def changed_files_for(self, specs):
+        """pathspec 목록에 해당하는 미커밋 변경. status 는 매칭 없는 pathspec 에도 실패하지 않는다."""
+        if not specs:
+            return []
+        p = self._git("status", "--porcelain", "-z", "-uall", "--no-renames", "--", *specs)
         return sorted({e[3:] for e in p.stdout.split("\0") if len(e) > 3})
 
     def commit(self, role, message, dry_run=False):
@@ -398,6 +410,13 @@ class Studio:
         sha = self._git("rev-parse", "--short", "HEAD").stdout.strip()
         self.log("commit", role=role, sha=sha, files=len(names))
         return {"committed": True, "sha": sha, "files": names, "warnings": warnings}
+
+
+def _maint():
+    # 스크립트로 실행되면 이 모듈은 __main__ — 'studio' 로 다시 import 되어 클래스가 두 벌 생기지 않게 한다
+    sys.modules.setdefault("studio", sys.modules[__name__])
+    import studio_maint  # noqa: E402 — 같은 디렉터리
+    return studio_maint
 
 
 # ---------------------------------------------------------------- CLI
@@ -489,7 +508,18 @@ def main(argv=None):
     p = sub.add_parser("changes", help="역할 쓰기 영역 + 공유 영역의 미커밋 변경 (중단 후 재개 점검용)")
     p.add_argument("role")
 
-    p = sub.add_parser("commit", help="역할 쓰기 영역 + 공유 영역만 커밋")
+    sub.add_parser("audit", help="미커밋 변경 중 주인 없는 파일 · 역할 간 겹침")
+
+    p = sub.add_parser("protocol", help="프로토콜(설정 · 도구 · 헌장 · 지침) 변경 확인 / 승인")
+    p.add_argument("action", nargs="?", default="status", choices=("status", "ack"))
+    p.add_argument("--by", default="director")
+    p.add_argument("--note", default="")
+
+    p = sub.add_parser("upgrade", help="템플릿 저장소에서 스튜디오 · artgen 도구 갱신 (프로젝트 설정 보존 · 공지 티켓)")
+    p.add_argument("--from", dest="template", required=True, help="템플릿 저장소 경로")
+    p.add_argument("--dry-run", action="store_true")
+
+    p = sub.add_parser("commit", help="역할(또는 director) 쓰기 영역 + 공유 영역만 커밋")
     p.add_argument("role")
     p.add_argument("-m", "--message", required=True)
     p.add_argument("--dry-run", action="store_true")
@@ -538,8 +568,15 @@ def main(argv=None):
         elif args.cmd == "inbox":
             rows = st.inbox(args.role, args.all)
             paused = st.paused()
+            proto = _maint().protocol_state(st)
             text = "\n".join(_fmt_ticket_row(r) for r in rows) or "(받은 티켓 없음)"
-            out({"paused": paused, "tickets": rows}, (f"⏸ 정지 중 — {paused}\n" if paused else "") + text)
+            note = ""
+            if proto["dirty"]:
+                n = len(proto["changed"]) + len(proto["added"]) + len(proto["removed"])
+                note = f"ⓘ 프로토콜 미승인 변경 {n}건 — 헌장 · README 를 다시 읽고 진행 (디렉터 확인 대기, 보고 불필요)\n"
+            out({"paused": paused, "tickets": rows, "protocolChanged": proto["dirty"] and
+                 {k: proto[k] for k in ("changed", "added", "removed")}},
+                (f"⏸ 정지 중 — {paused}\n" if paused else "") + note + text)
         elif args.cmd == "show":
             t = st.load_ticket(args.id)
             ready, why = st.readiness(t)
@@ -572,6 +609,12 @@ def main(argv=None):
             lines += ["[디렉터 판단 대기]"] + ([f"  {d['id']} {d['type']} ({d['from']}) {d['title']}" for d in s["directorQueue"]] or ["  없음"])
             if s["stale"]:
                 lines.append(f"[정체 — {st.cfg.get('staleHours', 24)}h 이상 갱신 없음] {', '.join(s['stale'])}")
+            a, pr = s["audit"], s["protocol"]
+            if a["orphans"] or a["overlaps"]:
+                lines.append(f"[쓰기 영역] 주인 없는 변경 {len(a['orphans'])}건 · 역할 겹침 {len(a['overlaps'])}건 — studio.py audit")
+            if pr["dirty"]:
+                lines.append(f"[프로토콜] 미승인 변경 — 수정 {len(pr['changed'])} · 추가 {len(pr['added'])} · 삭제 {len(pr['removed'])}"
+                             f" (마지막 승인 {pr['ackedAt']} {pr['ackedBy']}) — studio.py protocol")
             out(s, "\n".join(lines))
         elif args.cmd in ("pause", "resume"):
             st.set_paused(args.cmd == "pause", getattr(args, "reason", ""))
@@ -581,6 +624,28 @@ def main(argv=None):
             active = [t["id"] for t in st.inbox(args.role) if t["status"] == "in-progress"]
             out({"role": args.role, "files": files, "inProgress": active},
                 ("\n".join(files) or "(미커밋 변경 없음)") + (f"\n진행 중 티켓: {', '.join(active)}" if active else ""))
+        elif args.cmd == "audit":
+            a = _maint().audit(st)
+            lines = [f"미커밋 변경 {a['changed']}건"]
+            lines += ["[주인 없음 — 어느 역할 · 디렉터 · 공유 영역에도 없음]"] + ([f"  {f}" for f in a["orphans"]] or ["  없음"])
+            lines += ["[역할 겹침]"] + ([f"  {f}  ← {', '.join(o)}" for f, o in a["overlaps"].items()] or ["  없음"])
+            out(a, "\n".join(lines))
+        elif args.cmd == "protocol":
+            m = _maint()
+            r = m.protocol_ack(st, args.by, args.note) if args.action == "ack" else m.protocol_state(st)
+            body = [f"  수정 {f}" for f in r["changed"]] + [f"  추가 {f}" for f in r["added"]] + [f"  삭제 {f}" for f in r["removed"]]
+            head = "승인함" if args.action == "ack" else ("미승인 변경 있음" if r["dirty"] else "변경 없음")
+            out(r, f"프로토콜: {head} (마지막 승인 {r['ackedAt']} · {r['ackedBy']})" + ("\n" + "\n".join(body) if body else ""))
+        elif args.cmd == "upgrade":
+            r = _maint().upgrade(st, args.template, dry_run=args.dry_run)
+            lines = [f"템플릿 {r['templateRev']}" + (" [dry-run]" if r["dryRun"] else "")]
+            lines += [f"  교체 {f}" for f in r["replace"]] + [f"  추가 {f}" for f in r["add"]]
+            lines += [f"  병합 {m['file']}" + (f" (새 키: {', '.join(m['newTopLevelKeys'])})" if m["newTopLevelKeys"] else "")
+                      for m in r["merge"]]
+            lines.append(f"  변경 없음 {r['unchanged']}개")
+            if r.get("tickets"):
+                lines.append(f"공지 티켓: {', '.join(r['tickets'])}")
+            out(r, "\n".join(lines))
         elif args.cmd == "commit":
             r = st.commit(args.role, args.message, args.dry_run)
             text = (f"커밋 {r['sha']} — {len(r['files'])}개 파일" if r["committed"]

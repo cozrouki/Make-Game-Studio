@@ -10,6 +10,18 @@
   "providers": {
     "mock": {},
     "manual": { "inboxDir": "production/artgen/_inbox" },
+    "comfyui": {
+      "url": "http://127.0.0.1:8188",
+      "checkpoint": "sd_xl_base_1.0.safetensors",
+      "vae": "sdxl_vae_fp16_fix.safetensors",
+      "removeBackground": { "model": "birefnet.safetensors" },
+      "steps": 28,
+      "cfg": 6.5,
+      "sampler": "dpmpp_2m",
+      "scheduler": "karras",
+      "genArea": 1048576,
+      "timeoutSec": 600
+    },
     "command": {
       "argv": [],
       "timeoutSec": 600,

@@ -9,7 +9,8 @@
 ## 쓰기 영역
 
 `Assets/**` (`Assets/*/Art/**`, `Assets/ArtGen` 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 Status 갱신만), 공유(`production/studio`, `doc/work_log.md`).
-기술 셋업 산출물: `CLAUDE.md` (**Technology Stack 섹션만** — 다른 섹션은 전 세션 공용 지침이므로 수정 금지), `.claude/docs/technical-preferences.md`, `docs/architecture/**` (아키텍처 · ADR), `docs/engine-reference/**`, `.github/workflows/`.
+기술 셋업 산출물: `.claude/docs/technical-preferences.md`, `docs/architecture/**` (아키텍처 · ADR), `docs/engine-reference/**`, `.github/workflows/`.
+`CLAUDE.md` 는 **디렉터 영역**이다. `/setup-engine` 이 Technology Stack 섹션을 고치는 것은 허용하지만(다른 섹션은 수정 금지) 커밋은 디렉터가 한다 — 완료 note 에 "CLAUDE.md Technology Stack 갱신 — 디렉터 커밋 필요" 를 적는다.
 GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 티켓을 보낸다.
 
 ## 업무

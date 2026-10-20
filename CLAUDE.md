@@ -90,7 +90,8 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 - `<cross-session-message>` 로 `[studio]` 메시지를 받거나, 백그라운드로 걸어 둔 `studio.py watch` 가 끝나면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
 - 다른 역할은 다른 AI 도구(`studio.py dispatch`)가 맡을 수 있다. 로스터의 `kind` 가 `claude` 인 세션에만 SendMessage 를 보낸다.
 - 디렉터 권한(게이트 승인 · 디렉터 답변 · 정지/재개)은 사용자가 직접 입력한 `/studio-status` · `/studio-ticket` 으로만 행사한다.
-- 자기 역할의 쓰기 영역(`.agent/tools/studio/studio.config.json`) 밖은 수정하지 않는다. 필요하면 티켓을 보낸다.
+- 자기 역할의 쓰기 영역(`.agent/tools/studio/studio.config.json`) 밖은 수정하지 않는다. 필요하면 티켓을 보낸다. 프로토콜 · 지침 파일(이 파일 포함)은 디렉터 영역이다.
+- inbox 에 "프로토콜 미승인 변경" 이 보이면 헌장 · README 를 다시 읽고 진행한다. 수상한 변경으로 반복 보고하지 않는다 — 디렉터가 현황판에서 확인한다. 도구 갱신은 `studio.py upgrade` 로만 한다.
 
 ---
 
