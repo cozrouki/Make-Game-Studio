@@ -42,7 +42,49 @@
       ]
     }
   },
-  "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", ":(exclude)production/studio/PAUSED", "doc/work_log.md"],
+  "dispatch": {
+    "pollSec": 3,
+    "runTimeoutSec": 3600,
+    "backoffSec": [60, 300, 900],
+    "maxNoProgress": 3,
+    "logDir": "production/studio/logs"
+  },
+  "agents": {
+    "claude": {
+      "argv": ["claude", "-p", "{prompt}", "--dangerously-skip-permissions"],
+      "note": "Claude Code 헤드리스 (대화형으로 쓸 때는 dispatch 대신 /studio-join)"
+    },
+    "codex": {
+      "argv": ["codex", "exec", "--sandbox", "workspace-write", "{prompt}"],
+      "note": "Codex CLI — 공식 문서: --full-auto 는 폐기 예정, --sandbox workspace-write 권장"
+    },
+    "gemini": {
+      "argv": ["gemini", "-p", "{prompt}", "--yolo"],
+      "env": { "GEMINI_CLI_TRUST_WORKSPACE": "true" },
+      "note": "Gemini CLI — -p 헤드리스, --yolo 전체 자동 승인 (커뮤니티 자료 기준, gemini --help 로 확인)"
+    },
+    "cursor": {
+      "argv": ["cursor-agent", "-p", "{prompt}", "--force", "--output-format", "text"],
+      "note": "Cursor CLI — -p 출력 모드, --force 로 파일 수정 허용 (실행 파일명이 agent 인 설치도 있음)"
+    },
+    "copilot": {
+      "argv": ["copilot", "-p", "{prompt}", "--allow-all-tools", "--deny-tool=shell(git push)", "--no-ask-user", "-s"],
+      "note": "GitHub Copilot CLI (1.0.80 --help 확인) — 푸시 금지. 공식 문서는 최소 권한(--allow-tool) 권장"
+    },
+    "opencode": {
+      "argv": ["opencode", "run", "{prompt}"],
+      "note": "OpenCode — 권한 설정 미확인 (opencode.json permission 확인 필요)"
+    },
+    "antigravity": {
+      "argv": [],
+      "note": "IDE 에이전트 — 헤드리스 없음. .agent/workflows/studio-join.md 로 참여 (manual)"
+    },
+    "windsurf": {
+      "argv": [],
+      "note": "IDE 에이전트 — 헤드리스 없음. 에이전트 터미널에서 studio.py watch 로 참여 (manual)"
+    }
+  },
+  "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", ":(exclude)production/studio/PAUSED", ":(exclude)production/studio/logs", ":(exclude)production/studio/locks", "doc/work_log.md"],
   "gates": [
     {
       "id": "G1",

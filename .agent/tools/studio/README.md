@@ -62,6 +62,49 @@ Unity 에디터는 1개만 띄운다. **Unity MCP 는 dev 세션만 사용한다
 human 모드에서 아티스트는 art 세션의 터미널 앞에 앉아 대화만 하면 된다. 티켓 파일 · git · CLI 를 몰라도 된다.
 아트를 기다리는 동안 dev 는 자리표시 그래픽(`Assets/<Game>/Placeholder/`)으로 진행한다.
 
+## 여러 AI 도구 혼합
+
+역할마다 다른 AI 도구를 쓸 수 있다. 예: 기획 = Claude Code, 개발 = Codex CLI, 아트 = 사람 아티스트 + Claude 보조.
+상태가 파일(티켓 · 게이트)에 있으므로 **`studio.py` 를 실행할 수 있는 도구면 누구나 참여**한다. 깨우는 방식만 도구에 따라 다르다.
+
+| 참여 방식 | 대상 | 깨어나는 방법 | 시작 |
+|---|---|---|---|
+| **claude** (대화형) | Claude Code 터미널 세션 | 백그라운드 `studio.py watch` 종료 + (Claude 끼리) SendMessage | `/studio-join <역할>` |
+| **dispatch** (헤드리스) | Codex CLI · Gemini CLI · Cursor CLI · Copilot CLI · OpenCode · 헤드리스 Claude | 감독 루프가 티켓을 감지하면 도구를 실행 | `python .agent/tools/studio/studio.py dispatch <역할> --agent <도구>` |
+| **manual** (IDE) | Antigravity · Windsurf · Cursor IDE 등 헤드리스가 없는 에이전트 | 에이전트 터미널의 `studio.py watch` 종료 | Antigravity: `/studio-join` 워크플로 · 그 외: `prompts/agent-loop.md` 를 읽게 함 |
+
+**파일 감시 (`watch`)** — 역할에 처리할 티켓(진행 중, 또는 착수 가능한 open)이 생길 때까지 파일만 보며 기다린다. 이미 있으면 바로 끝난다(종료 코드 0, 시간 초과는 3). 정지 중에는 끝나지 않는다. 티켓을 누가 만들었든(Claude · 다른 도구 · 사람 · 디렉터) 같은 방식으로 깨어나고, 대기 중에는 AI 토큰을 쓰지 않는다.
+
+**감독 루프 (`dispatch`)**
+```bash
+python .agent/tools/studio/studio.py agents                          # 프리셋 · 설치 여부
+python .agent/tools/studio/studio.py dispatch dev --agent codex --dry-run   # 실행될 명령 확인
+python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (Ctrl+C 로 종료)
+```
+- 처리할 티켓이 생기면 도구를 헤드리스로 실행한다. 프롬프트는 "`prompts/agent-loop.md` 를 읽고 ROLE=<역할> 로 따르라" 는 한 줄이다 (도구 공통 업무 루프).
+- 실행 로그: `production/studio/logs/<역할>-<시각>-<도구>.log` (git 무시).
+- **진전 감지:** 실행 전후의 티켓 · 게이트 · HEAD 를 비교한다. 진전이 없으면 `backoffSec`(60 → 300 → 900초)만큼 기다리되, 그 사이 상태가 바뀌면 바로 재개한다. `maxNoProgress`(3)회 연속이면 디렉터에게 P0 `bug` 티켓을 1회 낸다 (사용량 한도 · 인증 만료 · CLI 옵션 변경 의심).
+- **역할당 1개:** `production/studio/locks/<역할>.json` 잠금. 하트비트가 끊긴 잠금(죽은 프로세스)은 자동으로 가져가고, 그 외에는 `--force-lock`.
+- 실행 시간 제한 `runTimeoutSec`(3600초)를 넘으면 종료한다. 끊긴 티켓은 다음 실행에서 재개 절차로 이어진다.
+- 로스터에 `kind: dispatch` 로 등록된다. 다른 세션은 이 역할에 SendMessage 를 보내지 않는다.
+
+**에이전트 프리셋** — `studio.config.json` 의 `agents`. CLI 옵션은 버전마다 바뀌므로 **설치한 버전의 `--help` 로 확인**하고, 다르면 `studio.config.local.json` 에서 덮어쓴다 (깊은 병합).
+
+| 프리셋 | 명령 | 근거 |
+|---|---|---|
+| `claude` | `claude -p … --dangerously-skip-permissions` | 공식 |
+| `codex` | `codex exec --sandbox workspace-write …` | 공식 (`--full-auto` 는 폐기 예정) |
+| `gemini` | `gemini -p … --yolo` (+ `GEMINI_CLI_TRUST_WORKSPACE`) | 커뮤니티 자료 |
+| `cursor` | `cursor-agent -p … --force --output-format text` | 공식 (실행 파일명이 `agent` 인 설치도 있음) |
+| `copilot` | `copilot -p … --allow-all-tools --no-ask-user -s` | 공식 + 커뮤니티. 공식 권장은 `--allow-tool` 로 최소 권한 |
+| `opencode` | `opencode run …` | 미확인 (권한 설정은 opencode 쪽 설정) |
+| `antigravity` · `windsurf` | (헤드리스 없음) | manual 참여 |
+
+**주의**
+- 헤드리스 실행은 **사람의 승인 없이 파일을 고치고 명령을 실행한다.** 신뢰할 수 있는 프로젝트에서만 쓰고, 쓰기 영역과 역할별 커밋으로 범위를 제한한다.
+- Windows 에서 npm 으로 설치한 CLI(`.cmd`)는 cmd.exe 를 거친다. 그래서 인자에 `& | < > ^ % " !` 가 있으면 실행을 거부한다. 기본 프롬프트에는 이 문자가 없다.
+- 사람 아티스트 모드(`artMode: human`)의 art 는 헤드리스로 돌리지 않는다. 대화형 세션이 맡는다.
+
 ## 단계 게이트
 
 | 게이트 | 요청자 | 산출물 (요청 시 존재 검사) | 승인되면 열리는 일 |
@@ -119,7 +162,10 @@ python .agent/tools/studio/studio.py commit art -m "[studio:art] T-0012 전투 V
 
 ```bash
 S="python .agent/tools/studio/studio.py"
-$S join <role> <session>         $S roster
+$S join <role> <session> [--kind claude|dispatch|manual] [--agent <도구>]      $S roster
+$S watch <role> [--timeout 초]    # 처리할 티켓이 생길 때까지 대기 (0 = 생김, 3 = 시간 초과)
+$S dispatch <role> --agent <프리셋> [--once] [--max-runs N] [--dry-run] [--force-lock]
+$S agents                        # 에이전트 프리셋 · 설치 여부
 $S new --from R --to R --type T --title "…" [--body-file f] [--priority P0|P1|P2] [--gate G2] [--depends T-1,T-2] [--refs a,b]
 $S inbox <role> [--all]          $S show T-0001
 $S update T-0001 --by R [--status S] [--to R] [--note "…"]
@@ -132,7 +178,7 @@ $S commit <role> -m "…" [--dry-run]
 
 ## 운영 규칙 (모든 세션 공통)
 
-1. **티켓 없는 메시지 금지.** SendMessage 는 티켓이 생기거나, 재배정되거나, 완료되거나, 게이트가 바뀔 때만 보낸다. 수신 확인이나 인사는 보내지 않는다 (핑퐁 방지).
+1. **티켓 없는 메시지 금지.** SendMessage 는 티켓이 생기거나, 재배정되거나, 완료되거나, 게이트가 바뀔 때만, 로스터의 `kind: claude` 세션에만 보낸다. 수신 확인이나 인사는 보내지 않는다 (핑퐁 방지).
 2. 메시지 첫 줄 형식: `[studio] T-0012 asset-request planning→art: 전투 VFX 4종`. 둘째 줄: `처리: python .agent/tools/studio/studio.py show T-0012`
 3. `[studio]` 메시지를 받은 세션은 진행 중인 작업을 마친 뒤 받은 티켓 처리 절차(`/studio-join` 의 업무 루프)로 들어간다.
 4. **정지(`PAUSED`) 중에는 새 티켓에 착수하지 않는다.** 진행 중인 티켓만 안전한 지점까지 마무리하고 멈춘다.
@@ -162,6 +208,6 @@ $S commit <role> -m "…" [--dry-run]
 
 ## 한계
 
-- 세션 간 알림은 **같은 PC 의 Claude Code 세션**끼리만 간다. 받는 세션이 꺼져 있으면 티켓은 파일에 남고, 다음 `/studio-join` 때 처리된다.
-- 알림이 유실돼도 상태는 유실되지 않는다. 장시간 무인 운영이라면 각 세션에서 `/loop 30m /studio-join <역할>` 처럼 받은 티켓을 주기적으로 확인하게 할 수 있다.
+- **같은 작업 폴더를 전제로 한다.** 상태 파일 · 역할별 커밋이 한 작업 트리에 있어야 한다. 다른 PC 의 Claude Code 세션도 Remote Control(같은 계정)로 메시지는 받을 수 있지만, 티켓 파일이 공유되지 않으므로 지금 구조로는 다른 PC 에 역할을 둘 수 없다.
+- 깨우기는 파일 감시가 기본이고, SendMessage 는 Claude 세션끼리의 보조 경로다. 알림이 유실돼도 상태는 유실되지 않는다. 꺼져 있던 세션은 다음 `/studio-join` 또는 `dispatch` 시작 때 밀린 티켓을 처리한다.
 - Unity 에디터 · MCP 는 하나뿐이므로 dev 세션이 병목이 될 수 있다. 아트 승격 후 임포트 확인은 dev 가 몰아서 처리한다.

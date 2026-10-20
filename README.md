@@ -97,18 +97,26 @@ git checkout -- .claude/hooks
 
 ## 스튜디오 모드 — 3세션 자동 개발
 
-사용자가 **디렉터**가 되고, 같은 프로젝트 폴더에서 Claude Code 세션 3개(기획 · 아트 · 개발)가 서로 일을 주고받으며 게임을 만듭니다. 상세: [`.agent/tools/studio/README.md`](.agent/tools/studio/README.md)
+사용자가 **디렉터**가 되고, 같은 프로젝트 폴더에서 AI 세션 3개(기획 · 아트 · 개발)가 서로 일을 주고받으며 게임을 만듭니다. 역할마다 **다른 AI 도구**를 쓸 수 있습니다(Claude Code · Codex CLI · Gemini CLI · Cursor · Copilot CLI · OpenCode · Antigravity 등). 상세: [`.agent/tools/studio/README.md`](.agent/tools/studio/README.md)
 
 ```
               디렉터 — 게이트 승인 · 판단 요청 답변 · 정지/재개 (/studio-status)
                  ▲
    planning ──티켓──▶ art ──티켓──▶ dev        상태: production/studio/ (티켓·게이트·로스터)
-       ◀──질문/리뷰──    ◀──에셋 요청──         알림: 세션 간 SendMessage (한 줄)
+       ◀──질문/리뷰──    ◀──에셋 요청──         깨우기: 티켓 파일 감시 (+ Claude 끼리는 SendMessage)
 ```
 
 **시작**
-1. 프로젝트 폴더에서 터미널 3개를 열고 각각 `claude` 를 실행합니다. **세 세션의 권한 모드를 같게** 둡니다. 다르면 세션 간 알림이 승인 대기로 묶입니다.
-2. 각 터미널에서 `/studio-join planning`, `/studio-join art`, `/studio-join dev` 를 입력합니다.
+1. 프로젝트 폴더에서 역할마다 터미널을 하나씩 엽니다.
+2. 역할을 맡길 도구에 따라 참여시킵니다.
+
+   | 도구 | 참여 방법 |
+   |---|---|
+   | Claude Code (대화형) | `claude` 실행 후 `/studio-join <역할>`. 세션끼리 **권한 모드를 같게** 둡니다(다르면 SendMessage 가 승인 대기로 묶임) |
+   | Codex · Gemini · Cursor · Copilot · OpenCode CLI | `python .agent/tools/studio/studio.py dispatch <역할> --agent <codex · gemini · cursor · copilot · opencode>` — 감독 루프가 티켓이 생길 때마다 그 도구를 헤드리스로 실행 |
+   | Antigravity · Windsurf 등 IDE 에이전트 | Antigravity 는 `/studio-join` 워크플로, 그 외에는 `.agent/tools/studio/prompts/agent-loop.md` 를 따르게 함 |
+
+   예: 기획 = Claude Code, 아트 = Claude Code(+사람 아티스트), 개발 = `dispatch dev --agent codex`.
 3. 아무 터미널에서 디렉터 지시를 입력합니다: `/studio-ticket planning "컨셉: …" <설명>`.
 4. `/studio-status` 로 현황을 봅니다. 게이트 요청이 오면 `/studio-status approve G1 "<메모>"`, 세션이 질문하면 `/studio-status answer T-0007 "<답>"` 으로 처리합니다.
 
@@ -121,8 +129,13 @@ git checkout -- .claude/hooks
   - `"human"`: art 세션이 **사람 아티스트의 보조**가 됩니다. 티켓을 대화 브리프로 전하고, 질문과 결정을 티켓으로 옮기고, 납품물을 검사해 승격합니다. 기획은 아트 디렉션 브리프부터 쓰고, 개발은 자리표시 그래픽으로 먼저 진행합니다.
 - **정지와 재개:** `/studio-status pause` 를 하면 각 세션이 진행 중인 티켓만 마무리하고 멈춥니다. 재개는 `/studio-status resume` 입니다.
 
+**여러 도구를 섞을 때**
+- 깨우기는 **티켓 파일 감시**(`studio.py watch`)가 기본이라 도구 종류와 무관합니다. 대기 중에는 AI 토큰을 쓰지 않습니다.
+- 감독 루프(`dispatch`)는 진전이 없으면 실행 간격을 늘리고(60 → 300 → 900초), 3회 연속이면 디렉터에게 알립니다. 역할당 하나만 돌고, 실행 로그는 `production/studio/logs/` 에 남습니다.
+- 헤드리스 실행은 **승인 없이 파일을 고치고 명령을 실행**합니다. 신뢰할 수 있는 프로젝트에서만 쓰세요. CLI 옵션은 버전마다 바뀌므로 `studio.py agents` 와 `--dry-run` 으로 확인하고, 다르면 `studio.config.local.json` 에서 덮어씁니다.
+
 **한계**
-- 세션 간 알림은 **같은 PC 의 Claude Code 세션**끼리만 갑니다. 꺼져 있던 세션은 다음 `/studio-join` 때 밀린 티켓을 처리합니다.
+- **같은 작업 폴더**를 전제로 합니다. 다른 PC 의 Claude Code 세션도 Remote Control(같은 계정)로 메시지는 주고받을 수 있지만, 티켓 파일이 공유되지 않아 지금 구조로는 다른 PC 에 역할을 둘 수 없습니다. 꺼져 있던 세션은 다음 `/studio-join` 또는 `dispatch` 시작 때 밀린 티켓을 처리합니다.
 - 세 세션이 **같은 계정의 사용량 한도**를 함께 써서 단일 세션보다 약 3배 빨리 소모됩니다. 한도가 가까우면 먼저 정지하세요. 한도에 닿으면 세션이 멈추고, 초기화 뒤 `/studio-join <역할>` 로 재개합니다. 반쯤 된 작업은 재개 시 점검합니다.
 
 ## 패키지 내용 통계
@@ -144,51 +157,57 @@ git checkout -- .claude/hooks
 | Windows PowerShell 5.1+ | `install.ps1` · `sync-upstream.ps1` |
 | Git for Windows (bash 포함), git 2.25+ | 훅 스크립트 · 스튜디오 모드 역할별 커밋 |
 | Python 3.8+ (`python` 이 PATH 에 있을 것) | artgen · studio CLI (표준 라이브러리만 사용). 테스트는 `pytest` 필요 |
+| (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
 | Unity + MCPForUnity (선택) | L3 에디터 자동화 · 승격 에셋 임포트 확인 |
 
-## 크로스툴 호환 (Claude Code · Cursor · Antigravity)
+## 크로스툴 호환 (Claude Code · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)
 
-이 패키지는 **Claude Code 전용이 아니다.** `AGENTS.md` 오픈 표준(Agentic AI Foundation)을 정본으로 삼아 여러 에이전트 도구에서 쓸 수 있게 구성돼 있다.
+이 패키지는 **Claude Code 전용이 아니다.** `AGENTS.md` 오픈 표준을 정본으로 삼고, 도구마다 다른 규칙 · 명령 형식은 **생성기**가 단일 소스에서 만들어 낸다.
 
 ### 도구별로 무엇을 읽는가
 
-| 자산 | Claude Code | Cursor | Antigravity | Gemini CLI |
-|---|---|---|---|---|
-| **페르소나·표준·문서규칙** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` |
-| **glob 자동적용 룰** | `.claude/rules/` | `.cursor/rules/*.mdc` | `.agent/rules/*.md` | — |
-| **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 |
-| **슬래시 워크플로** | `.claude/skills/` 86개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 8개 ✅ | ❌ |
-| **훅 / 서브에이전트** | `.claude/` ✅ | ❌ | ❌ | ❌ |
-| **artgen CLI** (`.agent/tools/artgen/`) | `/ko-art-gen` ✅ | 직접 실행 | `/ko-art-gen` 워크플로 ✅ | 직접 실행 |
-| **스튜디오 모드** | ✅ (세션 간 알림) | ❌ | ❌ | ❌ |
+| 자산 | Claude Code | Codex CLI | Copilot (CLI · VS Code) | Cursor | Gemini CLI | OpenCode | Windsurf | Antigravity |
+|---|---|---|---|---|---|---|---|---|
+| **페르소나 · 표준** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` + `.github/copilot-instructions.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
+| **파일별 자동 적용 룰** | `.claude/rules/` | `AGENTS.md` §8 색인 | `.github/instructions/` (`applyTo`) | `.cursor/rules/*.mdc` | `AGENTS.md` §8 색인 | `AGENTS.md` §8 색인 | `.windsurf/rules/` (`trigger: glob`) | `.agent/rules/` |
+| **슬래시 명령 (워크플로 9종)** | `.claude/skills/` 86개 | `.agents/skills/` (Agent Skills) | `.github/prompts/` (VS Code) · `.github/skills/` (CLI) | `.cursor/commands/` | `.gemini/commands/*.toml` | `.opencode/commands/` | `.windsurf/workflows/` | `.agent/workflows/` |
+| **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 |
+| **훅 / 서브에이전트** | ✅ | — | — | — | — | — | — | — |
+| **artgen CLI** | `/ko-art-gen` | `/ko-art-gen` 스킬 | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` |
+| **스튜디오 모드 참여** | `/studio-join` (대화형) | `dispatch --agent codex` | `dispatch --agent copilot` | `dispatch --agent cursor` | `dispatch --agent gemini` | `dispatch --agent opencode` | `/studio-join` 워크플로 (IDE) | `/studio-join` 워크플로 (IDE) |
 
-> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 8개 = `ko-*` 7 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
+**워크플로 9종** — `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/unity-fullstack` · `/studio-join`
+
+> **핵심 구분** — **콘텐츠 층**(페르소나 · 룰 · C# 카탈로그 · 워크플로 절차 · artgen · 스튜디오 CLI)은 모든 도구에서 쓴다. Claude Code 외 도구의 슬래시 명령은 `.agent/workflows/<이름>.md` 정본을 가리키는 **얇은 포인터**이고, 절차가 Claude 스킬(`.claude/skills/<이름>/SKILL.md`)을 지시하면 그 파일을 읽어 따른다. **훅 · 서브에이전트 · 나머지 77개 스킬의 슬래시 호출은 Claude Code 전용**이다 (다른 도구에서도 `SKILL.md` 를 읽게 하면 절차는 따라 할 수 있다).
 
 ### AGENTS.md 정본 구조
 
-- **`AGENTS.md`** — 도구 중립 정본 (페르소나 §1–§7). Claude Code·Cursor·Antigravity·Windsurf·Codex 가 공통으로 읽음.
-- **`CLAUDE.md`** — `AGENTS.md` 를 가리키고 그 위에 Claude Code 전용 계층(Technology Stack·§7 세션·§8 4계층·훅·서브에이전트)만 얹음. Technology Stack은 `/setup-engine`·`/gate-check`가 이 파일에서 읽고 쓰므로 여기에 둔다(다른 도구는 AGENTS.md §4 안내대로 이 섹션을 읽음).
-- **`GEMINI.md` / `AGENT.md`(단수)** — `AGENTS.md` 로 가는 얇은 포인터.
+- **`AGENTS.md`** — 도구 중립 정본 (페르소나 §1–§7 + §8 파일별 규칙 색인). Codex · Copilot · Cursor · OpenCode · Windsurf · Antigravity 가 직접 읽는다.
+- **`CLAUDE.md`** — `AGENTS.md` 를 가리키고 그 위에 Claude Code 전용 계층(Technology Stack · §7 세션 · §8 4계층 · §9 스튜디오 모드)만 얹음. Technology Stack은 `/setup-engine` · `/gate-check` 가 이 파일에서 읽고 쓰므로 여기에 둔다(다른 도구는 AGENTS.md §4 안내대로 이 섹션을 읽음).
+- **`GEMINI.md` · `AGENT.md`(단수) · `.github/copilot-instructions.md`** — `AGENTS.md` 로 가는 얇은 포인터.
 
-### 룰 미러 — 단일 소스에서 파생
+### 미러 생성 — 단일 소스에서 파생
 
-`.claude/rules/*.md` 가 **소스 오브 트루스**이며, 스크립트로 두 도구용 미러를 생성한다:
+정본은 두 곳뿐이다. **룰은 `.claude/rules/`, 절차는 `.agent/workflows/`.** 도구별 파일은 모두 생성물이다.
 
 ```bash
 python scripts/gen-rule-mirrors.py
-#  .claude/rules/*.md  →  .agent/rules/*.md    (Antigravity, verbatim)
-#                      →  .cursor/rules/*.mdc  (Cursor, frontmatter 변환)
+#  .claude/rules/*.md     →  .agent/rules/ (Antigravity)  · .cursor/rules/*.mdc (Cursor)
+#                         →  .github/instructions/*.instructions.md (Copilot) · .windsurf/rules/ (Windsurf)
+#                         →  AGENTS.md §8 파일별 규칙 색인 (Codex · OpenCode · Gemini)
+#  .agent/workflows/*.md  →  .cursor/commands · .gemini/commands · .opencode/commands · .github/prompts
+#                         →  .github/skills · .agents/skills (Agent Skills) · .windsurf/workflows
 ```
 
-룰을 고칠 때는 **`.claude/rules/` 만 수정 후 재생성**한다. `.agent/rules/`·`.cursor/rules/` 는 생성물이므로 직접 편집 금지.
+- 룰을 고치면 `.claude/rules/` 만 수정하고 다시 생성한다.
+- 워크플로 미러는 정본 경로만 가리키므로 절차 내용을 고칠 때는 재생성할 필요가 없다. **추가 · 삭제 · description 변경** 때만 다시 생성한다.
+- 생성물은 직접 편집하지 않는다. 파일 머리의 `생성물:` 주석이 표시다.
 
-### Antigravity 워크플로 (슬래시 커맨드)
+> 도구별 경로 · 형식은 각 도구의 공개 문서와 커뮤니티 자료(2026-10 기준)를 따랐다. 일부는 버전마다 바뀐다 — OpenCode 는 예전 버전이 `.opencode/command/`(단수), Windsurf 는 최신 문서가 `.devin/rules/` 를 우선한다는 보고가 있다. 도구가 파일을 인식하지 못하면 생성기의 경로만 고치면 된다.
 
-`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 8종을 포팅:
+### Antigravity 워크플로
 
-- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/unity-fullstack`
-
-각 워크플로는 Claude Code의 `.claude/skills/<name>/` 절차를 참조하되, Antigravity용으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 훅·서브에이전트가 필요한 나머지 78개 skill은 Claude Code 전용으로 남는다. 스튜디오 모드(`studio-*`)는 Claude Code 의 세션 간 알림에 의존하므로 포팅하지 않았다.
+`.agent/workflows/*.md` 는 Antigravity 에서 `/파일명` 슬래시로 바로 발동되는 **정본 절차**다. 다른 도구의 슬래시 명령이 모두 이 파일을 가리킨다. 각 워크플로는 Claude Code 의 `.claude/skills/<name>/` 절차를 참조하되 도구 중립으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 스튜디오 모드의 디렉터 콘솔(`/studio-status`, `/studio-ticket`)은 Claude Code 전용이지만, 다른 도구에서는 `studio.py status` · `gate approve --by director` 등 CLI 로 같은 일을 한다.
 
 ## 다른 Unity 프로젝트에 적용하는 방법
 
@@ -203,17 +222,20 @@ python scripts/gen-rule-mirrors.py
 # 멀티 게임 + 공유 모듈 + Cursor 병행
 .\scripts\install.ps1 -Target D:\Projects\Multi -Games "A=GameA,B=GameB" -SharedModule SharedCore -Tools Claude,Cursor
 
+# 모든 도구 (Claude · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)
+.\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame" -Tools All
+
 # 미리보기 (파일 쓰기 없음)
 .\scripts\install.ps1 -Target D:\Projects\MyGame -DryRun
 ```
 
 | 단계 | 하는 일 |
 |---|---|
-| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 제외). `-Tools Claude,Cursor,Antigravity,Gemini` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/` |
+| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 제외). `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/`. 대상에 이미 있는 `.github/` 는 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
 | 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지 |
 | 권한 | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
 | MCP | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |
-| .gitignore | 백업 폴더 · 머신별 설정 · 런타임 파일 항목 추가 (artgen 생성 원본 · 받은함, 스튜디오 이벤트 로그 · 정지 표시 포함) |
+| .gitignore | 백업 폴더 · 머신별 설정 · 런타임 파일 항목 추가 (artgen 생성 원본 · 받은함, 스튜디오 이벤트 로그 · 정지 표시 · 디스패치 로그 · 잠금 포함) |
 
 - `-Games`를 생략하면 `Assets/` 하위 후보(.cs 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
 - 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다(`settings.local.json`은 보존).
@@ -451,13 +473,18 @@ GEMINI.md / AGENT.md             AGENTS.md 포인터 (Gemini CLI / 단수 폴백
 scripts/
 ├── install.ps1                  대상 Unity 프로젝트에 설치 (복사·치환·권한·MCP·.gitignore)
 ├── sync-upstream.ps1            upstream 2종 동기화
-└── gen-rule-mirrors.py          .claude/rules → .agent/rules + .cursor/rules 생성
+└── gen-rule-mirrors.py          크로스툴 미러 생성 (룰 → 4개 형식 + AGENTS.md 색인, 워크플로 → 7개 형식)
 
-.cursor/rules/                   12개 .mdc (Cursor — .claude/rules 에서 생성)
+.cursor/rules/ · commands/      12개 .mdc 룰 + 9개 명령 (Cursor — 생성물)
+.github/instructions/ · prompts/ · skills/ · copilot-instructions.md   Copilot (생성물)
+.agents/skills/                  9개 (Codex — Agent Skills, 생성물)
+.gemini/commands/                9개 .toml (Gemini CLI — 생성물)
+.opencode/commands/              9개 (OpenCode — 생성물)
+.windsurf/rules/ · workflows/    12개 룰 + 9개 워크플로 (Windsurf — 생성물)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
-.agent/workflows/                8개 (Antigravity 슬래시 — ko-* 7 + unity-fullstack)
+.agent/workflows/                9개 (Antigravity 슬래시 — ko-* 7 + unity-fullstack + studio-join)
 .agent/tools/artgen/             그래픽 생성 CLI · 백엔드 어댑터 · Unity 임포터 템플릿 · 테스트
-.agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋 CLI · 테스트
+.agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 도구 공통 업무 루프 프롬프트 · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋/감시/디스패치 CLI · 테스트
 
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
@@ -520,8 +547,10 @@ README.md                        이 파일
 # Unity Full-Stack Claude Skills
 
 A turnkey agentic scaffolding for **Unity game development** with
-[Claude Code](https://claude.com/claude-code) (also works with Cursor,
-Antigravity, Codex, and Gemini). Its goal is to automate the path from a **game
+[Claude Code](https://claude.com/claude-code) (also works with Codex CLI,
+GitHub Copilot, Cursor, Gemini CLI, OpenCode, Windsurf, and Antigravity —
+per-tool rules and slash commands are generated from one source by
+`scripts/gen-rule-mirrors.py`). Its goal is to automate the path from a **game
 idea → design documents → graphics that match the design intent → a Unity
 build**. It integrates four upstream skill repositories into a single,
 generalized **4-layer skill set**, and adds two original tools on top: a
@@ -556,9 +585,9 @@ Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
 | Tool | What | Entry |
 |---|---|---|
 | **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into `Assets/` with TextureImporter settings applied. **Backend-neutral**: `mock` (placeholder), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
-| **Studio mode** — 3-session auto-dev | You act as **director**; three Claude Code sessions (planning · art · dev) in one project pass work to each other via ticket files + cross-session notifications. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-ticket` · `/studio-status` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
+| **Studio mode** — 3-session auto-dev | You act as **director**; three AI sessions (planning · art · dev) in one project pass work to each other via ticket files. Each role can use a **different AI tool**: interactive Claude Code, or Codex / Gemini / Cursor / Copilot / OpenCode CLIs driven headless by a supervisor loop, or IDE agents (Antigravity, Windsurf). Sessions wake on ticket-file changes, so the tools don't need to talk to each other directly. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-ticket` · `/studio-status` · `studio.py dispatch` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
 
-Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytest` for their tests), git 2.25+. Studio mode needs Claude Code (cross-session messaging between sessions on the same machine).
+Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytest` for their tests), git 2.25+. Studio mode runs all roles in one working tree on one machine; the director console skills need Claude Code, but everything is also available through the `studio.py` CLI.
 
 ## Quick start
 
@@ -568,7 +597,9 @@ cd unity-fullstack-claude-skills
 .\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
 ```
 
-`install.ps1` copies the assets (git-tracked files only, per `-Tools`), fills
+`install.ps1` copies the assets (git-tracked files only, per `-Tools` — `Claude`,
+`Codex`, `Copilot`, `Cursor`, `Gemini`, `OpenCode`, `Windsurf`, `Antigravity`, or
+`All`), fills
 the game-folder mapping table in `AGENTS.md` §6 and the `<SharedModule>` /
 namespace placeholders, creates or merges `.claude/settings.local.json`, adds
 MCPForUnity to `Packages/manifest.json`, writes `.mcp.json`, and updates
@@ -586,10 +617,13 @@ It hands off to upstream `/setup-engine`.) About 20 L1 skills read these files
 to know the engine, performance budgets, naming conventions, and which Unity
 specialist agent to route work to.
 
-Studio mode: open three terminals in the project, run `claude` in each (same
-permission mode), then `/studio-join planning`, `/studio-join art`,
-`/studio-join dev`, and give the idea with `/studio-ticket planning "Concept: …"`.
-Check progress and approve gates with `/studio-status`.
+Studio mode: open one terminal per role in the project. For a Claude Code role,
+run `claude` and `/studio-join <role>` (keep Claude sessions in the same
+permission mode). For another CLI, run
+`python .agent/tools/studio/studio.py dispatch <role> --agent codex` (or
+`gemini`, `cursor`, `copilot`, `opencode`). Give the idea with
+`/studio-ticket planning "Concept: …"`, and check progress and approve gates
+with `/studio-status`.
 
 See the Korean guide above for the full step-by-step (settings, MCP install,
 cross-tool mirrors, upstream sync via `scripts/sync-upstream.ps1`). The artgen

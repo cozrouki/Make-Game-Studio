@@ -1,0 +1,15 @@
+---
+name: ko-perf-profile
+description: "한국어 성능 프로파일링 — 병목 진단 + SkillForge 06-performance 패턴 매칭"
+---
+<!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .agent/workflows/ko-perf-profile.md -->
+
+# /ko-perf-profile
+
+한국어 성능 프로파일링 — 병목 진단 + SkillForge 06-performance 패턴 매칭
+
+**정본 절차: `.agent/workflows/ko-perf-profile.md` — 이 파일을 먼저 읽고 그 절차를 그대로 따른다.**
+절차가 `.claude/skills/<이름>/SKILL.md` 를 가리키면 그 파일도 읽고 따른다 (이 도구에서 슬래시로 호출할 수 없는 스킬).
+페르소나 · 표준은 `AGENTS.md` 를 따른다.
+
+인수: 사용자가 요청과 함께 준 값.

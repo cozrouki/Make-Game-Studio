@@ -1,0 +1,15 @@
+---
+name: ko-art-gen
+description: "그래픽 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 생성 → 아트 바이블 검수 → Unity 승격"
+---
+<!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .agent/workflows/ko-art-gen.md -->
+
+# /ko-art-gen
+
+그래픽 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 생성 → 아트 바이블 검수 → Unity 승격
+
+**정본 절차: `.agent/workflows/ko-art-gen.md` — 이 파일을 먼저 읽고 그 절차를 그대로 따른다.**
+절차가 `.claude/skills/<이름>/SKILL.md` 를 가리키면 그 파일도 읽고 따른다 (이 도구에서 슬래시로 호출할 수 없는 스킬).
+페르소나 · 표준은 `AGENTS.md` 를 따른다.
+
+인수: 사용자가 요청과 함께 준 값.
