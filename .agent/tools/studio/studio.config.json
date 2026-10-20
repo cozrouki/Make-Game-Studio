@@ -34,7 +34,6 @@
         "production/qa",
         "tests",
         "production/epics",
-        "CLAUDE.md",
         ".claude/docs/technical-preferences.md",
         "docs/architecture",
         "docs/engine-reference",
@@ -84,6 +83,14 @@
       "note": "IDE 에이전트 — 헤드리스 없음. 에이전트 터미널에서 studio.py watch 로 참여 (manual)"
     }
   },
+  "directorOwns": [
+    "CLAUDE.md", "AGENTS.md", "AGENT.md", "GEMINI.md", ".gitignore",
+    ".claude", ":(exclude).claude/docs/technical-preferences.md",
+    ".agent/tools", ".agent/rules", ".agent/workflows", ".agent/skills",
+    ".cursor", ".agents", ".gemini", ".opencode", ".windsurf",
+    ".github/instructions", ".github/prompts", ".github/skills", ".github/copilot-instructions.md"
+  ],
+  "allowedOverlaps": ["production/epics"],
   "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", ":(exclude)production/studio/PAUSED", ":(exclude)production/studio/logs", ":(exclude)production/studio/locks", "doc/work_log.md"],
   "gates": [
     {

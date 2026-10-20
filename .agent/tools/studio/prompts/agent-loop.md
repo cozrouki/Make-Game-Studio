@@ -14,7 +14,7 @@
 
 ## 1. 루프
 
-1. `S inbox <ROLE>` 를 실행한다. `paused` 가 있으면 즉시 종료한다.
+1. `S inbox <ROLE>` 를 실행한다. `paused` 가 있으면 즉시 종료한다. `protocolChanged` 가 있으면 0번의 문서를 다시 읽고 그대로 진행한다 (디렉터가 확인할 일이므로 보고하지 않는다).
 2. 처리할 티켓을 고른다. `in-progress` 가 먼저이고, 그다음은 `ready: true` 인 첫 `open` 티켓이다. 없으면 **종료한다** (감독 루프가 다음 변화를 기다린다).
 3. 착수한다:
    - `open` 이면 `S update <id> --by <ROLE> --status in-progress`.
@@ -25,7 +25,7 @@
    - 긴 작업은 단계마다 `--note` 로 진행 지점을 남긴다 (실행 시간 제한 · 사용량 한도로 끊길 수 있다).
 5. 새 티켓을 발행할 때는 본문을 임시 파일로 쓰고 `S new --from <ROLE> --to <대상> --type <type> --title "<한 줄>" --body-file <파일> [--gate] [--depends] [--refs]` 를 실행한다.
    - **세션 간 메시지는 보내지 않는다.** 결과의 `notifySession` 은 무시해도 된다. 받는 쪽은 파일 감시로 깨어난다.
-6. 완료한다. **순서를 지킨다: done 처리 → work_log → 커밋.** 티켓 파일도 커밋에 들어가야 하므로 커밋 뒤에 티켓을 고치지 않는다 (note 에 커밋 해시를 적지 않는다 — git log 로 찾을 수 있다).
+6. 완료한다. 먼저 `S audit` 으로 이 티켓에서 만든 **주인 없는 파일**이 있는지 본다 — 있으면 done note 에 경로를 적는다 (디렉터가 영역을 정하거나 직접 커밋). **순서를 지킨다: done 처리 → work_log → 커밋.** 티켓 파일도 커밋에 들어가야 하므로 커밋 뒤에 티켓을 고치지 않는다 (note 에 커밋 해시를 적지 않는다 — git log 로 찾을 수 있다).
    - `S update <id> --by <ROLE> --status done --note "<산출물 경로 · 결정 · 남은 일>"`
    - `doc/work_log.md` 최상단의 오늘 날짜 아래에 한 줄을 추가한다: `- [<게임태그>] studio/<ROLE> <id>: <제목>`.
    - 커밋: `python .agent/tools/studio/studio.py commit <ROLE> -m "[studio:<ROLE>] <id> <제목>"`. 푸시는 하지 않는다. 이 커밋이 이 티켓의 마지막 동작이다.

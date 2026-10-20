@@ -1,7 +1,7 @@
 ---
 name: studio-status
 description: 스튜디오 모드 디렉터 콘솔 — 현황판, 게이트 승인/반려, 판단 요청 답변, 전체 정지/재개 (어느 세션에서든)
-argument-hint: "[approve <G#> [메모] | reject <G#> <사유> | answer <T-####> <답변> | pause [사유] | resume | show <T-####>]"
+argument-hint: "[approve <G#> [메모] | reject <G#> <사유> | answer <T-####> <답변> | pause [사유] | resume | show <T-####> | audit | protocol [ack <메모>] | commit <메시지> | upgrade <템플릿경로>]"
 user-invocable: true
 allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 ---
@@ -21,6 +21,8 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
    - **역할 표**: 진행 · 착수 가능 · 대기 · 차단 · 세션 (살아 있음 ✅ / 꺼짐 ⚠)
    - **디렉터 판단 대기**: 티켓마다 `S show` 로 본문 요약 2~3줄
    - **정체 티켓** (staleHours 이상 갱신 없음)
+   - **쓰기 영역**: `audit` 의 주인 없는 변경 · 역할 겹침 건수 (있으면 `audit` 으로 상세)
+   - **프로토콜**: 미승인 변경 목록 (설정 · 도구 · 헌장 · CLAUDE.md 등) — `protocol ack` 로 승인 권유
 3. 다음 행동을 제안한다. 요청된 게이트가 있으면 승인 전에 확인할 산출물 경로를 함께 보여 준다.
 
 ## approve / reject <G#>
@@ -44,6 +46,26 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 
 1. `S pause --reason "<사유>"` 또는 `S resume`.
 2. 로스터에서 `kind` 가 `claude` 인 세션에 알린다. 정지: `[studio] ⏸ 디렉터 정지 — <사유>`. 재개: `[studio] ▶ 재개 — 받은 티켓 확인`. 디스패처는 정지 중 새 실행을 하지 않고, 재개되면 감시로 깨어난다.
+
+## audit
+
+`S audit` 결과를 보여 준다. 주인 없는 파일마다 처리를 제안한다: 알맞은 역할의 영역에 추가(`studio.config.json` 수정 → 이후 `protocol ack`) · 디렉터가 직접 커밋 · 삭제.
+
+## protocol [ack <메모>]
+
+- 인수 없음: `S protocol` — 미승인 변경 파일 목록과 마지막 승인자를 보여 준다. 변경 내용이 궁금하면 `git diff -- <파일>` 로 보여 준다.
+- `ack`: 디렉터가 확인했다면 `S protocol ack --by director --note "<메모>"`. 이후 세션들의 inbox 에서 변경 표시가 사라진다.
+
+## commit <메시지>
+
+디렉터 영역(프로토콜 · 지침 · `CLAUDE.md`)을 커밋한다: 먼저 `S commit director -m "<메시지>" --dry-run` 으로 대상을 보여 주고 확인받은 뒤 실제로 커밋한다. 프로젝트 커밋 서명 줄을 붙인다. 푸시는 하지 않는다.
+
+## upgrade <템플릿경로>
+
+템플릿 저장소에서 스튜디오 · artgen 도구를 갱신한다. **실행 중인 프로젝트의 도구 파일을 손으로 덮어쓰지 않고 반드시 이 경로로 한다.**
+1. `S upgrade --from <경로> --dry-run` 결과(교체 · 추가 · 병합 · 새 설정 키)를 보여 주고 확인받는다.
+2. `S upgrade --from <경로>` — 설정은 프로젝트 값 우선 병합, 지문 승인, 역할마다 공지 티켓.
+3. 로스터의 `kind: claude` 세션에 `[studio] 프로토콜 갱신 — 공지 티켓 확인` 을 알린다.
 
 ## show <T-####>
 
