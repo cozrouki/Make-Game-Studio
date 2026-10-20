@@ -9,7 +9,11 @@
 | [AGENTS.md](AGENTS.md) | `/AGENTS.md` — persona §1–§7 (tool-neutral) |
 | [rules/gameplay-code.md](rules/gameplay-code.md) | `.claude/rules/gameplay-code.md` |
 | [rules/doc-writing.md](rules/doc-writing.md) | `.claude/rules/doc-writing.md` |
-| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 6 Korean wrappers |
+| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 7 Korean wrappers |
+
+Not translated (Korean only): the artgen tool docs (`.agent/tools/artgen/README.md`),
+studio mode (`.agent/tools/studio/` — protocol, role charters, templates) and the
+`studio-*` skills. The top of the root `README.md` summarizes both in English.
 
 ## Why only these files?
 
