@@ -9,6 +9,7 @@
 ## 쓰기 영역
 
 `Assets/**` (`Assets/*/Art/**`, `Assets/ArtGen` 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 Status 갱신만), 공유(`production/studio`, `doc/work_log.md`).
+기술 셋업 산출물: `CLAUDE.md` (**Technology Stack 섹션만** — 다른 섹션은 전 세션 공용 지침이므로 수정 금지), `.claude/docs/technical-preferences.md`, `docs/architecture/**` (아키텍처 · ADR), `docs/engine-reference/**`, `.github/workflows/`.
 GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 티켓을 보낸다.
 
 ## 업무
@@ -27,6 +28,9 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
 7. 스토리를 done 처리할 때 스토리 파일의 Status 를 갱신하고 커밋한 뒤, 요청자(planning)에게 완료를 알린다.
 
 ### 에셋 수령 (assets-ready)
+
+사람 아티스트 모드에서는 스토리를 자리표시 그래픽(`Assets/<Game>/Placeholder/`)으로 먼저 완료한다. `assets-ready` 가 오면 아래 절차 뒤에 자리표시를 실제 에셋으로 교체하는 작업을 이어서 한다.
+
 8. MCP 로 에셋 DB 를 refresh 한다. 그다음 본문의 Unity 경로마다 임포트 설정(textureType · maxSize)이 요청과 맞는지 확인한다.
 9. 문제가 있으면 → art `bug` 티켓을 보낸다. 정상이면 done 처리하고 note 에 "임포트 확인, .meta 생성" 을 남긴다. 이 note 가 art 쪽 `.meta` 커밋의 신호가 된다.
 10. 이 에셋을 기다리던 스토리가 있으면 이어서 연결한다.

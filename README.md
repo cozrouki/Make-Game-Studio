@@ -129,7 +129,7 @@ git checkout -- .claude/hooks
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 생성** | 기획 → 이미지 생성 → 아트 바이블 검수 → Unity 임포트 (백엔드 중립, 어댑터로 나중에 연결) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
-| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 패키지 내용 통계
 

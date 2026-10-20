@@ -1,5 +1,6 @@
 {
   "dataDir": "production/studio",
+  "artMode": "ai",
   "staleHours": 24,
   "roles": {
     "planning": {
@@ -17,6 +18,7 @@
       "owns": [
         "design/assets/requests",
         "production/artgen",
+        "art-source",
         ":(glob)Assets/*/Art/**",
         "Assets/ArtGen"
       ]
@@ -31,11 +33,16 @@
         "ProjectSettings",
         "production/qa",
         "tests",
-        "production/epics"
+        "production/epics",
+        "CLAUDE.md",
+        ".claude/docs/technical-preferences.md",
+        "docs/architecture",
+        "docs/engine-reference",
+        ".github/workflows"
       ]
     }
   },
-  "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", "doc/work_log.md"],
+  "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", ":(exclude)production/studio/PAUSED", "doc/work_log.md"],
   "gates": [
     {
       "id": "G1",
@@ -49,6 +56,9 @@
       "name": "아트 디렉션 승인",
       "owner": "planning",
       "artifacts": ["design/art/art-bible.md", "design/assets/requests/_style-tokens.json", "production/artgen/ASSET-000/review.md"],
+      "artifactsByArtMode": {
+        "human": ["design/art/art-direction-brief.md", "production/artgen/ASSET-000/review.md", "design/art/art-bible.md"]
+      },
       "unlocks": "에셋 양산 (art)"
     },
     {

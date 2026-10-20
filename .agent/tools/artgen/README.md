@@ -69,6 +69,20 @@ python .agent/tools/artgen/artgen.py status   [ASSET-001]
 | `unity.import` | 아트 바이블 §8 + 성능 예산 (maxSize·압축·PPU·필터) |
 | `providerOptions.<이름>` | 백엔드별 값 (워크플로 파일·모델·LoRA 등) — 백엔드 결정 후 |
 
+## 사람 아티스트 납품 — `manual` 어댑터
+
+이미지를 생성하지 않고 **사람이 그린 PNG 를 받는다.** 검수 · 선택 · 승격 · Unity 임포트는 AI 생성물과 똑같이 처리된다. 그래서 AI 와 사람의 에셋을 한 프로젝트에서 섞어 쓸 수 있다.
+
+```bash
+# 아티스트가 production/artgen/_inbox/ASSET-012/ 에 PNG 를 넣은 뒤
+python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.json --provider manual
+```
+- 받은함의 PNG 를 새 버전 디렉터리(`v###`)로 **이동**한다. 받은함은 다음 라운드를 위해 비워진다.
+- 받은함이 비어 있으면 넣을 위치를 알려 주는 오류를 낸다 (폴더는 만들어 둠).
+- 변형 수(variants)와 납품 수가 달라도 경고하지 않는다.
+- 받은함 경로: `providers.manual.inboxDir` (기본 `production/artgen/_inbox`, git 무시).
+- 스튜디오 모드의 사람 아티스트 운영: `.agent/tools/studio/roles/art-human.md`
+
 ## 백엔드 연결 (나중에)
 
 백엔드가 정해지면 둘 중 하나를 고른다. **파이프라인의 다른 부분은 바뀌지 않는다.**

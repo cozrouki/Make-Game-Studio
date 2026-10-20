@@ -53,7 +53,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
 | **그래픽 생성** | 기획 → 이미지 → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
-| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림) | `/studio-join`, `/studio-ticket`, `/studio-status` — §9 |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림, 아트는 AI 또는 사람 아티스트 — `artMode`) | `/studio-join`, `/studio-ticket`, `/studio-status` — §9 |
 
 ### 자동 적용 자산 (호출 불필요)
 

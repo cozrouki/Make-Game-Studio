@@ -110,7 +110,7 @@ class Store:
         job = Job(asset_id=asset_id, request=request, positive=prompt["positive"], negative=prompt["negative"],
                   width=out["width"], height=out["height"], transparent=out["transparent"], variants=n,
                   seeds=seeds, references=refs, out_dir=vdir, job_file=os.path.join(vdir, "job.json"),
-                  options=provider.options)
+                  options=provider.options, project_root=self.root)
         plan = {"assetId": asset_id, "version": version, "provider": provider_name, "variants": n,
                 "seeds": seeds, "prompt": prompt, "outDir": _rel(self.root, vdir)}
         if dry_run:
@@ -142,7 +142,7 @@ class Store:
                 warnings.append(f"{os.path.basename(p)}: 투명 배경 요청했으나 알파 채널 없음")
             outputs.append({"file": os.path.basename(p), "width": w, "height": h, "alpha": alpha,
                             "seed": seeds[i] if i < len(seeds) else None, "sha256": _sha256(p)})
-        if len(outputs) != n:
+        if provider.honors_variants and len(outputs) != n:
             warnings.append(f"변형 수 {len(outputs)} ≠ 요청 {n}")
 
         run = dict(plan, requestFile=_rel(self.root, os.path.abspath(request_path)),

@@ -45,12 +45,29 @@
 
 Unity 에디터는 1개만 띄운다. **Unity MCP 는 dev 세션만 사용한다.**
 
+## 아트 모드 — AI 생성 / 사람 아티스트
+
+`studio.config.json` 의 `"artMode"` 로 art 역할의 운영 방식을 고른다.
+
+| | `"ai"` (기본) | `"human"` |
+|---|---|---|
+| 그림을 만드는 쪽 | art 세션 (artgen 백엔드) | **사람 아티스트** |
+| art 세션의 역할 | 자율 생성 · 검수 · 승격 | 아티스트의 **보조 · 연락 창구**: 티켓을 대화 브리프로 전달하고, 질문 · 결정을 티켓으로 옮기고, 납품물을 규격 검사 · 승격한다 |
+| 헌장 | `roles/art.md` | `roles/art-human.md` |
+| 기획의 첫 산출물 (G1 후) | 아트 바이블 + 스타일 토큰 | **아트 디렉션 브리프** (`templates/art-direction-brief.md`) → 아티스트 시안 → 디렉터 선택 → 아트 바이블 공동 작성 |
+| G2 산출물 | `art-bible.md`, `_style-tokens.json`, ASSET-000 review | `art-direction-brief.md`, ASSET-000(시안) review, `art-bible.md` |
+| 납품 수령 | `artgen generate` (활성 백엔드) | `artgen generate --provider manual` — `production/artgen/_inbox/<ASSET-ID>/` 의 PNG 를 새 버전으로 이동 |
+| 시각 루브릭 | 통과 기준 (자동 재생성) | 아티스트에게 주는 **의견** (최종 판단은 아티스트) |
+
+human 모드에서 아티스트는 art 세션의 터미널 앞에 앉아 대화만 하면 된다. 티켓 파일 · git · CLI 를 몰라도 된다.
+아트를 기다리는 동안 dev 는 자리표시 그래픽(`Assets/<Game>/Placeholder/`)으로 진행한다.
+
 ## 단계 게이트
 
 | 게이트 | 요청자 | 산출물 (요청 시 존재 검사) | 승인되면 열리는 일 |
 |---|---|---|---|
 | **G1 컨셉** | planning | `design/gdd/game-concept.md`, `game-pillars.md` | 시스템 분해 · 아트 바이블 · 기술 셋업 |
-| **G2 아트 디렉션** | planning | `art-bible.md`, `_style-tokens.json`, 스타일 프로브 `production/artgen/ASSET-000/review.md` | 에셋 양산 (art) |
+| **G2 아트 디렉션** | planning | ai: `art-bible.md`, `_style-tokens.json`, 스타일 프로브 `ASSET-000/review.md` · human: `art-direction-brief.md`, 시안 `ASSET-000/review.md`, `art-bible.md` | 에셋 양산 (art) |
 | **G3 프리프로덕션** | planning | `systems-index.md`, `asset-manifest.md`, `production/epics/index.md`, `production/sprints/`, `technical-preferences.md` | 기능 스토리 구현 (dev) |
 | **M1, M2 …** | planning (`gate add`) | 마일스톤 리뷰 문서 | 다음 마일스톤 |
 
@@ -82,8 +99,8 @@ Unity 에디터는 1개만 띄운다. **Unity MCP 는 dev 세션만 사용한다
 | 역할 | 쓸 수 있는 곳 |
 |---|---|
 | planning | `design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones` |
-| art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/ArtGen` |
-| dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만) |
+| art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/ArtGen`, `art-source` (아티스트 원본, human 모드) |
+| dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`CLAUDE.md` Technology Stack 섹션만 · `.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
 | 공유 | `production/studio` (티켓 · 게이트), `doc/work_log.md` (최상단에 한 줄 추가만) |
 
 다른 역할의 영역을 고쳐야 하면 **그 역할에 티켓을 보낸다.** 정의 정본은 `studio.config.json` 이다.
@@ -108,6 +125,7 @@ $S inbox <role> [--all]          $S show T-0001
 $S update T-0001 --by R [--status S] [--to R] [--note "…"]
 $S gate list | request G1 --by planning | approve G1 --by director --note "…" | reject … | add M1 --name … --artifacts … --unlocks …
 $S status                        $S pause --reason "…" | resume
+$S changes <role>                # 내 영역 미커밋 변경 + 진행 중 티켓 (중단 후 재개 점검)
 $S commit <role> -m "…" [--dry-run]
 ```
 모든 명령은 `--json` 을 지원한다. `new` 와 `update` 의 JSON 출력에는 알림을 보낼 세션 이름(`notifySession`)이 들어 있다.
@@ -121,6 +139,26 @@ $S commit <role> -m "…" [--dry-run]
 5. **권한 경계:** 내 세션에서 거부되었거나 막힐 작업을 다른 세션에 대신 시키지 않는다. 그런 일은 디렉터 티켓으로 올린다.
 6. 같은 티켓에서 2회 연속 실패하면 `blocked` 로 바꾸고 원인을 note 에 적는다. 같은 일을 계속 재시도하지 않는다.
 7. 비밀값(API 키)을 티켓 · 메시지 · 로그에 쓰지 않는다.
+
+## 사용량 한도
+
+세 세션은 **같은 계정의 사용량 한도를 함께 쓴다.** 그래서 단일 세션보다 약 3배 빨리 한도에 닿고, 닿으면 보통 세 세션이 함께 멈춘다.
+
+| 대상 | 한도 도달 시 |
+|---|---|
+| 세션 | 응답이 중단되고, 초기화 후에도 **스스로 재시작하지 않는다** |
+| 티켓 · 게이트 · 로스터 | 파일에 그대로 남는다. 처리 중이던 티켓은 `in-progress` 로 남는다 |
+| 작업 중 파일 | 반쯤 된 상태로 작업 트리에 남는다. 커밋은 티켓 완료 시점에만 하므로 미완성 작업은 커밋되지 않는다 |
+| 세션 간 알림 | 받는 세션의 대기열에 남았다가 다시 움직일 때 전달된다. 놓쳐도 일감은 티켓 파일에 있다 |
+
+**예방**
+- 한도가 가까우면 `/studio-status pause` 로 먼저 정지한다. 진행 중 티켓만 마무리하고 멈추므로 깔끔하게 선다. 사용량은 `/usage` 로 확인한다.
+- 역할별로 모델을 나눈다. 판단이 많은 planning 은 상위 모델, 정해진 절차를 반복하는 art · dev 는 `/model` 로 가벼운 모델.
+- 작업량을 줄인다. `/asset-spec` · 리뷰 스킬은 `--review lean`, `/ko-art-gen` 은 `--variants` 를 작게.
+
+**복구 (한도 초기화 후)**
+1. 각 세션에 `/studio-join <역할>` 을 다시 입력한다. 업무 루프가 `in-progress` 티켓부터 처리한다. 재개 시에는 `studio.py changes <역할>` 로 반쯤 된 변경을 확인하고, 이어서 할지 되돌리고 다시 할지 정해 스레드에 기록한다.
+2. `/studio-status` 로 정체 티켓이 없는지 확인한다. 정지했던 경우에는 `/studio-status resume` 도 한다.
 
 ## 한계
 

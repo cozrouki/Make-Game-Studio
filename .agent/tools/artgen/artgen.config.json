@@ -9,6 +9,7 @@
   },
   "providers": {
     "mock": {},
+    "manual": { "inboxDir": "production/artgen/_inbox" },
     "command": {
       "argv": [],
       "timeoutSec": 600,

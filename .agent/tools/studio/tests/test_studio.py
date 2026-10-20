@@ -111,6 +111,22 @@ def test_gate_only_director_can_approve(st, tmp_path):
     assert g["status"] == "approved" and g["history"][-1]["note"] == "좋음"
 
 
+def test_gate_g2_artifacts_follow_art_mode(tmp_path):
+    cfg = S.load_config()
+    assert "design/assets/requests/_style-tokens.json" in S.Studio(str(tmp_path), cfg).gate("G2")["artifacts"]
+    cfg["artMode"] = "human"
+    human = S.Studio(str(tmp_path), cfg).gate("G2")["artifacts"]
+    assert "design/art/art-direction-brief.md" in human
+    assert "design/assets/requests/_style-tokens.json" not in human
+
+
+def test_art_mode_invalid_value_rejected(tmp_path):
+    cfg = S.load_config()
+    cfg["artMode"] = "robot"
+    with pytest.raises(S.StudioError, match="artMode"):
+        S.Studio(str(tmp_path), cfg).status()
+
+
 def test_gate_add_custom_milestone(st):
     g = st.add_gate("M1", "버티컬 슬라이스", "planning", [], "M2 착수")
     assert g["status"] == "pending"
@@ -143,7 +159,8 @@ def repo(tmp_path):
                  ["config", "core.autocrlf", "false"]):
         subprocess.run(["git", "-C", root, *args], check=True)
     for rel in ("Assets/MyGame/Art/vfx.png", "Assets/MyGame/Art/vfx.png.meta", "Assets/MyGame/Scripts/Player.cs",
-                "design/gdd/game-concept.md", "design/assets/requests/ASSET-001.json", "production/studio/roster.json"):
+                "design/gdd/game-concept.md", "design/assets/requests/ASSET-001.json", "production/studio/roster.json",
+                ".claude/docs/technical-preferences.md", "docs/architecture/adr-0001.md", "production/studio/PAUSED"):
         _touch(root, rel)
     return S.Studio(root, S.load_config())
 
@@ -163,6 +180,18 @@ def test_commit_dev_excludes_art_folder(repo):
     assert not any("/Art/" in f for f in files)
 
 
+def test_commit_dev_includes_tech_setup_outputs(repo):
+    # 리허설 T-0006 회귀: /setup-engine · /create-architecture 산출물이 어느 역할에도 없어 커밋되지 않았음
+    files = repo.commit("dev", "x", dry_run=True)["files"]
+    assert ".claude/docs/technical-preferences.md" in files
+    assert "docs/architecture/adr-0001.md" in files
+
+
+def test_commit_excludes_pause_marker(repo):
+    for role in ("planning", "art", "dev"):
+        assert "production/studio/PAUSED" not in repo.commit(role, "x", dry_run=True)["files"]
+
+
 def test_commit_planning_excludes_asset_requests(repo):
     files = repo.commit("planning", "x", dry_run=True)["files"]
     assert "design/gdd/game-concept.md" in files
@@ -173,6 +202,16 @@ def test_commit_warns_on_missing_meta(repo):
     _touch(repo.root, "Assets/MyGame/Art/new.png")
     r = repo.commit("art", "x", dry_run=True)
     assert any("new.png" in w for w in r["warnings"])
+
+
+def test_changes_cli_lists_own_area_and_in_progress(repo, capsys):
+    t = repo.new_ticket("planning", "dev", "task", "중단된 작업")
+    repo.update_ticket(t["id"], "dev", status="in-progress")
+    assert S.main(["--root", repo.root, "--json", "changes", "dev"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert "Assets/MyGame/Scripts/Player.cs" in out["files"]
+    assert not any("/Art/" in f for f in out["files"])
+    assert out["inProgress"] == [t["id"]]
 
 
 def test_commit_nothing_to_commit(repo):

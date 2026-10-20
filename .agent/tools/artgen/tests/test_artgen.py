@@ -205,6 +205,29 @@ def test_command_provider_failure_is_reported(project, cfg):
     assert "error" in run
 
 
+# ---- manual 어댑터: 사람 아티스트 납품 ----
+def test_manual_provider_empty_inbox_reports_drop_location(project, cfg):
+    root, req_path = project
+    with pytest.raises(ArtgenError, match=r"_inbox"):
+        Store(str(root), cfg).generate(load_request(req_path), req_path, provider_name="manual")
+    assert (root / "production" / "artgen" / "_inbox" / "ASSET-001").is_dir()   # 넣을 곳을 만들어 둠
+
+
+def test_manual_provider_moves_delivery_into_version_without_count_warning(project, cfg):
+    from artgen_lib.pngutil import write_rgba
+    root, req_path = project
+    inbox = root / "production" / "artgen" / "_inbox" / "ASSET-001"
+    inbox.mkdir(parents=True)
+    write_rgba(str(inbox / "frost_hit_a.png"), 32, 32, [(0, 0, 0, 0)] * 1024)   # 요청 variants=2 인데 1장 납품
+
+    run = Store(str(root), cfg).generate(load_request(req_path), req_path, provider_name="manual")
+
+    assert [o["file"] for o in run["outputs"]] == ["frost_hit_a.png"]
+    assert run["warnings"] == []
+    assert not list(inbox.glob("*.png"))                                         # 받은함은 비워짐
+    assert (root / run["outDir"] / "frost_hit_a.png").is_file()
+
+
 # ---- CLI ----
 def test_cli_json_error_exit_code(tmp_path, capsys):
     assert main(["--root", str(tmp_path), "--json", "validate", str(tmp_path / "missing.json")]) == 1
