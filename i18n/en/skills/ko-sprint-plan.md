@@ -21,7 +21,7 @@ Wraps the Game-Studios `sprint-plan` skill. Output saved to `production/sprints/
 
 ## Phase 2: Gather context
 Read and assemble context from:
-- `doc/work_log.md` last ~50 lines — recent work flow
+- `doc/work_log.md` top ~50 lines (newest first) — recent work flow
 - `doc/{ActiveGame}/task.md` — current game's task status
 - `production/session-state/active.md` — active game/Epic/Feature
 - Previous sprint's retro section, if any: `production/sprints/sprint-<N-1>.md`

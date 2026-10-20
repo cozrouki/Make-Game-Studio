@@ -28,7 +28,7 @@ Game-Studios의 `sprint-plan` skill을 한국어 인터페이스로 래핑합니
 ## Phase 2: 컨텍스트 수집
 
 다음을 읽고 컨텍스트를 만든다:
-- `doc/work_log.md` 최근 50줄 — 직전 작업 흐름
+- `doc/work_log.md` 상단 50줄 (최신순) — 직전 작업 흐름
 - `doc/{ActiveGame}/task.md` — 현재 게임의 태스크 상태
 - `production/session-state/active.md` — 활성 게임/Epic/Feature
 - 이전 스프린트가 있다면 `production/sprints/sprint-<N-1>.md` 회고 섹션

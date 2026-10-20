@@ -10,6 +10,19 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 ---
 
+## Technology Stack
+
+> 프로젝트 셋업 시 `/setup-engine`으로 채우거나 `ProjectSettings/ProjectVersion.txt`·`Packages/manifest.json`을 실측해 직접 채운다. 채워진 값이 기준이다 — 엔진·패키지 업그레이드 때만 갱신 (AGENTS.md §4).
+
+- **Engine**: Unity [CHOOSE]
+- **Language**: C#
+- **Render Pipeline**: [CHOOSE: URP / HDRP / Built-in + 버전]
+- **Key Packages**: [CHOOSE: Input System · Addressables · Cinemachine · Test Framework 등 + 버전]
+- **Build System**: Unity Build Pipeline
+- **Asset Pipeline**: Unity Asset Import Pipeline + Addressables
+
+---
+
 ## §7. Session Start Protocol (Claude Code)
 
 세션이 시작되면 다음 절차를 따른다:

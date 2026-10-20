@@ -12,7 +12,7 @@ description: 스프린트 계획 수립 (한국어) — production/sprints/sprin
 **1. 인수 파싱** — `$1`=스프린트 번호(필수), `$2`=기간 일수(기본 14), `--solo`=1인 모드(리뷰 간소화).
 
 **2. 컨텍스트 수집** — 다음을 읽어 컨텍스트를 만든다:
-- `doc/work_log.md` 최근 50줄 — 직전 작업 흐름
+- `doc/work_log.md` 상단 50줄 (최신순) — 직전 작업 흐름
 - `doc/{ActiveGame}/task.md` — 현재 게임 태스크 상태
 - `production/session-state/active.md` — 활성 게임/Epic/Feature
 - 이전 스프린트가 있으면 `production/sprints/sprint-<N-1>.md` 회고 섹션
