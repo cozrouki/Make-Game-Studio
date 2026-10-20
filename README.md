@@ -22,7 +22,7 @@ together yourself.
 
 | Layer | What | Entry |
 |---|---|---|
-| **L1 — Process** | 81 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
+| **L1 — Process** | 82 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
 | **L2 — C# code patterns** | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 — Editor automation** | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
 | **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |
@@ -40,6 +40,16 @@ Then fill **one place** — the game-folder mapping table in `AGENTS.md` §6 (th
 single source of truth; every tool derives from it). Everything else ships
 pre-generalized with `<GameName>` / `<GamePrefix>` / `<SharedModule>`
 placeholders. Single-game project? Just ignore the game-tag system.
+
+Then record your engine once: run `/ko-setup-engine` in Claude Code. It
+measures the project (engine version, render pipeline, packages, input
+bindings, UI framework, and naming conventions from your own code) and asks only
+two questions — target platforms and framerate — before writing the
+`## Technology Stack` section of `CLAUDE.md` and
+`.claude/docs/technical-preferences.md`. (Brand-new project with no code yet?
+It hands off to upstream `/setup-engine`.) About 20 L1 skills read these files
+to know the engine, performance budgets, naming conventions, and which Unity
+specialist agent to route work to.
 
 See the Korean guide below for the full step-by-step (settings, MCP install,
 cross-tool mirrors, upstream sync via `scripts/sync-upstream.ps1`).
@@ -84,14 +94,14 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (81 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype` 등 |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (82 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype` 등 |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 81개 (Game-Studios 72 + 한국어 wrapper 5 + 마스터 진입 1 + SkillForge 헬퍼 3)
+- **Skills (L1)**: 82개 (Game-Studios 72 + 한국어 wrapper 6 + 마스터 진입 1 + SkillForge 헬퍼 3)
 - **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
 - **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
 - **Hooks**: 12개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent 등)
@@ -110,15 +120,15 @@ git checkout -- .claude/hooks
 | **페르소나·표준·문서규칙** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` |
 | **glob 자동적용 룰** | `.claude/rules/` | `.cursor/rules/*.mdc` | `.agent/rules/*.md` | — |
 | **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 |
-| **슬래시 워크플로** | `.claude/skills/` 81개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 6개 ✅ | ❌ |
+| **슬래시 워크플로** | `.claude/skills/` 82개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 7개 ✅ | ❌ |
 | **훅 / 서브에이전트** | `.claude/` ✅ | ❌ | ❌ | ❌ |
 
-> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 6개 = `ko-*` 5 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
+> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 7개 = `ko-*` 6 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
 
 ### AGENTS.md 정본 구조
 
 - **`AGENTS.md`** — 도구 중립 정본 (페르소나 §1–§7). Claude Code·Cursor·Antigravity·Windsurf·Codex 가 공통으로 읽음.
-- **`CLAUDE.md`** — `AGENTS.md` 를 가리키고 그 위에 Claude Code 전용 계층(§7 세션·§8 4계층·훅·서브에이전트)만 얹음.
+- **`CLAUDE.md`** — `AGENTS.md` 를 가리키고 그 위에 Claude Code 전용 계층(Technology Stack·§7 세션·§8 4계층·훅·서브에이전트)만 얹음. Technology Stack은 `/setup-engine`·`/gate-check`가 이 파일에서 읽고 쓰므로 여기에 둔다(다른 도구는 AGENTS.md §4 안내대로 이 섹션을 읽음).
 - **`GEMINI.md` / `AGENT.md`(단수)** — `AGENTS.md` 로 가는 얇은 포인터.
 
 ### 룰 미러 — 단일 소스에서 파생
@@ -135,9 +145,9 @@ python scripts/gen-rule-mirrors.py
 
 ### Antigravity 워크플로 (슬래시 커맨드)
 
-`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 6종을 포팅:
+`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 7종을 포팅:
 
-- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/unity-fullstack`
+- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/unity-fullstack`
 
 각 워크플로는 Claude Code의 `.claude/skills/<name>/` 절차를 참조하되, Antigravity용으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 훅·서브에이전트가 필요한 나머지 75개 skill은 Claude Code 전용으로 남는다.
 
@@ -223,6 +233,36 @@ claude
 `session-start.sh` 가 자동 발화하며 한국어 컨텍스트 + 코드 헬스 + 스프린트 정보(있으면) 표시됩니다.
 
 `/unity-fullstack` 호출 → 4계층 메뉴 한국어 안내.
+
+### 6단계: 엔진 설정 (Technology Stack + technical-preferences.md)
+
+L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`team-*` 등)가 `.claude/docs/technical-preferences.md`에서 엔진·성능 예산·명명 규칙·**Unity 전문가 에이전트 라우팅**을 읽고, `/gate-check`는 `CLAUDE.md`의 `## Technology Stack`이 `[CHOOSE]` 상태인지 검사합니다. 두 파일 모두 **비어 있는 상태로 배포**되므로 한 번 채워야 합니다. 비어 있으면 이 스킬들이 "엔진 미설정"으로 판단하고 전문가 에이전트(`unity-specialist`·`unity-shader-specialist`·`unity-ui-specialist` 등)로 넘기지 못합니다.
+
+**`/ko-setup-engine` 한 번 실행하면 됩니다.**
+
+```
+/ko-setup-engine                    # 코드 루트 후보를 보여 주고 고르게 함
+/ko-setup-engine Assets/YourGame    # 코드 루트 지정 (서드파티 에셋 제외용)
+```
+
+| 자동 실측 (`measure.sh`) | 질문 (2개) |
+|---|---|
+| 엔진 버전 · 렌더 파이프라인 · 패키지 버전 · 물리/NavMesh · UI Toolkit/uGUI 비율 · 입력 바인딩(게임패드 지원) · **명명 규칙 다수결**(`[SerializeField]`/private/const/event 따로) · 테스트 asmdef(EditMode/PlayMode) | 대상 플랫폼(현재 + 확장 예정) · 목표 프레임 |
+
+- 결과는 미리보기로 보여 주고 **승인 후에만** 씁니다. 다시 실행해도 사람이 쓴 섹션(금지 패턴·허용 라이브러리·ADR 로그)은 보존하므로, 엔진·패키지를 업그레이드할 때마다 재실행하면 됩니다.
+- **코드가 없는 새 프로젝트**는 실측할 것이 없으므로 upstream `/setup-engine`으로 넘깁니다.
+- 왜 `/setup-engine`을 그대로 쓰지 않나: upstream은 명명 규칙을 기본값(private 필드 `_camelCase` 하나)으로 채웁니다. 기존 코드가 다른 규칙이면 `/code-review`가 수백 곳을 위반으로 지적합니다.
+- `.claude/`는 프로젝트(클론)당 하나이므로 `technical-preferences.md`도 하나입니다. 한 Unity 프로젝트에 여러 게임이 있으면 코드 루트를 여러 개 넘겨 함께 실측합니다.
+- 측정 스크립트만 따로 돌려 볼 수도 있습니다: `bash .claude/skills/ko-setup-engine/measure.sh Assets/YourGame` (파일을 쓰지 않음).
+
+## 문서 운영 규칙 (컨텍스트 비용)
+
+`work_log.md`·`active.md`는 매 세션 읽히므로 커질수록 토큰 비용이 늘어납니다. `AGENTS.md` §6·§6-1에 다음 규칙이 정의돼 있습니다.
+
+- **work_log 월별 분리** — `doc/work_log.md`에는 현재 월만 두고 새 항목은 최상단에 추가(최신순). 지난 달은 `doc/work_log/YYYY-MM.md`로 옮기고 하단 인덱스에 한 줄 추가.
+- **active.md 3~5KB** — `production/session-state/active.md`에는 현재 상태·최근 완료분·다음 할 것·블로커만. 지난 이력은 work_log로, 커밋은 해시만, 넘치면 `production/session-state/archive/`로.
+
+`ko-story-cycle`·`ko-sprint-plan`도 이 기준(work_log 최상단 = 최신)을 따릅니다. 일부 GS 스킬(`dev-story`·`story-done` 등)은 active.md에 내용을 덧붙이므로 주기적으로 정리하세요 — upstream 미러라 스킬 자체는 수정하지 않습니다.
 
 ## 자동 발화되는 자산
 
@@ -337,7 +377,7 @@ Register-ScheduledTask -TaskName "ClaudeSkillsUpstreamSync" -Action $action -Tri
 
 ```
 AGENTS.md                        ★ 크로스툴 정본 (페르소나·표준·문서규칙)
-CLAUDE.md                        Claude Code 계층 (→AGENTS.md + 스킬/훅/서브에이전트)
+CLAUDE.md                        Claude Code 계층 (→AGENTS.md + Technology Stack + 스킬/훅/서브에이전트)
 GEMINI.md / AGENT.md             AGENTS.md 포인터 (Gemini CLI / 단수 폴백)
 .mcp.json.template               MCPForUnity 설정 템플릿
 scripts/
@@ -346,7 +386,7 @@ scripts/
 
 .cursor/rules/                   12개 .mdc (Cursor — .claude/rules 에서 생성)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
-.agent/workflows/                6개 (Antigravity 슬래시 — ko-* 5 + unity-fullstack)
+.agent/workflows/                7개 (Antigravity 슬래시 — ko-* 6 + unity-fullstack)
 
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
@@ -354,13 +394,14 @@ scripts/
 ├── hooks/                       12개 (로컬 머지 2 + GS 신규 10)
 ├── rules/                       12개 (로컬 fork 2 + GS 10)
 ├── agents/                      39개 (Tier 1-3, Godot/UE 제외)
-├── skills/                      81개
+├── skills/                      82개
 │   ├── unity-fullstack/         마스터 진입
-│   ├── ko-sprint-plan/          한국어 wrapper 5개
+│   ├── ko-sprint-plan/          한국어 wrapper 6개
 │   ├── ko-story-cycle/
 │   ├── ko-code-review/
 │   ├── ko-perf-profile/
 │   ├── ko-prototype/
+│   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh)
 │   ├── sf-list/                 SkillForge 오프라인 헬퍼 3개
 │   ├── sf-info/
 │   ├── sf-add/

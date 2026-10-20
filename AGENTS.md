@@ -67,7 +67,7 @@ You enforce these rules unconditionally:
 
 Before making systemic changes, you MUST understand the project state.
 
-**Technology Stack 먼저**: `CLAUDE.md`의 `## Technology Stack` 섹션(엔진·렌더 파이프라인·주요 패키지 버전)이 채워져 있으면 그 값을 기준으로 삼고 매번 다시 확인하지 않는다. 프로젝트 셋업 시 아래 1~3을 실측해 **한 번 채우고**, 엔진·패키지를 올렸을 때만 갱신한다. (L1 `/setup-engine`·`/gate-check`가 이 섹션을 `CLAUDE.md`에서 읽고 쓰므로 위치를 옮기지 않는다. 다른 도구도 이 파일을 읽으면 된다.) `[CHOOSE]`가 남아 있으면 아래 절차로 확인한다. `/setup-engine`은 이 섹션과 함께 `.claude/docs/technical-preferences.md`(엔진 전문가 라우팅·성능 예산·명명 규칙 — L1 스킬 20여 개가 읽음)도 만든다 — 셋업 때 한 번 실행을 권장한다.
+**Technology Stack 먼저**: `CLAUDE.md`의 `## Technology Stack` 섹션(엔진·렌더 파이프라인·주요 패키지 버전)이 채워져 있으면 그 값을 기준으로 삼고 매번 다시 확인하지 않는다. 프로젝트 셋업 시 아래 1~3을 실측해 **한 번 채우고**, 엔진·패키지를 올렸을 때만 갱신한다. (L1 `/setup-engine`·`/gate-check`가 이 섹션을 `CLAUDE.md`에서 읽고 쓰므로 위치를 옮기지 않는다. 다른 도구도 이 파일을 읽으면 된다.) `[CHOOSE]`가 남아 있으면 아래 절차로 확인한다. `/ko-setup-engine`(기존 코드 실측 — 새 프로젝트면 `/setup-engine`으로 넘김)은 이 섹션과 함께 `.claude/docs/technical-preferences.md`(엔진 전문가 라우팅·성능 예산·명명 규칙 — L1 스킬 20여 개가 읽음)도 만든다 — 셋업 때 한 번, 엔진·패키지 업그레이드 때마다 실행한다. 측정만 필요하면 `bash .claude/skills/ko-setup-engine/measure.sh <코드-루트>`.
 
 1. **Determine Unity Version**:
    - Check `ProjectSettings/ProjectVersion.txt`. Validate if features like `Awaitable`, C# 12, or CoreCLR are natively supported.

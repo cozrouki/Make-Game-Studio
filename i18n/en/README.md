@@ -9,7 +9,7 @@
 | [AGENTS.md](AGENTS.md) | `/AGENTS.md` — persona §1–§7 (tool-neutral) |
 | [rules/gameplay-code.md](rules/gameplay-code.md) | `.claude/rules/gameplay-code.md` |
 | [rules/doc-writing.md](rules/doc-writing.md) | `.claude/rules/doc-writing.md` |
-| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 5 Korean wrappers |
+| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 6 Korean wrappers |
 
 ## Why only these files?
 

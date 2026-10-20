@@ -10,6 +10,7 @@
       "required": true,
       "skills": [
         "unity-fullstack",
+        "ko-setup-engine",
         "start",
         "help",
         "onboard",
