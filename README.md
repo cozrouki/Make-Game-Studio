@@ -31,15 +31,19 @@ Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
 
 ## Quick start
 
-```bash
+```powershell
 git clone https://github.com/cozrouki/unity-fullstack-claude-skills
-# copy .claude/ and .agent/ into your Unity project root
+cd unity-fullstack-claude-skills
+.\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
 ```
 
-Then fill **one place** — the game-folder mapping table in `AGENTS.md` §6 (the
-single source of truth; every tool derives from it). Everything else ships
-pre-generalized with `<GameName>` / `<GamePrefix>` / `<SharedModule>`
-placeholders. Single-game project? Just ignore the game-tag system.
+`install.ps1` copies the assets (git-tracked files only, per `-Tools`), fills
+the game-folder mapping table in `AGENTS.md` §6 and the `<SharedModule>` /
+namespace placeholders, creates or merges `.claude/settings.local.json`, adds
+MCPForUnity to `Packages/manifest.json`, writes `.mcp.json`, and updates
+`.gitignore`. It refuses to overwrite an existing install unless you pass
+`-Force` (which backs it up first). Use `-DryRun` to preview. Single-game
+project? Omit `-Games` and ignore the game-tag system.
 
 Then record your engine once: run `/ko-setup-engine` in Claude Code. It
 measures the project (engine version, render pipeline, packages, input
@@ -153,7 +157,36 @@ python scripts/gen-rule-mirrors.py
 
 ## 다른 Unity 프로젝트에 적용하는 방법
 
-### 1단계: 자산 복사
+### 자동 설치 (권장) — `scripts/install.ps1`
+
+아래 1~4단계를 한 번에 수행합니다. Windows PowerShell 5.1 이상.
+
+```powershell
+# 단일 게임
+.\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
+
+# 멀티 게임 + 공유 모듈 + Cursor 병행
+.\scripts\install.ps1 -Target D:\Projects\Multi -Games "A=GameA,B=GameB" -SharedModule SharedCore -Tools Claude,Cursor
+
+# 미리보기 (파일 쓰기 없음)
+.\scripts\install.ps1 -Target D:\Projects\MyGame -DryRun
+```
+
+| 단계 | 하는 일 |
+|---|---|
+| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 제외). `-Tools Claude,Cursor,Antigravity,Gemini` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/` |
+| 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지 |
+| 권한 | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
+| MCP | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |
+| .gitignore | 백업 폴더·머신별 설정·런타임 파일 항목 추가 |
+
+- `-Games`를 생략하면 `Assets/` 하위 후보(.cs 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
+- 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다(`settings.local.json`은 보존).
+- 설치 후: Unity에서 MCPForUnity 확인 → `claude` 실행 → **`/ko-setup-engine`**(6단계) → `/unity-fullstack`.
+
+스크립트를 쓸 수 없는 환경이면 아래 수동 절차를 따르세요.
+
+### 1단계: 자산 복사 (수동)
 
 대상 Unity 프로젝트 루트에 자산을 복사. 쓰는 도구에 맞춰 선택 복사:
 
@@ -381,6 +414,7 @@ CLAUDE.md                        Claude Code 계층 (→AGENTS.md + Technology S
 GEMINI.md / AGENT.md             AGENTS.md 포인터 (Gemini CLI / 단수 폴백)
 .mcp.json.template               MCPForUnity 설정 템플릿
 scripts/
+├── install.ps1                  대상 Unity 프로젝트에 설치 (복사·치환·권한·MCP·.gitignore)
 ├── sync-upstream.ps1            upstream 2종 동기화
 └── gen-rule-mirrors.py          .claude/rules → .agent/rules + .cursor/rules 생성
 
