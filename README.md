@@ -79,6 +79,32 @@ Unity 게임 개발용 Claude Code 통합 환경. 4개 외부 저장소를 흡�
 
 원본 통합 시점: **2026-05-13** (Unity 멀티 게임 프로젝트에서 추출·일반화)
 
+## 빠른 시작
+
+설치 스크립트 한 번 + Claude Code에서 엔진 설정 한 번이면 끝납니다.
+
+```powershell
+# 1. 템플릿 받기
+git clone https://github.com/cozrouki/unity-fullstack-claude-skills
+cd unity-fullstack-claude-skills
+
+# 2. 대상 Unity 프로젝트에 설치 (복사·자리표시자·권한·MCP·.gitignore)
+.\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
+```
+
+3. **Unity 에디터**에서 프로젝트를 열고 `Window > MCP for Unity`에서 브리지 연결을 확인합니다 (패키지는 2에서 manifest에 추가됨).
+4. 프로젝트 루트에서 Claude Code를 실행합니다.
+   ```powershell
+   cd D:\Projects\MyGame
+   claude
+   ```
+5. **`/ko-setup-engine`** — 최초 1회. 엔진·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `CLAUDE.md` Technology Stack과 `technical-preferences.md`를 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
+6. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화).
+
+- 옵션(멀티 게임, Cursor 병행, 미리보기, 덮어쓰기): [자동 설치](#자동-설치-권장--scriptsinstallps1)
+- 엔진 설정 상세: [6단계](#6단계-엔진-설정-자동수동-설치-공통--technology-stack--technical-preferencesmd)
+- 스크립트를 쓸 수 없으면: [수동 1~5단계](#1단계-자산-복사-수동)
+
 ## Windows 기여자 — 최초 clone 후 설정
 
 이 저장소는 `.gitattributes` 로 `.sh` 등 텍스트 파일을 LF 로 저장합니다. 그러나 사용자 전역 git 설정이 `core.autocrlf=true` (Git for Windows 기본값) 이면 clone 시점에 워킹트리에 CRLF 로 풀려 hook bash 스크립트가 `'\r': command not found` 류로 실패합니다. 이 저장소에 한정해 LF 를 유지하도록 한 줄 설정하세요:
@@ -267,7 +293,7 @@ claude
 
 `/unity-fullstack` 호출 → 4계층 메뉴 한국어 안내.
 
-### 6단계: 엔진 설정 (Technology Stack + technical-preferences.md)
+### 6단계: 엔진 설정 (자동·수동 설치 공통) — Technology Stack + technical-preferences.md
 
 L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`team-*` 등)가 `.claude/docs/technical-preferences.md`에서 엔진·성능 예산·명명 규칙·**Unity 전문가 에이전트 라우팅**을 읽고, `/gate-check`는 `CLAUDE.md`의 `## Technology Stack`이 `[CHOOSE]` 상태인지 검사합니다. 두 파일 모두 **비어 있는 상태로 배포**되므로 한 번 채워야 합니다. 비어 있으면 이 스킬들이 "엔진 미설정"으로 판단하고 전문가 에이전트(`unity-specialist`·`unity-shader-specialist`·`unity-ui-specialist` 등)로 넘기지 못합니다.
 
