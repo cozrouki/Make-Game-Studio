@@ -52,3 +52,4 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
 ## 커밋
 
 스토리를 done 처리할 때 `studio.py commit dev -m "[studio:dev] T-xxxx <스토리>"`. 컴파일 에러나 실패한 테스트가 있는 상태로는 커밋하지 않는다.
+Unity 에디터가 만든 `.meta` · `ProjectSettings` · `Packages` 변경이 스토리와 무관하면 `--only <스토리 경로…>` 로 빼고, 따로 "Unity 에디터 생성물" 커밋으로 묶는다 (`.meta` 는 원본 에셋과 같은 커밋에 넣는다).

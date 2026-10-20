@@ -60,7 +60,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
 6. 완료: 먼저 `S audit` 으로 이 티켓에서 만든 **주인 없는 파일**(어느 영역에도 없음)이 있는지 본다. 있으면 note 에 경로를 함께 적는다 — 디렉터가 영역을 정하거나 직접 커밋한다. 그다음 `S update <id> --by <역할> --status done --note "<산출물 경로 · 결정 · 남은 일>"`.
    - 결과의 `notifySession`(요청자)에 완료를 알린다: `[studio] T-0012 done (art): <한 줄 요약>`. 요청자가 director 면 알리지 않는다.
    - `doc/work_log.md` 최상단의 오늘 날짜 아래에 한 줄을 추가한다: `- [<게임태그>] studio/<역할> <id>: <제목>`.
-   - 커밋한다: `python .agent/tools/studio/studio.py commit <역할> -m "[studio:<역할>] <id> <제목>"` 에 프로젝트 커밋 서명 줄을 붙인다. **이 커밋이 이 티켓의 마지막 파일 변경이다** — 커밋 뒤에 티켓을 고치지 않는다(note 에 커밋 해시를 쓰지 않음). 커밋 출력의 경고는 다음 티켓 note 나 대화로 보고한다. 푸시는 하지 않는다.
+   - 커밋한다: `python .agent/tools/studio/studio.py commit <역할> -m "[studio:<역할>] <id> <제목>"` 에 프로젝트 커밋 서명 줄을 붙인다. **이 커밋이 이 티켓의 마지막 파일 변경이다** — 커밋 뒤에 티켓을 고치지 않는다(note 에 커밋 해시를 쓰지 않음). 먼저 `--dry-run` 으로 대상을 보고, 이 티켓과 무관한 변경(Unity 가 만든 `.meta` · `ProjectSettings` 등)이 섞였으면 `--only <이 티켓의 경로…>` 로 좁힌다 (공유 영역은 자동 포함). 커밋 출력의 경고는 다음 티켓 note 나 대화로 보고한다. 푸시는 하지 않는다.
 7. 막힘: 같은 티켓에서 2번 연속 실패하면 `--status blocked --note "<원인>"` 으로 바꾸고, 해결 권한이 있는 쪽(역할 또는 director)에 `question` 티켓을 낸 뒤 다음 티켓으로 넘어간다.
 8. 1번으로 돌아간다.
 

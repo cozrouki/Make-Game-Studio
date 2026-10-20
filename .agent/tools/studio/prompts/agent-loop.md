@@ -28,7 +28,7 @@
 6. 완료한다. 먼저 `S audit` 으로 이 티켓에서 만든 **주인 없는 파일**이 있는지 본다 — 있으면 done note 에 경로를 적는다 (디렉터가 영역을 정하거나 직접 커밋). **순서를 지킨다: done 처리 → work_log → 커밋.** 티켓 파일도 커밋에 들어가야 하므로 커밋 뒤에 티켓을 고치지 않는다 (note 에 커밋 해시를 적지 않는다 — git log 로 찾을 수 있다).
    - `S update <id> --by <ROLE> --status done --note "<산출물 경로 · 결정 · 남은 일>"`
    - `doc/work_log.md` 최상단의 오늘 날짜 아래에 한 줄을 추가한다: `- [<게임태그>] studio/<ROLE> <id>: <제목>`.
-   - 커밋: `python .agent/tools/studio/studio.py commit <ROLE> -m "[studio:<ROLE>] <id> <제목>"`. 푸시는 하지 않는다. 이 커밋이 이 티켓의 마지막 동작이다.
+   - 커밋: `python .agent/tools/studio/studio.py commit <ROLE> -m "[studio:<ROLE>] <id> <제목>"`. 푸시는 하지 않는다. 이 커밋이 이 티켓의 마지막 동작이다. 영역 안에 이 티켓과 무관한 변경(예: Unity 가 만든 `.meta` · `ProjectSettings`)이 섞여 있으면 `--dry-run` 으로 대상을 보고 `--only <이 티켓의 경로…>` 로 좁힌다.
 7. 같은 티켓에서 2번 연속 실패하면 `--status blocked --note "<원인>"` 으로 바꾸고 다음 티켓으로 간다.
 8. 1번으로 돌아간다.
 

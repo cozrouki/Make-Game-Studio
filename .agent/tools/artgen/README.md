@@ -69,6 +69,42 @@ python .agent/tools/artgen/artgen.py status   [ASSET-001]
 | `unity.import` | 아트 바이블 §8 + 성능 예산 (maxSize·압축·PPU·필터) |
 | `providerOptions.<이름>` | 백엔드별 값 (워크플로 파일·모델·LoRA 등) — 백엔드 결정 후 |
 
+## 로컬 ComfyUI — `comfyui` 어댑터
+
+로컬 ComfyUI 서버의 HTTP API 로 생성한다 (표준 라이브러리만 사용). `POST /prompt` → `GET /history/<id>` 대기 → `GET /view` 로 수령. **변형마다 시드 하나씩** 따로 제출해 재현성을 유지한다.
+
+**준비**: ComfyUI 실행(`run_nvidia_gpu.bat`) → 모델 배치 → `artgen.config.local.json` 에 `{"provider": "comfyui"}`.
+
+| 모델 | 위치 | 라이선스 |
+|---|---|---|
+| SDXL base 1.0 `sd_xl_base_1.0.safetensors` | `models/checkpoints/` | CreativeML Open RAIL++-M (상업 가능) |
+| `sdxl_vae_fp16_fix.safetensors` | `models/vae/` | MIT |
+| BiRefNet `birefnet.safetensors` ([Comfy-Org/BiRefNet](https://huggingface.co/Comfy-Org/BiRefNet)) | `models/background_removal/` | MIT |
+
+**설정** (`artgen.config.json` → `providers.comfyui`, 요청별 덮어쓰기는 `request.providerOptions.comfyui`)
+
+| 키 | 기본값 | 설명 |
+|---|---|---|
+| `url` | `http://127.0.0.1:8188` | ComfyUI 주소 |
+| `checkpoint` · `vae` | SDXL base · fp16 VAE | 기본 그래프의 모델 파일명 |
+| `steps` · `cfg` · `sampler` · `scheduler` | 28 · 6.5 · dpmpp_2m · karras | 샘플링 |
+| `genArea` | 1048576 (1024²) | 생성 해상도 면적. 요청 비율을 유지한 64 배수로 생성한 뒤 요청 크기로 lanczos 축소 |
+| `removeBackground` | `{"model": "birefnet.safetensors"}` | 투명 배경. 비우면 `capabilities.transparent=false`. `"threshold": null` 로 이진화 끔 |
+| `workflow` | (없음) | ComfyUI 에서 **Export (API)** 로 저장한 JSON 경로. 지정하면 기본 그래프 대신 사용 |
+| `timeoutSec` | 600 | 이미지 1장 대기 한도 |
+
+**투명 배경 처리** — 코어 노드만 쓴다 (ComfyUI 0.42+): `RemoveBackground`(전경 확률) → `ThresholdMask`(0.5 이진화) → `InvertMask` → `JoinImageWithAlpha` → 축소.
+- `JoinImageWithAlpha` 는 `alpha = 1 - mask` 로 뒤집으므로 `InvertMask` 가 필요하다.
+- 전경 확률이 0.996 수준이라 그대로 쓰면 내부 알파가 254 로 남는다(미세하게 비침). 원본 해상도에서 이진화한 뒤 축소하면 내부는 255, 가장자리는 부드러워진다.
+- 배경 제거를 쓸 때는 프롬프트의 "isolated on transparent background" 를 SDXL 이 잘 따르는 "단색 흰 배경의 단일 오브젝트" 로 바꾸고, 부정 프롬프트에 장면 · 지면 · 잘림을 더한다.
+
+**사용자 워크플로 토큰** — 문자열 값 안의 `{{positive}} {{negative}} {{seed}} {{width}} {{height}} {{gen_width}} {{gen_height}}` 를 치환한다. 값 전체가 토큰인 필드(예: `"seed": "{{seed}}"`)는 숫자로 바뀐다. 결과는 마지막 저장 노드(SaveImage)의 이미지다. LoRA · ControlNet · IP-Adapter 로 스타일과 시점을 고정할 때 쓴다.
+
+**실측과 한계** (RTX 2070 SUPER 8GB, ComfyUI 0.42.1)
+- 256px 2장 약 45~55초, 1024×768 2장 약 76초 (첫 실행은 모델 로딩 포함).
+- 단일 이펙트 · 아이콘은 바로 쓸 만한 품질. 긴 프롬프트(CLIP 77 토큰 초과) · 격자 시트 · 엄격한 시점 · 정확한 팔레트는 기본 SDXL 로 맞추기 어렵다 → 요청을 단일 이미지로 쪼개고 사용자 워크플로로 보강한다.
+- Flux dev 는 비상업 라이선스라 출시용으로 쓰지 않는다.
+
 ## 사람 아티스트 납품 — `manual` 어댑터
 
 이미지를 생성하지 않고 **사람이 그린 PNG 를 받는다.** 검수 · 선택 · 승격 · Unity 임포트는 AI 생성물과 똑같이 처리된다. 그래서 AI 와 사람의 에셋을 한 프로젝트에서 섞어 쓸 수 있다.

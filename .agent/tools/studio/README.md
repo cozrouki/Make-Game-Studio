@@ -170,6 +170,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 python .agent/tools/studio/studio.py commit art -m "[studio:art] T-0012 전투 VFX 4종 승격" [--dry-run]
 ```
 - 자기 쓰기 영역과 공유 영역의 변경만 파일을 명시해 커밋한다. 다른 세션이 스테이징한 파일은 섞이지 않는다.
+- **`--only <경로…>`** — 자기 영역 안에서도 일부만 커밋한다 (폴더 · 파일 · `*` 패턴). 예: Unity 에디터가 만든 `.meta` · `ProjectSettings` 를 이번 티켓 커밋에서 뺄 때 `commit dev -m "…" --only Assets/MyGame/Scripts`. 공유 영역(티켓 · work_log)은 항상 포함되고, 지정 경로에 영역 밖 변경이 있으면 거부한다.
 - 다른 세션이 git 을 쓰고 있어 `index.lock` 이 잡혀 있으면 자동으로 재시도한다.
 - `Assets/` 파일에 `.meta` 가 없으면 경고한다. 아트는 dev 가 Unity 임포트를 확인한 뒤(다음 커밋 때) `.meta` 와 함께 커밋한다.
 - 디렉터 영역(프로토콜 · 지침 · `CLAUDE.md`)은 `studio.py commit director -m "…"` 로 디렉터가 커밋한다 (`/studio-status commit`).
@@ -192,7 +193,7 @@ $S changes <role>                # 내 영역 미커밋 변경 + 진행 중 티�
 $S audit                         # 주인 없는 변경 · 역할 겹침
 $S protocol [ack --by director --note "…"]   # 프로토콜 변경 확인 · 승인
 $S upgrade --from <템플릿> [--dry-run]         # 도구 갱신 (설정 보존 · 공지 티켓)
-$S commit <role|director> -m "…" [--dry-run]
+$S commit <role|director> -m "…" [--dry-run] [--only <경로…>]
 ```
 모든 명령은 `--json` 을 지원한다. `new` 와 `update` 의 JSON 출력에는 알림을 보낼 세션 이름(`notifySession`)이 들어 있다.
 
