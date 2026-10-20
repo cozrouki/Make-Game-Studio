@@ -26,11 +26,27 @@
    - → dev `task` "기술 셋업": `/ko-setup-engine`(코드가 없으면 `/setup-engine`) → `/test-setup` → `/create-architecture`
 7. art 의 스타일 프로브 `review` 티켓을 검토한다. 아트 바이블과 어긋나면 수정을 요청하고, 맞으면 `gate request G2` 와 디렉터 티켓을 낸다 (프로브 이미지 경로 포함).
 
+### G1 승인 후 — 사람 아티스트 모드 (`"artMode": "human"`)
+
+위 5~7번 대신 다음 순서로 한다. 사람에게는 **완성된 지시서보다 방향 · 이유 · 제약**이 먼저다.
+
+5h. `.agent/tools/studio/templates/art-direction-brief.md` 를 복사해 `design/art/art-direction-brief.md` 를 쓴다. §1~5 와 §8 이 필수다. §6 제약은 지금 아는 것만 쓰고, §9 우선순위 목록은 초안으로 둔다.
+6h. 티켓을 발행한다:
+   - → art `task` "스타일 시안 ASSET-000" (refs: 브리프). 보조 세션이 아티스트에게 대화로 전달한다.
+   - → dev `task` "기술 셋업" (5~7번과 같음)
+   - → dev `task` "자리표시 그래픽으로 코어 루프 구현 준비" — 아트를 기다리지 않게 한다 (`Assets/<Game>/Placeholder/`)
+7h. 아티스트 시안이 오면 디렉터가 고른다 (art 가 director 에 질문 티켓을 보냄). 선택이 나면 `/art-bible` 로 아트 바이블을 쓰되, **초안 단계에서 art `review` 티켓으로 아티스트 의견을 받아 반영한다** (공동 작성).
+   §8 기술 규격은 dev 의 `technical-preferences.md` 가 나온 뒤 확정한다. 스타일 토큰(`_style-tokens.json`)은 만들지 않는다.
+8h. 브리프 · 시안 review · 아트 바이블이 갖춰지면 `gate request G2` 를 하고 디렉터 티켓을 낸다.
+
+사람 아티스트 모드의 에셋 요청(아래 9번)에서는 **첫 플레이 가능 버전에 필요한 것부터 작게** 나눠 보낸다. 사람의 시간이 가장 비싼 자원이다. 본문에 "왜 이 에셋이 먼저인가" 를 한 줄 적는다.
+
 ### G2 승인 후 — 상세 설계
 8. MVP 시스템마다 `/design-system <system>` → GDD 를 쓰고, `/asset-spec system:<system>` → 에셋 스펙과 매니페스트를 만든다.
 9. 스펙 파일마다 → art `asset-request` 티켓 (`--gate G2`, `--refs design/assets/specs/<x>-assets.md`). 본문에 ASSET ID 범위와 우선순위를 적는다.
 10. `/create-epics` → `/create-stories <epic>` → `/sprint-plan`.
 11. 스토리마다 → dev `story` 티켓 (`--gate G3`, `--refs <스토리 파일>`). 에셋이 필요한 스토리는 `--depends <해당 asset-request 티켓>` 을 단다.
+    - **사람 아티스트 모드에서는 `--depends` 를 달지 않는다.** dev 는 자리표시 그래픽으로 구현하고, 본문에 필요한 ASSET ID 를 적어 둔다. art 의 `assets-ready` 가 오면 dev 가 교체한다. 사람의 일정에 dev 를 묶지 않기 위해서다.
 12. dev 의 기술 셋업이 끝나 `technical-preferences.md` 가 생기면 `gate request G3` 와 디렉터 티켓을 낸다 (스프린트 1 범위 요약).
 
 ### G3 승인 후 — 프로덕션

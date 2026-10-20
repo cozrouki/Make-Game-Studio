@@ -19,7 +19,10 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
 2. `ListAgents` 를 호출해 이 세션의 이름을 확인한다 (`This session is <이름> [...]` 줄).
 3. `S roster` 로 기존 등록을 본다. 같은 역할에 **다른 살아 있는 세션**(ListAgents 의 peer 목록에 있음)이 이미 있으면, `AskUserQuestion` 으로 교체할지 묻는다. 한 역할에는 세션 하나만 둔다.
 4. `S join <역할> <세션이름>` 으로 등록한다.
-5. **반드시 읽는다:** `.agent/tools/studio/README.md`, `.agent/tools/studio/roles/<역할>.md`, `AGENTS.md`. 이 세션은 지금부터 이 헌장대로 행동한다.
+5. **반드시 읽는다:** `.agent/tools/studio/README.md`, 역할 헌장, `AGENTS.md`. 이 세션은 지금부터 이 헌장대로 행동한다.
+   - 역할 헌장은 `.agent/tools/studio/roles/<역할>.md` 다. 단, **역할이 art 이고 `studio.config.json` 의 `artMode` 가 `human` 이면 `roles/art-human.md`** 를 읽는다.
+   - art-human 모드에서 이 세션은 **아티스트의 보조**다. 업무 루프(Phase 2)의 "수행" 단계는 자율 실행이 아니라 헌장의 대화 절차다. 브리프를 전하고, 아티스트의 응답이나 납품을 기다린다. 아티스트가 자리에 없으면 대기열만 정리하고 루프를 종료한다.
+   - 등록을 마치면 이 터미널의 아티스트에게 자기소개와 사용법을 3줄로 알린다. 예: "티켓이 오면 브리프로 알려 드립니다 / 그림은 `production/artgen/_inbox/<ASSET-ID>/` 에 넣고 '넣었어' 라고 말씀하세요 / 질문은 언제든 저에게".
 6. 다른 역할의 세션이 로스터에 있고 살아 있으면, 그 세션들에 합류를 알린다 (한 번만):
    `[studio] <역할> 세션 합류 (<세션이름>)` — 답장을 기대하지 않는다.
 
@@ -31,7 +34,13 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
    - `paused` 가 있으면: "⏸ 디렉터 정지 중 — <사유>" 를 알리고 **루프를 종료**한다. 진행 중이던 티켓은 안전한 지점까지 마무리한 뒤 note 를 남기고 멈춘다.
 2. 처리할 티켓을 고른다. 진행 중(`in-progress`)인 티켓이 먼저이고, 그다음은 `ready: true` 인 첫 티켓이다.
    - 없으면 대기 사유별로 요약한다 (게이트 대기 N · 의존 대기 N). "새 티켓 알림이 오면 이어서 처리합니다" 라고 알리고 **루프를 종료**한다. 폴링하지 않는다.
-3. 착수: `S update <id> --by <역할> --status in-progress`.
+3. 착수:
+   - 새 티켓(`open`)이면 `S update <id> --by <역할> --status in-progress`.
+   - **이미 `in-progress` 인 티켓이면 중단 후 재개다** (사용량 한도 · 세션 재시작 · 대화 요약). 먼저 다음을 한다:
+     1. `S changes <역할>` 로 내 영역의 미커밋 파일을 보고, `git diff -- <파일>` 로 반쯤 된 작업을 확인한다.
+     2. 티켓 스레드의 마지막 note 와 대조해 판단한다. 이어서 할 수 있으면 이어서 하고, 일관성이 깨졌으면 그 티켓에서 바꾼 파일만 `git checkout -- <파일>` 로 되돌린 뒤 처음부터 다시 한다. **다른 티켓 때문에 생긴 변경은 건드리지 않는다.**
+     3. `S update <id> --by <역할> --note "재개: <이어서 | 되돌리고 재시작> — <근거 한 줄>"` 로 기록한다.
+   - 작업이 길면 의미 있는 단계마다 note 로 진행 지점을 남긴다 (예: "GDD §1~4 완료, §5 작성 중"). 중단되었을 때 재개 근거가 된다.
 4. `S show <id>` 로 본문과 스레드를 읽고, refs 문서를 읽는다. 그다음 **역할 헌장의 해당 업무 절차**대로 수행한다. 필요한 L1 스킬(`/brainstorm`, `/ko-art-gen`, `/ko-story-cycle` 등)은 Skill 도구로 호출한다.
    - 스튜디오 모드에서 업무 스킬이 AskUserQuestion 을 하면: **역할 판단 권한 안**에 있는 질문은 권장안을 채택하고 티켓 note 에 "결정: … (권장안)" 을 남긴다. 권한 **밖**이면 `to: director` 나 해당 역할에 `question` 티켓을 발행하고, 현재 티켓은 `blocked` 로 바꾼다.
    - 이 세션에서 실제 사용자(디렉터)가 직접 지시를 입력했다면 그 지시가 우선한다.

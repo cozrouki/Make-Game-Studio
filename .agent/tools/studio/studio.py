@@ -22,6 +22,7 @@ TYPES = ("task", "question", "asset-request", "assets-ready", "story", "review",
 PRIORITIES = ("P0", "P1", "P2")
 GATE_STATUSES = ("pending", "requested", "approved", "rejected")
 DIRECTOR = "director"
+ART_MODES = ("ai", "human")
 TICKET_RE = re.compile(r"^T-(\d{4,})\.md$")
 FIELDS = ("id", "title", "from", "to", "type", "status", "priority", "gate", "depends", "refs", "created", "updated")
 LIST_FIELDS = ("depends", "refs")
@@ -72,6 +73,13 @@ class Studio:
         self.cfg = config
         self.dir = os.path.join(self.root, config["dataDir"])
         self.tickets_dir = os.path.join(self.dir, "tickets")
+
+    @property
+    def art_mode(self):
+        mode = self.cfg.get("artMode", "ai")
+        if mode not in ART_MODES:
+            raise StudioError(f"artMode 는 {ART_MODES} 중 하나 (현재: {mode})")
+        return mode
 
     @property
     def roles(self):
@@ -250,6 +258,11 @@ class Studio:
         out = []
         for g in defs:
             s = state.get(g["id"], {})
+            g = dict(g)
+            # 아트 모드별 산출물 — 사람 아티스트면 스타일 토큰 대신 디렉션 브리프 · 시안 선택이 게이트 조건
+            by_mode = g.pop("artifactsByArtMode", {})
+            if self.art_mode in by_mode:
+                g["artifacts"] = by_mode[self.art_mode]
             out.append(dict(g, status=s.get("status", "pending"), history=s.get("history", [])))
         return out
 
@@ -326,7 +339,7 @@ class Studio:
         director_queue = [{"id": t["id"], "title": t["title"], "from": t["from"], "type": t["type"]}
                           for t in tickets if t["to"] == DIRECTOR and t["status"] in ACTIVE]
         gates = [{"id": g["id"], "name": g["name"], "status": g["status"], "unlocks": g["unlocks"]} for g in self.gates()]
-        return {"paused": self.paused(), "roster": self.roster(), "gates": gates, "roles": per_role,
+        return {"artMode": self.art_mode, "paused": self.paused(), "roster": self.roster(), "gates": gates, "roles": per_role,
                 "directorQueue": director_queue, "stale": stale, "total": len(tickets)}
 
     # ------------------------------------------------------------ 커밋
@@ -440,6 +453,9 @@ def main(argv=None):
     p.add_argument("--reason", default="")
     sub.add_parser("resume", help="정지 해제")
 
+    p = sub.add_parser("changes", help="역할 쓰기 영역 + 공유 영역의 미커밋 변경 (중단 후 재개 점검용)")
+    p.add_argument("role")
+
     p = sub.add_parser("commit", help="역할 쓰기 영역 + 공유 영역만 커밋")
     p.add_argument("role")
     p.add_argument("-m", "--message", required=True)
@@ -499,7 +515,7 @@ def main(argv=None):
                 out(dict(g, roster=st.roster()), f"{g['id']} {g['status']}")
         elif args.cmd == "status":
             s = st.status()
-            lines = ([f"⏸ 정지 중 — {s['paused']}"] if s["paused"] else []) + ["[게이트]"] +[f"  {g['id']:<4} {g['status']:<10} {g['name']}" for g in s["gates"]]
+            lines = ([f"⏸ 정지 중 — {s['paused']}"] if s["paused"] else []) + [f"아트 모드: {s['artMode']}", "[게이트]"] +[f"  {g['id']:<4} {g['status']:<10} {g['name']}" for g in s["gates"]]
             lines += ["[역할]          진행 착수가능 대기(open) 차단  세션"]
             for r, c in s["roles"].items():
                 sess = s["roster"].get(r, {}).get("session", "-" if r != DIRECTOR else "(사용자)")
@@ -511,6 +527,11 @@ def main(argv=None):
         elif args.cmd in ("pause", "resume"):
             st.set_paused(args.cmd == "pause", getattr(args, "reason", ""))
             out({"paused": st.paused(), "roster": st.roster()}, "정지됨" if args.cmd == "pause" else "재개됨")
+        elif args.cmd == "changes":
+            files = st.changed_files(args.role)
+            active = [t["id"] for t in st.inbox(args.role) if t["status"] == "in-progress"]
+            out({"role": args.role, "files": files, "inProgress": active},
+                ("\n".join(files) or "(미커밋 변경 없음)") + (f"\n진행 중 티켓: {', '.join(active)}" if active else ""))
         elif args.cmd == "commit":
             r = st.commit(args.role, args.message, args.dry_run)
             text = (f"커밋 {r['sha']} — {len(r['files'])}개 파일" if r["committed"]

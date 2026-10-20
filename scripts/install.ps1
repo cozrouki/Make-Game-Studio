@@ -303,8 +303,8 @@ Write-Step "[5/6] .gitignore"
 $gi = Join-Path $Target ".gitignore"
 $need = @(".claude.backup-*/", ".claude/settings.local.json", ".claude/scheduled_tasks.lock", ".mcp.json",
           "production/session-logs/", "production/session-state/active.md", "production/stage.txt",
-          "production/artgen/*/v*/", "production/artgen/*/replaced/", ".agent/tools/artgen/artgen.config.local.json",
-          "production/studio/events.jsonl", ".agent/tools/studio/studio.config.local.json", "__pycache__/")
+          "production/artgen/*/v*/", "production/artgen/*/replaced/", "production/artgen/_inbox/", ".agent/tools/artgen/artgen.config.local.json",
+          "production/studio/events.jsonl", "production/studio/PAUSED", ".agent/tools/studio/studio.config.local.json", "__pycache__/")
 $giText = ""
 if (Test-Path $gi) { $giText = Read-TextFile $gi }
 $lines = $giText -split "\r?\n"

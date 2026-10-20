@@ -32,6 +32,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
    - `design/art/art-bible.md` 가 없으면 → "`/art-bible` 을 먼저 실행하세요. 검수 기준이 아트 바이블입니다."
    - `design/assets/asset-manifest.md` 와 해당 스펙 파일이 없으면 → "`/asset-spec system:<이름>` 을 먼저 실행하세요."
 2. **백엔드 상태** — `artgen providers` 를 실행해 결과를 보여 준다.
+   - 스튜디오 모드가 사람 아티스트 모드(`.agent/tools/studio/studio.config.json` 의 `"artMode": "human"`)이면 이 스킬의 자동 생성 루프를 쓰지 않는다. `roles/art-human.md` 절차(`--provider manual` 로 납품 수령)를 따른다.
    - 활성 provider 가 `mock` 이면 이렇게 알린다: "이미지 생성 백엔드가 아직 정해지지 않아 **자리표시 이미지(mock)** 로 진행합니다. 요청·승격·임포트 흐름은 실제와 같고, 시각 검수만 생략합니다. 백엔드 연결 방법은 `.agent/tools/artgen/README.md` §백엔드 연결을 보세요."
    - 활성 provider 가 `ready: false` 이면 메시지를 보여 주고 중단한다. 대안으로 `--provider mock` 을 제안한다.
 3. **설정 값** — `.agent/tools/artgen/artgen.config.json`(+ `.local.json`)에서 `defaults.variants / maxRounds / passScore` 를 읽는다. 인수로 받은 `--variants`·`--rounds` 가 이 값보다 우선한다.
