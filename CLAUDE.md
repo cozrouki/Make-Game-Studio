@@ -12,7 +12,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 ## Technology Stack
 
-> 프로젝트 셋업 시 `/setup-engine`으로 채우거나 `ProjectSettings/ProjectVersion.txt`·`Packages/manifest.json`을 실측해 직접 채운다. 채워진 값이 기준이다 — 엔진·패키지 업그레이드 때만 갱신 (AGENTS.md §4).
+> 프로젝트 셋업 시 `/ko-setup-engine`으로 채운다 (프로젝트 실측 — 코드가 없는 새 프로젝트면 `/setup-engine`으로 넘김). 채워진 값이 기준이다 — 엔진·패키지 업그레이드 때만 갱신 (AGENTS.md §4).
 
 - **Engine**: Unity [CHOOSE]
 - **Language**: C#
@@ -48,7 +48,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (81 skills, GS 72 + ko-* 5 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (82 skills, GS 72 + ko-* 6 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (3 워크플로) |

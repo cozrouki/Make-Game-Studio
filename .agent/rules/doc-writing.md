@@ -29,6 +29,8 @@ globs: ["doc/**/*.md", "production/**/*.md"]
 
 ## work_log.md 형식
 
+현재 월만 `doc/work_log.md`에 두고 새 항목은 최상단에 추가(최신순), 지난 달은 `doc/work_log/YYYY-MM.md` (AGENTS.md §6).
+
 ```markdown
 ## YYYY-MM-DD
 
@@ -42,6 +44,7 @@ globs: ["doc/**/*.md", "production/**/*.md"]
 - `<!-- STATUS -->` 블록 항상 최신 유지
 - 세션 종료 전 `_마지막 업데이트:` 날짜 갱신
 - "다음 할 것"은 구체적인 액션으로 기술
+- 3~5KB 유지 — 현재 상태·최근 완료분·다음 할 것·블로커만 (AGENTS.md §6-1)
 
 ## architecture.md 필수 섹션
 
