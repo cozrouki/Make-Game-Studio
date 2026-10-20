@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "artgen-request/1",
+  "title": "artgen 생성 요청",
+  "description": "에셋 1개의 생성 요청. 백엔드 중립 — 어떤 백엔드든 이 구조를 받는다. 검증 정본은 artgen_lib/request.py (이 파일은 문서·에디터 자동완성용).",
+  "type": "object",
+  "required": ["schema", "assetId", "name", "category", "prompt", "output"],
+  "properties": {
+    "schema": { "const": "artgen-request/1" },
+    "assetId": { "type": "string", "pattern": "^ASSET-\\d{3,}$", "description": "design/assets/asset-manifest.md 의 ID" },
+    "name": { "type": "string", "minLength": 1 },
+    "category": { "enum": ["sprite", "icon", "ui", "vfx", "environment", "texture", "concept"] },
+    "game": { "type": "string", "description": "게임 태그 (AGENTS.md §6). 단일 게임이면 생략" },
+    "source": {
+      "type": "object",
+      "description": "추적성 — 이 요청이 어느 기획 문서에서 왔는가",
+      "properties": {
+        "spec": { "type": "string", "description": "design/assets/specs/<target>-assets.md" },
+        "artBible": { "type": "string", "description": "design/art/art-bible.md" },
+        "gdd": { "type": "string" }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "required": ["subject"],
+      "properties": {
+        "subject": { "type": "string", "description": "무엇을 그리는가 — 에셋 스펙의 Visual Description 에서" },
+        "style": { "type": "array", "items": { "type": "string" }, "description": "아트 바이블 스타일 토큰 (모든 에셋 공통 → 일관성의 핵심)" },
+        "palette": { "type": "array", "items": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }, "description": "아트 바이블 Color System 에서 이 에셋의 의미 색" },
+        "composition": { "type": "string" },
+        "lighting": { "type": "string" },
+        "negative": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "output": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 16, "maximum": 8192 },
+        "height": { "type": "integer", "minimum": 16, "maximum": 8192 },
+        "format": { "enum": ["png"], "default": "png" },
+        "transparent": { "type": "boolean", "default": false },
+        "variants": { "type": "integer", "minimum": 1, "maximum": 16, "description": "생략 시 config.defaults.variants" },
+        "seed": { "type": ["integer", "null"], "minimum": 0, "description": "null = 무작위 (run.json 에 기록되어 재현 가능)" }
+      }
+    },
+    "references": { "type": "array", "items": { "type": "string" }, "description": "참조 이미지 (프로젝트 루트 상대). 백엔드가 지원할 때만 사용" },
+    "unity": {
+      "type": "object",
+      "properties": {
+        "dest": { "type": "string", "pattern": "^Assets/.+\\.png$", "description": "승격 위치 — technical-preferences.md 네이밍 규칙 준수" },
+        "import": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "textureType": { "enum": ["Default", "Sprite", "NormalMap"] },
+            "spriteMode": { "enum": ["Single", "Multiple"] },
+            "pixelsPerUnit": { "type": "number", "exclusiveMinimum": 0 },
+            "filterMode": { "enum": ["Point", "Bilinear", "Trilinear"] },
+            "maxSize": { "enum": [32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384] },
+            "compression": { "enum": ["None", "LowQuality", "Normal", "HighQuality"] },
+            "mipmaps": { "type": "boolean" },
+            "wrapMode": { "enum": ["Repeat", "Clamp", "Mirror"] },
+            "alphaIsTransparency": { "type": "boolean" },
+            "sRGB": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "providerOptions": {
+      "type": "object",
+      "description": "백엔드별 전달값. 키 = provider 이름. 예: {\"comfyui\": {\"workflow\": \"sprite_v2.json\"}}",
+      "additionalProperties": { "type": "object" }
+    },
+    "history": {
+      "type": "array",
+      "description": "검수 재생성 시 프롬프트 수정 이력 (스킬이 기록)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "round": { "type": "integer" },
+          "version": { "type": "string" },
+          "change": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      }
+    }
+  }
+}

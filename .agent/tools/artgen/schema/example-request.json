@@ -1,0 +1,39 @@
+{
+  "schema": "artgen-request/1",
+  "assetId": "ASSET-001",
+  "name": "Frost Hit Spark",
+  "category": "vfx",
+  "source": {
+    "spec": "design/assets/specs/combat-assets.md",
+    "artBible": "design/art/art-bible.md"
+  },
+  "prompt": {
+    "subject": "a burst of jagged ice shards radiating from a bright core, single frame hit effect",
+    "style": ["flat cel shading", "thick dark outline", "chunky readable silhouette", "2D game sprite"],
+    "palette": ["#BFE9FF", "#4FA8D8", "#1C3B57"],
+    "composition": "centered, fills 80% of frame, no cropping",
+    "lighting": "self-illuminated core, no cast shadow",
+    "negative": ["text", "watermark", "photorealistic", "gradient background", "blurry"]
+  },
+  "output": {
+    "width": 256,
+    "height": 256,
+    "transparent": true,
+    "variants": 4,
+    "seed": null
+  },
+  "unity": {
+    "dest": "Assets/MyGame/Art/VFX/vfx_frost_hit_01.png",
+    "import": {
+      "textureType": "Sprite",
+      "pixelsPerUnit": 100,
+      "filterMode": "Bilinear",
+      "maxSize": 256,
+      "compression": "Normal",
+      "mipmaps": false,
+      "alphaIsTransparency": true
+    }
+  },
+  "providerOptions": {},
+  "history": []
+}

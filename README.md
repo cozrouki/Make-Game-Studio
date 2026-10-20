@@ -22,7 +22,7 @@ together yourself.
 
 | Layer | What | Entry |
 |---|---|---|
-| **L1 — Process** | 82 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
+| **L1 — Process** | 86 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
 | **L2 — C# code patterns** | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 — Editor automation** | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
 | **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |
@@ -124,14 +124,16 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (82 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype` 등 |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (86 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
+| **그래픽 생성** | 기획 → 이미지 생성 → 아트 바이블 검수 → Unity 임포트 (백엔드 중립, 어댑터로 나중에 연결) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 82개 (Game-Studios 72 + 한국어 wrapper 6 + 마스터 진입 1 + SkillForge 헬퍼 3)
+- **Skills (L1)**: 86개 (Game-Studios 72 + 한국어 wrapper 7 + 스튜디오 모드 3 + 마스터 진입 1 + SkillForge 헬퍼 3)
 - **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
 - **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
 - **Hooks**: 12개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent 등)
@@ -150,10 +152,10 @@ git checkout -- .claude/hooks
 | **페르소나·표준·문서규칙** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` |
 | **glob 자동적용 룰** | `.claude/rules/` | `.cursor/rules/*.mdc` | `.agent/rules/*.md` | — |
 | **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 |
-| **슬래시 워크플로** | `.claude/skills/` 82개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 7개 ✅ | ❌ |
+| **슬래시 워크플로** | `.claude/skills/` 86개 ✅ | ❌ (자체 명령) | `.agent/workflows/` 8개 ✅ | ❌ |
 | **훅 / 서브에이전트** | `.claude/` ✅ | ❌ | ❌ | ❌ |
 
-> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 7개 = `ko-*` 6 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
+> **핵심 구분** — **콘텐츠 층**(페르소나·룰·C# 카탈로그·docs)은 어느 도구든 즉시 사용 가능. **자동화 층** 중 슬래시 워크플로는 Claude Code(`.claude/skills/` 전체) + Antigravity(`.agent/workflows/` 핵심 8개 = `ko-*` 7 + `unity-fullstack`)가 커버하고, **훅·서브에이전트는 Claude Code 네이티브 전용**이다. Cursor는 콘텐츠 층 + `.cursor/rules/` 자동적용 룰까지 사용한다.
 
 ### AGENTS.md 정본 구조
 
@@ -175,11 +177,11 @@ python scripts/gen-rule-mirrors.py
 
 ### Antigravity 워크플로 (슬래시 커맨드)
 
-`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 7종을 포팅:
+`.agent/workflows/*.md` 는 Antigravity에서 `/파일명` 슬래시로 발동된다. L1 핵심 8종을 포팅:
 
-- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/unity-fullstack`
+- `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/unity-fullstack`
 
-각 워크플로는 Claude Code의 `.claude/skills/<name>/` 절차를 참조하되, Antigravity용으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 훅·서브에이전트가 필요한 나머지 75개 skill은 Claude Code 전용으로 남는다.
+각 워크플로는 Claude Code의 `.claude/skills/<name>/` 절차를 참조하되, Antigravity용으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 훅·서브에이전트가 필요한 나머지 78개 skill은 Claude Code 전용으로 남는다.
 
 ## 다른 Unity 프로젝트에 적용하는 방법
 
@@ -446,7 +448,9 @@ scripts/
 
 .cursor/rules/                   12개 .mdc (Cursor — .claude/rules 에서 생성)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
-.agent/workflows/                7개 (Antigravity 슬래시 — ko-* 6 + unity-fullstack)
+.agent/workflows/                8개 (Antigravity 슬래시 — ko-* 7 + unity-fullstack)
+.agent/tools/artgen/             그래픽 생성 CLI · 백엔드 어댑터 · Unity 임포터 템플릿 · 테스트
+.agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 3종 · 티켓/게이트/커밋 CLI · 테스트
 
 .claude/
 ├── settings.json                권한 + 12 hook wiring + 플러그인
@@ -454,14 +458,18 @@ scripts/
 ├── hooks/                       12개 (로컬 머지 2 + GS 신규 10)
 ├── rules/                       12개 (로컬 fork 2 + GS 10)
 ├── agents/                      39개 (Tier 1-3, Godot/UE 제외)
-├── skills/                      82개
+├── skills/                      86개
 │   ├── unity-fullstack/         마스터 진입
-│   ├── ko-sprint-plan/          한국어 wrapper 6개
+│   ├── ko-sprint-plan/          한국어 wrapper 7개
 │   ├── ko-story-cycle/
 │   ├── ko-code-review/
 │   ├── ko-perf-profile/
 │   ├── ko-prototype/
 │   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh)
+│   ├── ko-art-gen/              그래픽 생성 파이프라인 (artgen CLI 오케스트레이션)
+│   ├── studio-join/             스튜디오 모드 3종 (역할 등록·업무 루프 / 디렉터 지시 / 디렉터 콘솔)
+│   ├── studio-ticket/
+│   ├── studio-status/
 │   ├── sf-list/                 SkillForge 오프라인 헬퍼 3개
 │   ├── sf-info/
 │   ├── sf-add/
@@ -473,7 +481,7 @@ scripts/
 │   └── gs-*.md                  GS 원본 docs 6개
 ├── data/                        2개
 │   ├── bundles.json             6 번들 (core / gameplay / perf / process / visuals-ui / devops)
-│   └── workflows.json           3 워크플로 (concept-to-prototype / feature-implementation / release-cycle)
+│   └── workflows.json           5 워크플로 (concept-to-prototype / concept-to-art / studio-autodev / feature-implementation / release-cycle)
 └── agent-memory/                (빈 디렉토리, GS hook 출력처)
 
 .agent/skills/                   L2 SkillForge 미러
