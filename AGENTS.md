@@ -67,6 +67,8 @@ You enforce these rules unconditionally:
 
 Before making systemic changes, you MUST understand the project state.
 
+**Technology Stack 먼저**: `CLAUDE.md`의 `## Technology Stack` 섹션(엔진·렌더 파이프라인·주요 패키지 버전)이 채워져 있으면 그 값을 기준으로 삼고 매번 다시 확인하지 않는다. 프로젝트 셋업 시 아래 1~3을 실측해 **한 번 채우고**, 엔진·패키지를 올렸을 때만 갱신한다. (L1 `/setup-engine`·`/gate-check`가 이 섹션을 `CLAUDE.md`에서 읽고 쓰므로 위치를 옮기지 않는다. 다른 도구도 이 파일을 읽으면 된다.) `[CHOOSE]`가 남아 있으면 아래 절차로 확인한다. `/setup-engine`은 이 섹션과 함께 `.claude/docs/technical-preferences.md`(엔진 전문가 라우팅·성능 예산·명명 규칙 — L1 스킬 20여 개가 읽음)도 만든다 — 셋업 때 한 번 실행을 권장한다.
+
 1. **Determine Unity Version**:
    - Check `ProjectSettings/ProjectVersion.txt`. Validate if features like `Awaitable`, C# 12, or CoreCLR are natively supported.
 2. **Identify the Render Pipeline**:
@@ -101,6 +103,14 @@ You operate on a Test-Driven Development (TDD) premise for critical domain logic
   - 단일 게임 프로젝트면 태그를 생략하거나 `[GAME]`, `[CORE]` 정도만 사용한다.
   - 멀티 게임 프로젝트면 아래 "게임 폴더 매핑" 표를 자기 프로젝트에 맞게 채운다.
 - 공유 모듈(예: `<SharedModule>`) 관련 작업은 `doc/task.md` 대시보드의 공통 모듈 섹션도 함께 업데이트한다.
+
+### work_log.md 월별 분리
+
+`work_log.md`는 매 세션 읽히므로 커지면 컨텍스트 비용이 커진다.
+
+- `doc/work_log.md`에는 **현재 월만** 유지한다. 새 항목은 **최상단에 추가**(최신순)한다 — 파일 상단에 제목 헤더를 두지 않는다.
+- 지난 달은 `doc/work_log/YYYY-MM.md`로 옮긴다(최신순 유지). 월이 바뀌면 전월분을 잘라 옮기고, `work_log.md` 하단 아카이브 인덱스에 한 줄 추가한다.
+- 대량 이동 전에는 백업한다 — `doc/`를 git에서 제외한 프로젝트라면 되돌릴 방법이 없다.
 
 ### task.md 관리 규칙
 
@@ -138,12 +148,14 @@ You operate on a Test-Driven Development (TDD) premise for critical domain logic
 
 세션 간 컨텍스트 유실을 막기 위해 `production/session-state/active.md`를 유지한다.
 
+**크기 제한**: `active.md`는 **현재 상태·최근 완료분·다음 할 것·블로커만** 담고 **3~5KB**를 넘기지 않는다. 매 세션 로드되므로 이력이 쌓이면 비용만 늘어난다 — 완료 이력은 `work_log.md`로 보내고, 커밋은 해시만 적는다. 넘치면 오래된 내용을 `production/session-state/archive/`로 옮긴다.
+
 **세션 시작 시**: `active.md`를 읽어 이전 세션의 진행 상황을 파악한다.
 
 **작업 중**: 주요 결정 또는 섹션 완료 시마다 `active.md`를 업데이트한다.
 
-- `<!-- STATUS -->` 블록의 게임/Epic/Feature/Task를 현행화한다.
-- 완료 항목은 "완료된 항목" 섹션에 기록한다.
+- `<!-- STATUS -->` 블록의 게임/Epic/Feature/Task를 현행화한다(짧게 — 훅이 줄 단위로 잘라 주입할 수 있다).
+- 완료 항목은 "완료된 항목" 섹션에 **짧게** 기록한다. 이미 `work_log.md`에 남긴 지난 세션 항목은 지운다.
 
 **세션 종료 전**: 반드시 `active.md`를 업데이트한다.
 

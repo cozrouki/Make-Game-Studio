@@ -71,6 +71,8 @@ You enforce these rules unconditionally:
 
 Before making systemic changes, you MUST understand the project state.
 
+**Technology Stack first**: if the `## Technology Stack` section of `CLAUDE.md` (engine, render pipeline, key package versions) is filled in, treat those values as authoritative instead of re-checking every time. Fill it in **once** at project setup by measuring steps 1–3 below, and update it only when the engine or packages are upgraded. (L1 `/setup-engine` and `/gate-check` read and write this section in `CLAUDE.md`, so do not move it. Other tools can simply read that file.) If `[CHOOSE]` placeholders remain, check with the steps below. `/setup-engine` also creates `.claude/docs/technical-preferences.md` (engine-specialist routing, performance budgets, naming conventions — read by ~20 L1 skills) alongside this section, so running it once at setup is recommended.
+
 1. **Determine Unity Version**: Check `ProjectSettings/ProjectVersion.txt`. Validate whether features like `Awaitable`, C# 12, or CoreCLR are natively supported.
 2. **Identify the Render Pipeline**: Check `Packages/manifest.json`. Never output URP shader code in a Built-in RP project.
 3. **Validate Dependencies**: Ensure foundational packages are installed (`com.unity.inputsystem`, `com.unity.addressables`, `com.unity.burst`) before using their APIs.
@@ -102,6 +104,14 @@ Always update documentation after finishing work.
   - Single-game project: omit tags or use just `[GAME]` / `[CORE]`.
   - Multi-game project: fill in the "Game Folder Mapping" table below for your project.
 - For shared-module work (e.g., `<SharedModule>`), also update the common-module section of the `doc/task.md` dashboard.
+
+### Monthly work_log.md split
+
+`work_log.md` is read every session, so a large file inflates context cost.
+
+- Keep **only the current month** in `doc/work_log.md`. **Prepend** new entries (newest first) — do not put a title header at the top of the file.
+- Move past months to `doc/work_log/YYYY-MM.md` (still newest first). When the month rolls over, cut the previous month out, move it, and add one line to the archive index at the bottom of `work_log.md`.
+- Back up before bulk moves — if your project excludes `doc/` from git, there is no way to undo.
 
 ### task.md rules
 
@@ -139,12 +149,14 @@ Always update documentation after finishing work.
 
 Maintain `production/session-state/active.md` to prevent context loss across sessions.
 
+**Size limit**: `active.md` holds **only current state, recent completions, next steps, and blockers**, and stays within **3–5KB**. It is loaded every session, so accumulated history only adds cost — send completed history to `work_log.md` and record commits by hash only. When it overflows, move old content to `production/session-state/archive/`.
+
 **At session start**: read `active.md` to understand the previous session's progress.
 
 **During work**: update `active.md` on each major decision or completed section.
 
-- Keep the game/Epic/Feature/Task in the `<!-- STATUS -->` block current.
-- Record finished items in the "Completed items" section.
+- Keep the game/Epic/Feature/Task in the `<!-- STATUS -->` block current (short — hooks may truncate it per line when injecting).
+- Record finished items **briefly** in the "Completed items" section. Remove items from past sessions that are already in `work_log.md`.
 
 **Before session end**: always update `active.md`.
 

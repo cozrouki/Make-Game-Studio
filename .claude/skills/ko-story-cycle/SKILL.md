@@ -49,7 +49,7 @@ agent: lead-programmer
 
 `.claude/skills/story-done/SKILL.md` 호출 + 문서 후처리:
 - `doc/{ActiveGame}/task.md` 해당 항목을 완료로 마크 (Edit 도구, 사용자 승인)
-- `doc/work_log.md` 끝에 한 줄 요약 추가 (게임 태그 포함)
+- `doc/work_log.md` 최상단에 한 줄 요약 추가 (최신순, 게임 태그 포함)
 - `active.md`의 "완료된 항목" 섹션 업데이트 제안
 
 ## 관련

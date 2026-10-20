@@ -22,7 +22,7 @@ description: 스토리 구현 사이클 (한국어) — 준비 점검 → 구현
 
 **5. 완료 처리** — `.claude/skills/story-done/SKILL.md` 절차 + 후처리:
 - `doc/{ActiveGame}/task.md` 항목 완료 마크(사용자 승인)
-- `doc/work_log.md` 끝에 한 줄 요약(게임 태그 포함)
+- `doc/work_log.md` 최상단에 한 줄 요약(최신순, 게임 태그 포함)
 - `active.md` "완료된 항목" 업데이트 제안
 
 ## 관련

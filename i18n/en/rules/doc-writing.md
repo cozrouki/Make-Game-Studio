@@ -29,6 +29,8 @@
 
 ## work_log.md format
 
+Keep only the current month in `doc/work_log.md`, prepend new entries (newest first), and move past months to `doc/work_log/YYYY-MM.md` (AGENTS.md §6).
+
 ```markdown
 ## YYYY-MM-DD
 
@@ -42,6 +44,7 @@
 - Keep the `<!-- STATUS -->` block current at all times.
 - Update the `_last updated:` date before ending a session.
 - "Next up" items must be described as concrete actions.
+- Stay within 3–5KB — current state, recent completions, next steps, and blockers only (AGENTS.md §6-1).
 
 ## architecture.md required sections
 

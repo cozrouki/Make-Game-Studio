@@ -39,7 +39,7 @@ If `--skip-review` is absent, call `.claude/skills/code-review/SKILL.md`. Added 
 ## Phase 5: Completion (story-done)
 Call `.claude/skills/story-done/SKILL.md` plus post-processing:
 - Mark the item done in `doc/{ActiveGame}/task.md` (Edit tool, user approval).
-- Add a one-line summary to `doc/work_log.md` (with game tag).
+- Prepend a one-line summary to the top of `doc/work_log.md` (newest first, with game tag).
 - Propose updating the "Completed items" section of `active.md`.
 
 ## Related
