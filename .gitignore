@@ -32,6 +32,15 @@ production/session-state/active.md
 # 이 템플릿 저장소에는 커밋하지 않는 것을 권장.
 production/spec/
 
+# artgen — 생성 원본·교체 백업은 용량이 커서 제외 (state.json · review.md · import-map.json 은 추적)
+production/artgen/*/v*/
+production/artgen/*/replaced/
+.agent/tools/artgen/artgen.config.local.json
+# studio — 세션 이벤트 로그(로컬 감사용) · 로컬 설정
+production/studio/events.jsonl
+.agent/tools/studio/studio.config.local.json
+__pycache__/
+
 # Build artifacts
 dist/
 build/

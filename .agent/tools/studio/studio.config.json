@@ -1,0 +1,62 @@
+{
+  "dataDir": "production/studio",
+  "staleHours": 24,
+  "roles": {
+    "planning": {
+      "title": "기획",
+      "owns": [
+        "design",
+        ":(exclude)design/assets/requests",
+        "production/epics",
+        "production/sprints",
+        "production/milestones"
+      ]
+    },
+    "art": {
+      "title": "그래픽 아트",
+      "owns": [
+        "design/assets/requests",
+        "production/artgen",
+        ":(glob)Assets/*/Art/**",
+        "Assets/ArtGen"
+      ]
+    },
+    "dev": {
+      "title": "Unity 개발",
+      "owns": [
+        "Assets",
+        ":(exclude,glob)Assets/*/Art/**",
+        ":(exclude)Assets/ArtGen",
+        "Packages",
+        "ProjectSettings",
+        "production/qa",
+        "tests",
+        "production/epics"
+      ]
+    }
+  },
+  "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", "doc/work_log.md"],
+  "gates": [
+    {
+      "id": "G1",
+      "name": "컨셉 승인",
+      "owner": "planning",
+      "artifacts": ["design/gdd/game-concept.md", "design/gdd/game-pillars.md"],
+      "unlocks": "시스템 분해 · 아트 바이블 착수"
+    },
+    {
+      "id": "G2",
+      "name": "아트 디렉션 승인",
+      "owner": "planning",
+      "artifacts": ["design/art/art-bible.md", "design/assets/requests/_style-tokens.json", "production/artgen/ASSET-000/review.md"],
+      "unlocks": "에셋 양산 (art)"
+    },
+    {
+      "id": "G3",
+      "name": "프리프로덕션 완료",
+      "owner": "planning",
+      "artifacts": ["design/gdd/systems-index.md", "design/assets/asset-manifest.md", "production/epics/index.md", "production/sprints/", ".claude/docs/technical-preferences.md"],
+      "unlocks": "기능 스토리 구현 (dev)"
+    }
+  ]
+}

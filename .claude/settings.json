@@ -12,7 +12,9 @@
       "Bash(dir *)",
       "Bash(python -m json.tool*)",
       "Bash(python -m pytest*)",
-      "Bash(py -m pytest*)"
+      "Bash(py -m pytest*)",
+      "Bash(python .agent/tools/artgen/artgen.py*)",
+      "Bash(python .agent/tools/studio/studio.py*)"
     ],
     "deny": [
       "Bash(rm -rf *)",

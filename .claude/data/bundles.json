@@ -112,7 +112,10 @@
         "launch-checklist",
         "hotfix",
         "bug-report",
-        "bug-triage"
+        "bug-triage",
+        "studio-join",
+        "studio-ticket",
+        "studio-status"
       ],
       "rules": [
         "doc-writing",
@@ -148,7 +151,10 @@
       "skills": [
         "ux-design",
         "ux-review",
-        "art-bible"
+        "art-bible",
+        "asset-spec",
+        "asset-audit",
+        "ko-art-gen"
       ],
       "agents": [
         "art-director",

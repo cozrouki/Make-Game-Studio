@@ -48,10 +48,12 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (82 skills, GS 72 + ko-* 6 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (86 skills, GS 72 + ko-* 7 + studio-* 3 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
-| **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (3 워크플로) |
+| **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
+| **그래픽 생성** | 기획 → 이미지 → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림) | `/studio-join`, `/studio-ticket`, `/studio-status` — §9 |
 
 ### 자동 적용 자산 (호출 불필요)
 
@@ -77,6 +79,17 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 ### 출처·라이선스
 
 전체 출처·라이선스·사용 유형은 `.claude/docs/ATTRIBUTION.md` 참조. 핵심: Game-Studios의 hooks/settings/gameplay-code.md는 로컬 fork (한국어 톤 머지), 나머지 자산은 직접 복사 또는 미러.
+
+---
+
+## §9. 스튜디오 모드 (3세션 협업)
+
+`production/studio/roster.json` 이 있고 **이 세션의 이름**(`ListAgents` 첫 줄)이 거기 등록되어 있으면, 이 세션은 해당 역할(planning / art / dev)로 동작 중이다.
+
+- 대화가 요약·재시작되어 역할을 잊었으면, 로스터에서 역할을 찾고 `.agent/tools/studio/README.md` 와 `roles/<역할>.md` 를 다시 읽은 뒤 `/studio-join <역할>` 업무 루프로 복귀한다.
+- `<cross-session-message>` 로 `[studio]` 메시지를 받으면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
+- 디렉터 권한(게이트 승인 · 디렉터 답변 · 정지/재개)은 사용자가 직접 입력한 `/studio-status` · `/studio-ticket` 으로만 행사한다.
+- 자기 역할의 쓰기 영역(`.agent/tools/studio/studio.config.json`) 밖은 수정하지 않는다. 필요하면 티켓을 보낸다.
 
 ---
 

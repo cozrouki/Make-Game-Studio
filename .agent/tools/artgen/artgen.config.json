@@ -1,0 +1,19 @@
+{
+  "provider": "mock",
+  "storeDir": "production/artgen",
+  "importMap": "production/artgen/import-map.json",
+  "defaults": {
+    "variants": 4,
+    "maxRounds": 3,
+    "passScore": 4.0
+  },
+  "providers": {
+    "mock": {},
+    "command": {
+      "argv": [],
+      "timeoutSec": 600,
+      "env": {},
+      "capabilities": { "transparent": false, "references": false, "seed": true }
+    }
+  }
+}

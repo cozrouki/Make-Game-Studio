@@ -43,6 +43,78 @@
       ]
     },
     {
+      "id": "concept-to-art",
+      "name": "기획 → 그래픽 → Unity 에셋",
+      "description": "확정된 기획에서 아트 바이블·에셋 스펙을 뽑아 이미지를 생성·검수하고 Unity 에 임포트. 이미지 생성 백엔드는 어댑터로 교체 (미정이면 mock).",
+      "category": "art",
+      "relatedBundles": ["unity-fullstack-core", "unity-fullstack-visuals-ui"],
+      "steps": [
+        {
+          "title": "아트 바이블",
+          "goal": "비주얼 정체성·형태 언어·색 체계·에셋 규격 확정 (검수 기준이 됨)",
+          "recommendedSkill": "art-bible",
+          "notes": "game-concept 승인 후. 스타일 토큰의 원천"
+        },
+        {
+          "title": "에셋 스펙",
+          "goal": "시스템/레벨/캐릭터별 에셋 목록 + 규격 + 생성 프롬프트",
+          "recommendedSkill": "asset-spec",
+          "notes": "산출: design/assets/specs/*.md, design/assets/asset-manifest.md"
+        },
+        {
+          "title": "백엔드 연결 (선택)",
+          "goal": "이미지 생성 백엔드 결정 및 어댑터 설정",
+          "ref": ".agent/tools/artgen/README.md",
+          "notes": "미정이면 생략 — mock 으로 흐름 검증. command 어댑터(설정만) 또는 Python 어댑터"
+        },
+        {
+          "title": "생성 · 검수 · 승격",
+          "goal": "요청 작성 → 생성 → 아트 바이블 루브릭 검수·재생성 → 사용자 선택 → Assets/ 승격 + 임포트 설정",
+          "recommendedSkill": "ko-art-gen",
+          "notes": "/ko-art-gen next 로 Needed 에셋을 하나씩, spec:<target> 로 묶음 처리"
+        },
+        {
+          "title": "납품 대조",
+          "goal": "스펙 대비 누락·규격 위반 확인",
+          "recommendedSkill": "asset-audit",
+          "notes": "인게임 확인 후 매니페스트 Approved 처리"
+        }
+      ]
+    },
+    {
+      "id": "studio-autodev",
+      "name": "스튜디오 모드 — 3세션 자동 개발",
+      "description": "디렉터(사용자) + 기획·아트·개발 세션이 티켓과 단계 게이트로 협업. 디렉터는 게이트에서만 승인.",
+      "category": "orchestration",
+      "relatedBundles": ["unity-fullstack-core", "unity-fullstack-process", "unity-fullstack-visuals-ui"],
+      "steps": [
+        {
+          "title": "세션 합류",
+          "goal": "같은 프로젝트 폴더의 3세션을 역할로 등록 (권한 모드 동일)",
+          "recommendedSkill": "studio-join",
+          "notes": "/studio-join planning · art · dev — 로스터 production/studio/roster.json"
+        },
+        {
+          "title": "디렉터 지시",
+          "goal": "아이디어를 기획 세션 티켓으로",
+          "recommendedSkill": "studio-ticket",
+          "notes": "/studio-ticket planning \"컨셉: …\""
+        },
+        {
+          "title": "G1 컨셉 → G2 아트 디렉션 → G3 프리프로덕션",
+          "goal": "세션 자율 진행, 게이트마다 디렉터 승인",
+          "recommendedSkill": "studio-status",
+          "notes": "/studio-status approve G1 … · 판단 요청은 /studio-status answer T-####"
+        },
+        {
+          "title": "프로덕션 · 마일스톤",
+          "goal": "스토리 구현 + 에셋 양산 병행, 마일스톤 게이트(M#)",
+          "ref": ".agent/tools/studio/README.md",
+          "notes": "정지: /studio-status pause · 커밋은 역할별 자동, 푸시는 디렉터"
+        }
+      ]
+    },
+    {
       "id": "feature-implementation",
       "name": "기능 구현 사이클",
       "description": "스토리부터 머지까지의 표준 사이클.",
