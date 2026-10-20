@@ -10,6 +10,7 @@ Unity 프로젝트 루트에서 실행:
 """
 import argparse
 import datetime
+import fnmatch
 import json
 import os
 import re
@@ -384,6 +385,10 @@ class Studio:
         """역할 쓰기 영역 + 공유 영역의 변경 파일."""
         return self.changed_files_for(self.pathspecs(role))
 
+    def all_changed_files(self):
+        p = self._git("status", "--porcelain", "-z", "-uall", "--no-renames")
+        return sorted({e[3:] for e in p.stdout.split("\0") if len(e) > 3})
+
     def changed_files_for(self, specs):
         """pathspec 목록에 해당하는 미커밋 변경. status 는 매칭 없는 pathspec 에도 실패하지 않는다."""
         if not specs:
@@ -391,12 +396,29 @@ class Studio:
         p = self._git("status", "--porcelain", "-z", "-uall", "--no-renames", "--", *specs)
         return sorted({e[3:] for e in p.stdout.split("\0") if len(e) > 3})
 
-    def commit(self, role, message, dry_run=False):
+    def commit(self, role, message, dry_run=False, only=None):
         files = self.changed_files(role)
+        notes = []
+        if only:
+            # 영역 안의 일부만 — 예: Unity 가 만든 .meta · ProjectSettings 를 이번 티켓 커밋에서 뺄 때.
+            # 공유 영역(티켓 · work_log)은 done → work_log → 커밋 흐름을 위해 항상 포함한다.
+            shared = set(self.changed_files_for(list(self.cfg.get("shared", []))))
+            mine = set(files)
+            pats = [p.replace("\\", "/").rstrip("/") for p in only]
+
+            def hit(f):
+                return any(f == p or f.startswith(p + "/") or fnmatch.fnmatch(f, p) for p in pats)
+
+            outside = [f for f in self.all_changed_files() if hit(f) and f not in mine]
+            if outside:
+                raise StudioError(f"--only 경로에 {role} 영역 밖 변경이 있음: {', '.join(outside[:5])}")
+            unmatched = [p for p in pats if not any(f == p or f.startswith(p + "/") or fnmatch.fnmatch(f, p) for f in mine)]
+            notes += [f"--only {p}: 변경 없음" for p in unmatched]
+            files = sorted(f for f in files if hit(f) or f in shared)
         if not files:
-            return {"committed": False, "files": [], "warnings": [], "reason": "변경 없음"}
+            return {"committed": False, "files": [], "warnings": notes, "reason": "변경 없음"}
         # 생성된 .meta 없이 커밋하면 팀원 쪽에서 GUID 가 새로 생겨 참조가 깨진다
-        warnings = [f"{f}: .meta 없음 — Unity 임포트 후 커밋 권장" for f in files
+        warnings = notes + [f"{f}: .meta 없음 — Unity 임포트 후 커밋 권장" for f in files
                     if f.startswith("Assets/") and not f.endswith(".meta")
                     and os.path.isfile(os.path.join(self.root, f)) and not os.path.exists(os.path.join(self.root, f + ".meta"))]
         if dry_run:
@@ -523,6 +545,7 @@ def main(argv=None):
     p.add_argument("role")
     p.add_argument("-m", "--message", required=True)
     p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--only", nargs="+", help="영역 안의 이 파일 · 폴더 · 패턴만 (공유 영역은 항상 포함)")
 
     args = ap.parse_args(argv)
     st = Studio(args.root, load_config())
@@ -647,7 +670,7 @@ def main(argv=None):
                 lines.append(f"공지 티켓: {', '.join(r['tickets'])}")
             out(r, "\n".join(lines))
         elif args.cmd == "commit":
-            r = st.commit(args.role, args.message, args.dry_run)
+            r = st.commit(args.role, args.message, args.dry_run, args.only)
             text = (f"커밋 {r['sha']} — {len(r['files'])}개 파일" if r["committed"]
                     else ("[dry-run] 대상:\n  " + "\n  ".join(r["files"]) if r.get("dryRun") else r["reason"]))
             out(r, text + "".join(f"\n  ⚠ {w}" for w in r["warnings"]))

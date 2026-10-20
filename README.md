@@ -83,7 +83,8 @@ git checkout -- .claude/hooks
   | 어댑터 | 용도 |
   |---|---|
   | `mock` (기본) | 자리표시 이미지. 백엔드 없이 흐름 검증 |
-  | `command` | 외부 스크립트나 CLI(ComfyUI 호출 스크립트, 상용 API 래퍼 등)를 설정만으로 연결 |
+  | `comfyui` | **로컬 ComfyUI 서버**(HTTP API). 기본 SDXL 그래프 또는 직접 만든 워크플로 JSON, BiRefNet 으로 투명 배경 |
+  | `command` | 외부 스크립트나 CLI(상용 API 래퍼 등)를 설정만으로 연결 |
   | `manual` | 사람 아티스트가 `production/artgen/_inbox/<ASSET-ID>/` 에 넣은 PNG 를 수령 |
   | Python 어댑터 | `providers/_template.py` 를 복사해 구현 |
 
@@ -94,6 +95,17 @@ git checkout -- .claude/hooks
 /ko-art-gen next                 매니페스트에서 다음 Needed 에셋
 /ko-art-gen spec:combat --auto   스펙 파일 단위로 일괄 처리
 ```
+
+**로컬 ComfyUI 연결 (권장 시작점)**
+1. [ComfyUI 휴대용(portable)](https://github.com/Comfy-Org/ComfyUI/releases) NVIDIA 판을 여유 공간이 넉넉한 드라이브에 풀고 `run_nvidia_gpu.bat` 으로 실행합니다 (기본 `http://127.0.0.1:8188`).
+2. 모델을 넣습니다.
+   - `models/checkpoints/` ← SDXL base 1.0 (CreativeML Open RAIL++-M, 상업 이용 가능)
+   - `models/vae/` ← `sdxl_vae_fp16_fix` (fp16 GPU 에서 검은 이미지 방지)
+   - `models/background_removal/` ← [Comfy-Org/BiRefNet](https://huggingface.co/Comfy-Org/BiRefNet) `birefnet.safetensors` (MIT, 투명 배경용)
+3. 프로젝트에서 켭니다: `.agent/tools/artgen/artgen.config.local.json` 에 `{"provider": "comfyui"}` (git 무시) — 확인은 `python .agent/tools/artgen/artgen.py providers`.
+
+- 실측 (RTX 2070 SUPER 8GB): 256px 스프라이트 2장에 약 45~55초, 1024×768 2장에 약 76초 (첫 실행은 모델 로딩 포함).
+- **한계:** SDXL 기본 모델은 짧고 단순한 단일 오브젝트(이펙트 · 아이콘)는 잘 만들지만, 긴 프롬프트 · 격자 시트 · 엄격한 시점(탑다운) · 정확한 팔레트는 따르지 못합니다. 캐릭터 스프라이트는 요청을 단일 이미지로 쪼개고, 스타일 LoRA · ControlNet · IP-Adapter 를 쓴 **사용자 워크플로**(`providers.comfyui.workflow`)로 보강하세요.
 
 ## 스튜디오 모드 — 3세션 자동 개발
 
@@ -159,6 +171,7 @@ git checkout -- .claude/hooks
 | Git for Windows (bash 포함), git 2.25+ | 훅 스크립트 · 스튜디오 모드 역할별 커밋 |
 | Python 3.8+ (`python` 이 PATH 에 있을 것) | artgen · studio CLI (표준 라이브러리만 사용). 테스트는 `pytest` 필요 |
 | (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
+| (선택) ComfyUI + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 생성 (`comfyui` 어댑터). 모델 저장에 10GB 이상 필요 |
 | Unity + MCPForUnity (선택) | L3 에디터 자동화 · 승격 에셋 임포트 확인 |
 
 ## 크로스툴 호환 (Claude Code · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)
@@ -585,7 +598,7 @@ Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
 
 | Tool | What | Entry |
 |---|---|---|
-| **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into `Assets/` with TextureImporter settings applied. **Backend-neutral**: `mock` (placeholder), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
+| **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into `Assets/` with TextureImporter settings applied. **Backend-neutral**: `mock` (placeholder), `comfyui` (local ComfyUI server — SDXL graph or your own exported workflow, BiRefNet transparency), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
 | **Studio mode** — 3-session auto-dev | You act as **director**; three AI sessions (planning · art · dev) in one project pass work to each other via ticket files. Each role can use a **different AI tool**: interactive Claude Code, or Codex / Gemini / Cursor / Copilot / OpenCode CLIs driven headless by a supervisor loop, or IDE agents (Antigravity, Windsurf). Sessions wake on ticket-file changes, so the tools don't need to talk to each other directly. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-ticket` · `/studio-status` · `studio.py dispatch` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
 
 Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytest` for their tests), git 2.25+. Studio mode runs all roles in one working tree on one machine; the director console skills need Claude Code, but everything is also available through the `studio.py` CLI.

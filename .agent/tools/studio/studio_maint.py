@@ -49,10 +49,9 @@ def _hash(path):
 def audit(st):
     """미커밋 변경을 영역별로 분류 — 주인 없는 파일(orphans)과 역할 간 겹침(overlaps)."""
     try:
-        allp = st._git("status", "--porcelain", "-z", "-uall", "--no-renames")
+        changed = st.all_changed_files()
     except StudioError as e:  # git 저장소가 아닌 곳(초기 셋업 등) — 감사 생략
         return {"changed": 0, "orphans": [], "overlaps": {}, "error": str(e)}
-    changed = sorted({e[3:] for e in allp.stdout.split("\0") if len(e) > 3})
     owners = {r: set(st.changed_files(r)) for r in st.roles}
     owners[DIRECTOR] = set(st.changed_files(DIRECTOR))
     shared = set(st.changed_files_for(list(st.cfg.get("shared", []))))

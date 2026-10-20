@@ -214,6 +214,40 @@ def test_changes_cli_lists_own_area_and_in_progress(repo, capsys):
     assert out["inProgress"] == [t["id"]]
 
 
+def test_commit_only_limits_role_files_but_keeps_shared(repo):
+    _touch(repo.root, "Assets/MyGame/Scripts/Enemy.cs")
+    _touch(repo.root, "Assets/MyGame/Scripts/Enemy.cs.meta")
+    _touch(repo.root, "ProjectSettings/EditorSettings.asset")     # Unity 가 만든 무관한 변경
+    r = repo.commit("dev", "x", dry_run=True, only=["Assets/MyGame/Scripts"])
+    assert "Assets/MyGame/Scripts/Player.cs" in r["files"]
+    assert "ProjectSettings/EditorSettings.asset" not in r["files"]
+    assert "production/studio/roster.json" in r["files"]           # 공유 영역은 항상
+
+
+def test_commit_only_supports_glob(repo):
+    _touch(repo.root, "Assets/MyGame/Scripts/Enemy.cs.meta")
+    files = repo.commit("dev", "x", dry_run=True, only=["Assets/MyGame/Scripts/*.cs"])["files"]
+    assert "Assets/MyGame/Scripts/Player.cs" in files and "Assets/MyGame/Scripts/Enemy.cs.meta" not in files
+
+
+def test_commit_only_rejects_paths_outside_role(repo):
+    with pytest.raises(S.StudioError, match="영역 밖"):
+        repo.commit("dev", "x", dry_run=True, only=["design/gdd"])
+
+
+def test_commit_only_warns_unmatched_path(repo):
+    r = repo.commit("dev", "x", dry_run=True, only=["Assets/MyGame/Scripts", "Assets/Nope"])
+    assert any("Assets/Nope" in w for w in r["warnings"])
+
+
+def test_commit_only_really_commits_subset(repo):
+    _touch(repo.root, "ProjectSettings/EditorSettings.asset")
+    r = repo.commit("dev", "[studio:dev] 스크립트만", only=["Assets/MyGame/Scripts"])
+    assert r["committed"]
+    left = subprocess.run(["git", "-C", repo.root, "status", "--porcelain", "-uall"], capture_output=True, text=True).stdout
+    assert "ProjectSettings/EditorSettings.asset" in left and "Player.cs" not in left
+
+
 def test_commit_nothing_to_commit(repo):
     repo.commit("planning", "first")
     assert repo.commit("planning", "again")["committed"] is False
