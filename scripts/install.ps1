@@ -21,7 +21,8 @@
 
 .PARAMETER Tools
     설치할 도구 계층. 기본 Claude. 공통 자산(AGENTS.md, .agent/)은 항상 설치.
-    Claude | Cursor | Antigravity | Gemini
+    Claude | Cursor | Antigravity | Gemini | Codex | Copilot | OpenCode | Windsurf | All
+    (도구별 파일은 scripts/gen-rule-mirrors.py 가 만든 미러 — README §크로스툴 호환)
 
 .PARAMETER Games
     게임 폴더 매핑. "TAG=폴더" 목록. 예: -Games "RPG=MyRpg","PZL=MyPuzzle"
@@ -67,8 +68,9 @@ $pkg = Split-Path -Parent $PSScriptRoot
 function Split-List($items) { @($items | ForEach-Object { $_ -split "," } | ForEach-Object { $_.Trim() } | Where-Object { $_ }) }
 $Tools = Split-List $Tools
 $Games = Split-List $Games
-$validTools = @("Claude", "Cursor", "Antigravity", "Gemini")
-foreach ($t in $Tools) { if ($validTools -notcontains $t) { throw "Tools 값 오류: '$t' (허용: $($validTools -join ', '))" } }
+$validTools = @("Claude", "Cursor", "Antigravity", "Gemini", "Codex", "Copilot", "OpenCode", "Windsurf")
+if ($Tools -contains "All") { $Tools = $validTools }
+foreach ($t in $Tools) { if ($validTools -notcontains $t) { throw "Tools 값 오류: '$t' (허용: $($validTools -join ', '), All)" } }
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 function Write-Step($msg) { Write-Host ""; Write-Host $msg -ForegroundColor Yellow }
@@ -111,8 +113,15 @@ $excludePrefix = @("i18n/", "scripts/")
 $toolPrefixes = @("AGENTS.md", ".agent/")   # 공통
 if ($Tools -contains "Claude") { $toolPrefixes += @("CLAUDE.md", ".claude/") }
 if ($Tools -contains "Cursor") { $toolPrefixes += @(".cursor/") }
-if ($Tools -contains "Gemini") { $toolPrefixes += @("GEMINI.md", "AGENT.md") }
+if ($Tools -contains "Gemini") { $toolPrefixes += @("GEMINI.md", "AGENT.md", ".gemini/") }
+if ($Tools -contains "Codex") { $toolPrefixes += @(".agents/") }          # AGENTS.md 는 공통
+if ($Tools -contains "Copilot") { $toolPrefixes += @(".github/copilot-instructions.md", ".github/instructions/", ".github/prompts/", ".github/skills/") }
+if ($Tools -contains "OpenCode") { $toolPrefixes += @(".opencode/") }
+if ($Tools -contains "Windsurf") { $toolPrefixes += @(".windsurf/") }
 # Antigravity 는 공통 .agent/ (rules · workflows · skills) 로 충분
+
+# 대상 프로젝트가 이미 쓰고 있을 수 있는 최상위 폴더 — 통째로 백업 · 삭제하지 않고 파일 단위로 병합한다
+$mergeTop = @(".github")
 
 # git 추적 파일만 — 로컬 잔재(settings.local.json, 로그, 백업)가 섞이지 않게
 $files = @()
@@ -131,9 +140,26 @@ $files = $files | Where-Object {
 }
 Write-Info "복사 대상 $($files.Count)개 파일"
 
-# 충돌 검사 — 최상위 단위
+# 충돌 검사 — 최상위 단위 (병합 폴더는 파일 단위)
 $topLevel = $files | ForEach-Object { ($_ -split "/")[0] } | Sort-Object -Unique
-$conflicts = $topLevel | Where-Object { Test-Path (Join-Path $Target $_) }
+$conflicts = $topLevel | Where-Object { ($mergeTop -notcontains $_) -and (Test-Path (Join-Path $Target $_)) }
+$mergeConflicts = $files | Where-Object { ($mergeTop -contains ($_ -split "/")[0]) -and (Test-Path (Join-Path $Target $_)) }
+if ($mergeConflicts) {
+    if (-not $Force) {
+        Write-Host "  이미 존재: $($mergeConflicts -join ', ')" -ForegroundColor Red
+        throw "기존 파일과 겹칩니다. 백업 후 덮어쓰려면 -Force 를 붙이세요."
+    }
+    $stampM = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupM = Join-Path $Target ".claude.backup-$stampM"
+    Write-Info "파일 백업: $backupM ($(@($mergeConflicts).Count)개 — 병합 폴더의 다른 파일은 그대로 둠)"
+    if (-not $DryRun) {
+        foreach ($f in $mergeConflicts) {
+            $bdst = Join-Path $backupM $f
+            New-Item -ItemType Directory -Force -Path (Split-Path -Parent $bdst) | Out-Null
+            Copy-Item -Path (Join-Path $Target $f) -Destination $bdst -Force
+        }
+    }
+}
 if ($conflicts) {
     if (-not $Force) {
         Write-Host "  이미 존재: $($conflicts -join ', ')" -ForegroundColor Red
@@ -203,6 +229,8 @@ foreach ($p in $pairs) {
 $placeholderFiles = @("AGENTS.md", ".claude/rules/doc-writing.md", ".claude/rules/gameplay-code.md",
                       ".agent/rules/doc-writing.md", ".agent/rules/gameplay-code.md",
                       ".cursor/rules/doc-writing.mdc", ".cursor/rules/gameplay-code.mdc",
+                      ".github/instructions/doc-writing.instructions.md", ".github/instructions/gameplay-code.instructions.md",
+                      ".windsurf/rules/doc-writing.md", ".windsurf/rules/gameplay-code.md",
                       ".claude/skills/ko-code-review/SKILL.md", ".claude/skills/sf-add/SKILL.md",
                       ".agent/workflows/ko-code-review.md", ".claude/docs/editor-automation-decision.md")
 
@@ -304,7 +332,7 @@ $gi = Join-Path $Target ".gitignore"
 $need = @(".claude.backup-*/", ".claude/settings.local.json", ".claude/scheduled_tasks.lock", ".mcp.json",
           "production/session-logs/", "production/session-state/active.md", "production/stage.txt",
           "production/artgen/*/v*/", "production/artgen/*/replaced/", "production/artgen/_inbox/", ".agent/tools/artgen/artgen.config.local.json",
-          "production/studio/events.jsonl", "production/studio/PAUSED", ".agent/tools/studio/studio.config.local.json", "__pycache__/")
+          "production/studio/events.jsonl", "production/studio/PAUSED", "production/studio/logs/", "production/studio/locks/", ".agent/tools/studio/studio.config.local.json", "__pycache__/")
 $giText = ""
 if (Test-Path $gi) { $giText = Read-TextFile $gi }
 $lines = $giText -split "\r?\n"

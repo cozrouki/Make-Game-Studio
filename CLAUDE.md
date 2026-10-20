@@ -87,7 +87,8 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 `production/studio/roster.json` 이 있고 **이 세션의 이름**(`ListAgents` 첫 줄)이 거기 등록되어 있으면, 이 세션은 해당 역할(planning / art / dev)로 동작 중이다.
 
 - 대화가 요약·재시작되어 역할을 잊었으면, 로스터에서 역할을 찾고 `.agent/tools/studio/README.md` 와 `roles/<역할>.md` 를 다시 읽은 뒤 `/studio-join <역할>` 업무 루프로 복귀한다.
-- `<cross-session-message>` 로 `[studio]` 메시지를 받으면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
+- `<cross-session-message>` 로 `[studio]` 메시지를 받거나, 백그라운드로 걸어 둔 `studio.py watch` 가 끝나면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
+- 다른 역할은 다른 AI 도구(`studio.py dispatch`)가 맡을 수 있다. 로스터의 `kind` 가 `claude` 인 세션에만 SendMessage 를 보낸다.
 - 디렉터 권한(게이트 승인 · 디렉터 답변 · 정지/재개)은 사용자가 직접 입력한 `/studio-status` · `/studio-ticket` 으로만 행사한다.
 - 자기 역할의 쓰기 영역(`.agent/tools/studio/studio.config.json`) 밖은 수정하지 않는다. 필요하면 티켓을 보낸다.
 

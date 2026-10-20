@@ -28,7 +28,7 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 1. `S gate list` 로 게이트가 `requested` 상태인지 확인한다. 산출물 파일 목록을 보여 준다.
 2. 디렉터가 인수에 메모를 이미 주었으면 그대로 진행한다. 주지 않았으면 `AskUserQuestion` 으로 한 번 확인한다: `[A] 승인` / `[B] 반려` / `[C] 산출물 먼저 보기`.
 3. `S gate approve|reject <G#> --by director --note "<메모>"`.
-4. 결과의 `roster` 에 있는 모든 세션에 알린다 (이 세션 제외):
+4. 결과의 `roster` 에서 `kind` 가 `claude` 인 세션에 알린다 (이 세션 제외). 다른 AI 도구(dispatch) · IDE 에이전트(manual)는 파일 감시로 스스로 깨어난다:
    - 승인: `[studio] 게이트 <G#> 승인 — 착수 가능 티켓 확인` + 메모
    - 반려: `[studio] 게이트 <G#> 반려 — <사유>` (요청자 역할은 사유를 반영해 다시 요청한다)
 5. 이 세션도 역할이 있으면(로스터에 이 세션 이름이 있으면) 업무 루프를 다시 시작한다.
@@ -43,7 +43,7 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 ## pause [사유] / resume
 
 1. `S pause --reason "<사유>"` 또는 `S resume`.
-2. 로스터의 모든 세션에 알린다. 정지: `[studio] ⏸ 디렉터 정지 — <사유>`. 재개: `[studio] ▶ 재개 — 받은 티켓 확인`.
+2. 로스터에서 `kind` 가 `claude` 인 세션에 알린다. 정지: `[studio] ⏸ 디렉터 정지 — <사유>`. 재개: `[studio] ▶ 재개 — 받은 티켓 확인`. 디스패처는 정지 중 새 실행을 하지 않고, 재개되면 감시로 깨어난다.
 
 ## show <T-####>
 

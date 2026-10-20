@@ -2,6 +2,7 @@
 """studio — 기획 · 아트 · 개발 세션 협업 프로토콜의 결정적 부분 (티켓 · 게이트 · 로스터 · 역할별 커밋).
 
 세션 간 알림(SendMessage)은 스킬이 하고, 이 도구는 파일 상태만 다룬다.
+여러 AI 도구 혼합(감시 · 헤드리스 디스패치)은 studio_dispatch.py.
 Unity 프로젝트 루트에서 실행:
     python .agent/tools/studio/studio.py status
 상세: .agent/tools/studio/README.md
@@ -26,6 +27,7 @@ ART_MODES = ("ai", "human")
 TICKET_RE = re.compile(r"^T-(\d{4,})\.md$")
 FIELDS = ("id", "title", "from", "to", "type", "status", "priority", "gate", "depends", "refs", "created", "updated")
 LIST_FIELDS = ("depends", "refs")
+ROSTER_KINDS = ("claude", "dispatch", "manual")  # claude = 대화형 Claude Code(SendMessage 가능)
 
 
 class StudioError(Exception):
@@ -60,11 +62,17 @@ def write_json(path, data):
     os.replace(tmp, path)
 
 
+def deep_merge(base, over):
+    out = dict(base)
+    for k, v in over.items():
+        out[k] = deep_merge(out[k], v) if isinstance(v, dict) and isinstance(out.get(k), dict) else v
+    return out
+
+
 def load_config(tool_dir=TOOL_DIR):
     cfg = read_json(os.path.join(tool_dir, "studio.config.json"))
     local = read_json(os.path.join(tool_dir, "studio.config.local.json"), {})
-    cfg.update(local)
-    return cfg
+    return deep_merge(cfg, local)
 
 
 class Studio:
@@ -102,14 +110,22 @@ class Studio:
     def roster(self):
         return read_json(self.roster_path(), {})
 
-    def join(self, role, session):
+    def join(self, role, session, kind="claude", agent=""):
         self.check_role(role)
+        if kind not in ROSTER_KINDS:
+            raise StudioError(f"kind 는 {ROSTER_KINDS} 중 하나")
         roster = self.roster()
         prev = roster.get(role, {}).get("session")
-        roster[role] = {"session": session, "joinedAt": now()}
+        roster[role] = {"session": session, "kind": kind, "agent": agent or ("claude" if kind == "claude" else ""),
+                        "joinedAt": now()}
         write_json(self.roster_path(), roster)
-        self.log("join", role=role, session=session, previous=prev)
+        self.log("join", role=role, session=session, kind=kind, previous=prev)
         return roster
+
+    def notify_session(self, role):
+        """SendMessage 로 깨울 수 있는 세션 이름 — 대화형 Claude Code 만. 나머지는 dispatch/watch 가 파일 변화로 깨어난다."""
+        entry = self.roster().get(role, {})
+        return entry.get("session") if entry.get("kind", "claude") == "claude" else None
 
     # ------------------------------------------------------------ 티켓
     def _ticket_path(self, tid):
@@ -409,7 +425,24 @@ def main(argv=None):
     p = sub.add_parser("join", help="역할 ↔ 세션 이름 등록")
     p.add_argument("role")
     p.add_argument("session")
+    p.add_argument("--kind", default="claude", choices=ROSTER_KINDS)
+    p.add_argument("--agent", default="", help="도구 이름 (codex, gemini, cursor …)")
     sub.add_parser("roster")
+
+    p = sub.add_parser("watch", help="역할에 처리할 티켓이 생길 때까지 대기 (파일 감시, 토큰 소모 없음)")
+    p.add_argument("role")
+    p.add_argument("--timeout", type=float, default=0, help="초. 0 = 무기한")
+    p.add_argument("--interval", type=float, default=0, help="감시 주기 초 (기본: config dispatch.pollSec)")
+
+    p = sub.add_parser("dispatch", help="Claude 외 도구를 헤드리스로 실행하는 감독 루프")
+    p.add_argument("role")
+    p.add_argument("--agent", required=True, help="config agents 의 프리셋 이름")
+    p.add_argument("--max-runs", type=int, default=0, help="0 = 무한")
+    p.add_argument("--once", action="store_true", help="처리할 티켓이 있을 때 1회만 실행하고 종료")
+    p.add_argument("--dry-run", action="store_true", help="실행할 명령만 출력")
+    p.add_argument("--force-lock", action="store_true", help="남아 있는 잠금을 무시")
+
+    sub.add_parser("agents", help="에이전트 프리셋과 설치 여부")
 
     p = sub.add_parser("new", help="티켓 발행")
     p.add_argument("--from", dest="sender", required=True)
@@ -469,11 +502,27 @@ def main(argv=None):
 
     try:
         if args.cmd == "join":
-            r = st.join(args.role, args.session)
-            out(r, f"{args.role} = {args.session}")
+            r = st.join(args.role, args.session, args.kind, args.agent)
+            out(r, f"{args.role} = {args.session} ({args.kind})")
         elif args.cmd == "roster":
             r = st.roster()
-            out(r, "\n".join(f"{k:<9} {v['session']}  (등록 {v['joinedAt']})" for k, v in r.items()) or "(등록 없음)")
+            out(r, "\n".join(f"{k:<9} {v['session']}  [{v.get('kind', 'claude')}/{v.get('agent') or 'claude'}]"
+                             f"  (등록 {v['joinedAt']})" for k, v in r.items()) or "(등록 없음)")
+        elif args.cmd in ("watch", "dispatch", "agents"):
+            # 스크립트로 실행되면 이 모듈은 __main__ — 'studio' 로 다시 import 되어 클래스가 두 벌 생기지 않게 한다
+            sys.modules.setdefault("studio", sys.modules[__name__])
+            import studio_dispatch as D  # noqa: E402 — 같은 디렉터리
+            if args.cmd == "watch":
+                r = D.watch(st, args.role, args.timeout, args.interval)
+                out(r, r["text"])
+                return 0 if r["actionable"] else 3
+            if args.cmd == "agents":
+                rows = D.list_agents(st)
+                out(rows, "\n".join(f"{'OK ' if r['installed'] else '-- '} {r['name']:<9} {r['executable'] or ''}  {r['note']}"
+                                    for r in rows))
+                return 0
+            return D.dispatch(st, args.role, args.agent, max_runs=args.max_runs, once=args.once,
+                              dry_run=args.dry_run, force_lock=args.force_lock, emit=lambda m: print(m, flush=True))
         elif args.cmd == "new":
             body = args.body
             if args.body_file:
@@ -482,10 +531,10 @@ def main(argv=None):
             t = st.new_ticket(args.sender, args.to, args.type, args.title, body, args.priority, args.gate,
                               _split(args.depends), _split(args.refs))
             ready, why = st.readiness(t)
-            session = st.roster().get(t["to"], {}).get("session")
+            session = st.notify_session(t["to"]) if t["to"] != DIRECTOR else None
             out(dict(t, ready=ready, readyReason=why, notifySession=session),
                 f"{t['id']} 발행 → {t['to']} ({'착수 가능' if ready else why})"
-                + (f"\n알림 대상 세션: {session}" if session else "\n알림 대상 세션 없음 (로스터 미등록)"))
+                + (f"\n알림 대상 세션: {session}" if session else "\n알림 없음 — 대상은 파일 감시(watch/dispatch)로 깨어남"))
         elif args.cmd == "inbox":
             rows = st.inbox(args.role, args.all)
             paused = st.paused()
@@ -498,7 +547,7 @@ def main(argv=None):
             out(dict(t, ready=ready, readyReason=why), text)
         elif args.cmd == "update":
             t = st.update_ticket(args.id, args.by, args.status, args.note, args.to)
-            session = st.roster().get(t["from"], {}).get("session")
+            session = st.notify_session(t["from"]) if t["from"] != DIRECTOR else None
             out(dict(t, notifySession=session), f"{t['id']} {t['status']} — {t['thread'][-1]}")
         elif args.cmd == "gate":
             if args.action == "list":

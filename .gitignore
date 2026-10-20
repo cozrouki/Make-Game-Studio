@@ -40,6 +40,8 @@ production/artgen/_inbox/
 # studio — 세션 이벤트 로그(로컬 감사용) · 로컬 설정
 production/studio/events.jsonl
 production/studio/PAUSED
+production/studio/logs/
+production/studio/locks/
 .agent/tools/studio/studio.config.local.json
 __pycache__/
 
