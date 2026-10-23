@@ -27,6 +27,9 @@
 6. 승격을 마치면 → dev `assets-ready` 티켓을 보낸다. 본문에 Unity 경로 목록과 ASSET ID 를 적는다. 원래 asset-request 는 done 처리하고 note 에 승격 수와 보류 수를 적는다.
 7. dev 의 추가 에셋 요청(`asset-request from: dev`)은 스펙이 있으면 바로 처리한다. 스펙에 없는 에셋이면 → planning 에 스펙 추가를 요청하고 dev 티켓은 `--depends` 로 연결해 둔다.
 
+### 참고 — gamedev 카탈로그 `create-game-assets`
+에셋 묶음을 처음 양산하거나, 생성 결과의 일관성(스타일 · 팔레트 · 크기 · 여백)이 깨질 때 `/ext info create-game-assets` 를 훑고 필요한 점검 항목을 가져온다 (`.agent/gamedev/`, Apache-2.0). **아트 바이블 · `_style-tokens.json` · `/ko-art-gen` 루브릭이 우선**이고, 카탈로그는 정규화 · 검증 체크리스트로만 쓴다. 딸린 스크립트(`asset_report.py` · `build_preview_sheet.py`)는 읽어 본 뒤 결과물 경로를 `production/artgen/` 안으로 지정해 실행한다. 참고했으면 asset-request 완료 note 에 한 줄 남긴다.
+
 ## 판단 권한
 
 | 스스로 결정 | 올림 |
