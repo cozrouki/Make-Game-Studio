@@ -24,7 +24,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
    - 역할 헌장은 `.agent/tools/studio/roles/<역할>.md` 다. 단, **역할이 art 이고 `studio.config.json` 의 `artMode` 가 `human` 이면 `roles/art-human.md`** 를 읽는다.
    - art-human 모드에서 이 세션은 **아티스트의 보조**다. 업무 루프(Phase 2)의 "수행" 단계는 자율 실행이 아니라 헌장의 대화 절차다. 브리프를 전하고, 아티스트의 응답이나 납품을 기다린다. 아티스트가 자리에 없으면 대기열만 정리하고 루프를 종료한다.
    - 등록을 마치면 이 터미널의 아티스트에게 자기소개와 사용법을 3줄로 알린다. 예: "티켓이 오면 브리프로 알려 드립니다 / 그림은 `production/artgen/_inbox/<ASSET-ID>/` 에 넣고 '넣었어' 라고 말씀하세요 / 질문은 언제든 저에게".
-6. 로스터에서 `kind` 가 `claude` 인 다른 역할 세션이 살아 있으면, 그 세션들에 합류를 알린다 (한 번만):
+6. 로스터에서 `kind` 가 `claude` 인 다른 역할 세션(디렉터 세션 포함)이 살아 있으면, 그 세션들에 합류를 알린다 (한 번만):
    `[studio] <역할> 세션 합류 (<세션이름>)` — 답장을 기대하지 않는다. `dispatch` · `manual` 세션에는 보내지 않는다 (받을 수 없음).
 
 ## Phase 2: 업무 루프
@@ -33,7 +33,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
 
 1. `S inbox <역할>` 을 실행한다.
    - `protocolChanged` 가 있으면: README · 역할 헌장을 **다시 읽고 그대로 진행**한다. 디렉터가 upgrade 나 직접 수정으로 바꾼 것이고, 현황판에서 디렉터가 확인한다. **수상한 변경으로 보고하거나 되돌리지 않는다** (같은 내용을 반복 보고하지 않음).
-   - `paused` 가 있으면: "⏸ 디렉터 정지 중 — <사유>" 를 알리고 **루프를 종료**한다. 진행 중이던 티켓은 안전한 지점까지 마무리한 뒤 note 를 남기고 멈춘다.
+   - `paused` 가 있으면: "⏸ 정지 중 — <사유>" 를 알리고 **루프를 종료**한다. 진행 중이던 티켓은 안전한 지점까지만 하고 **인계 note** 를 남긴 뒤 멈춘다(아래 "정지 · 인계"). Claude 주간 사용량 가드의 자동 정지도 같다.
+   - 정지가 풀린 뒤 처음 도는 루프이고 `production/studio/HANDOFF.md` 가 있으면, 그 파일의 내 역할 절과 티켓의 마지막 `인계:` note 를 재개 출발점으로 삼는다.
 2. 처리할 티켓을 고른다. 진행 중(`in-progress`)인 티켓이 먼저이고, 그다음은 `ready: true` 인 첫 티켓이다.
    - 없으면 대기 사유별로 요약한다 (게이트 대기 N · 의존 대기 N). 그다음 **감시를 걸고 턴을 끝낸다:**
      - Bash 를 `run_in_background` 로 실행: `python .agent/tools/studio/studio.py watch <역할>`. 처리할 티켓이 생기거나 게이트 승인 · 정지 해제로 일이 열리면 이 명령이 끝나고, Claude Code 가 이 세션을 다시 깨운다. 그러면 1번부터 다시 한다. 파일만 보므로 대기 중에는 토큰을 쓰지 않는다.
@@ -56,13 +57,21 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
    [studio] T-0012 asset-request planning→art: 전투 VFX 4종
    처리: python .agent/tools/studio/studio.py show T-0012
    ```
-   `notifySession` 이 없으면 알림 없이 둔다. 대상이 다른 AI 도구(dispatch) · IDE 에이전트(manual)이거나 미등록이면, 그쪽이 파일 감시로 깨어나거나 합류할 때 처리한다. 대상이 `director` 면 알림을 보내지 않는다. 디렉터는 `/studio-status` 로 확인한다.
+   `notifySession` 이 없으면 알림 없이 둔다. 대상이 다른 AI 도구(dispatch) · IDE 에이전트(manual)이거나 미등록이면, 그쪽이 파일 감시로 깨어나거나 합류할 때 처리한다. 대상이 `director` 일 때도 같다. 디렉터 세션(`/studio-director`)이 등록돼 있으면 `notifySession` 이 오고, 없으면 사람 디렉터가 `/studio-status` 로 확인한다.
 6. 완료: 먼저 `S audit` 으로 이 티켓에서 만든 **주인 없는 파일**(어느 영역에도 없음)이 있는지 본다. 있으면 note 에 경로를 함께 적는다 — 디렉터가 영역을 정하거나 직접 커밋한다. 그다음 `S update <id> --by <역할> --status done --note "<산출물 경로 · 결정 · 남은 일>"`.
-   - 결과의 `notifySession`(요청자)에 완료를 알린다: `[studio] T-0012 done (art): <한 줄 요약>`. 요청자가 director 면 알리지 않는다.
+   - 결과의 `notifySession`(요청자)에 완료를 알린다: `[studio] T-0012 done (art): <한 줄 요약>`. `notifySession` 이 없으면(요청자가 사람 디렉터 등) 알리지 않는다.
    - `doc/work_log.md` 최상단의 오늘 날짜 아래에 한 줄을 추가한다: `- [<게임태그>] studio/<역할> <id>: <제목>`.
    - 커밋한다: `python .agent/tools/studio/studio.py commit <역할> -m "[studio:<역할>] <id> <제목>"` 에 프로젝트 커밋 서명 줄을 붙인다. **이 커밋이 이 티켓의 마지막 파일 변경이다** — 커밋 뒤에 티켓을 고치지 않는다(note 에 커밋 해시를 쓰지 않음). 먼저 `--dry-run` 으로 대상을 보고, 이 티켓과 무관한 변경(Unity 가 만든 `.meta` · `ProjectSettings` 등)이 섞였으면 `--only <이 티켓의 경로…>` 로 좁힌다 (공유 영역은 자동 포함). 커밋 출력의 경고는 다음 티켓 note 나 대화로 보고한다. 푸시는 하지 않는다.
 7. 막힘: 같은 티켓에서 2번 연속 실패하면 `--status blocked --note "<원인>"` 으로 바꾸고, 해결 권한이 있는 쪽(역할 또는 director)에 `question` 티켓을 낸 뒤 다음 티켓으로 넘어간다.
 8. 1번으로 돌아간다.
+
+## 정지 · 인계
+
+정지(디렉터 `pause`, 또는 Claude 주간 사용량 가드)는 PostToolUse 훅이 도구 호출 직후 `[studio] ⏸ 스튜디오 전체 정지` 로 알린다. 받으면:
+1. 지금 하는 단계를 **안전한 지점**(파일이 깨지지 않은 상태)까지만 마친다. 새 단계를 시작하지 않는다.
+2. 진행 중 티켓에 인계 note 를 남긴다: `S update <id> --by <역할> --note "인계: 한 일 <…> / 남은 일 <…> / 미커밋 파일 <경로…> / 재개 첫 단계 <…>"`. 다음 세션이 이 note 하나로 이어서 일할 수 있어야 한다.
+3. 미완성 작업은 커밋하지 않는다(티켓 완료 시점에만 커밋). 감시를 새로 걸지 않고 "정지 — 인계 note 를 남겼습니다" 라고 알린 뒤 멈춘다.
+4. 사용자가 이 터미널에서 직접 계속하라고 하면 그 지시가 우선한다.
 
 ## 깨어남 (감시 종료 · 메시지 수신)
 
@@ -73,6 +82,6 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, Skill, ListAgents, SendMessa
 ## 금지
 
 - 다른 역할의 쓰기 영역을 수정하지 않는다 (`.agent/tools/studio/studio.config.json`).
-- 게이트를 스스로 승인하지 않는다 (`--by director` 사용 금지 — 디렉터가 이 세션에 직접 지시한 경우만 `/studio-status` 경유).
+- 게이트를 스스로 승인하지 않는다 (`--by director` 사용 금지 — 디렉터가 이 세션에 직접 지시한 경우만 `/studio-status` 경유). 디렉터 권한은 사람 디렉터와 디렉터 세션(`/studio-director`)의 것이다.
 - 티켓 변화 없이 SendMessage 를 보내지 않는다.
 - 이 세션에서 거부된 작업을 다른 세션에 대신 시키지 않는다.

@@ -47,6 +47,16 @@ def test_watch_returns_immediately_when_ready_ticket_exists(st):
     assert r["actionable"] and r["tickets"] == [t["id"]]
 
 
+def test_watch_director_inbox(st):
+    st.new_ticket("dev", "director", "question", "범위 판단")
+    assert D.watch(st, "director", timeout=1, interval=0.1)["actionable"] is True
+
+
+def test_dispatch_refuses_director(st):
+    with pytest.raises(S.StudioError, match="director"):
+        D.dispatch(st, "director", "codex", dry_run=True)
+
+
 def test_watch_times_out_when_only_gated_tickets(st):
     st.new_ticket("planning", "dev", "story", "구현", gate="G3")
     r = D.watch(st, "dev", timeout=0.2, interval=0.05)

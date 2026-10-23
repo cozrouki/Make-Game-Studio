@@ -29,7 +29,7 @@ Unity 풀스택 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 �
    - (c) 에디터 조작 → editor
    - (d) 프로세스/계획 관리 → process
    - (f) 기획 의도대로 그래픽 생성 → `/ko-art-gen`
-   - (g) 3세션 자동 개발 (디렉터 모드) → `/studio-join <planning|art|dev>` 각 세션 + `/studio-status`
+   - (g) 3세션 자동 개발 (디렉터 모드) → `/studio-join <planning|art|dev>` 각 세션 + `/studio-status` (또는 디렉터 세션 `/studio-director`)
    - (e) 어디부터 시작할지 모르겠다 → 아래 "자주 쓰는 작업" 안내
 
 ## 자주 쓰는 작업
@@ -41,7 +41,7 @@ Unity 풀스택 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 �
 - **엔진 설정 (최초 1회)**: 기존 코드가 있으면 `/ko-setup-engine` (실측), 새 프로젝트면 `/setup-engine` — Technology Stack·`technical-preferences.md`를 채워 전문가 에이전트 라우팅을 켬
 - **프로토타입 만들기**: `/ko-prototype <게임-태그> <컨셉>`
 - **기획대로 그래픽 생성**: `/art-bible` → `/asset-spec system:<이름>` → `/ko-art-gen <ASSET-NNN | spec:<target> | next>` (백엔드 중립 — `.agent/tools/artgen/README.md`)
-- **3세션 자동 개발 (스튜디오 모드)**: 터미널 3개에서 `/studio-join planning|art|dev` → `/studio-ticket planning "컨셉: …"` → `/studio-status` 로 게이트 승인 (`.agent/tools/studio/README.md`)
+- **3세션 자동 개발 (스튜디오 모드)**: 터미널 3개에서 `/studio-join planning|art|dev` → `/studio-ticket planning "컨셉: …"` → `/studio-status` 로 게이트 승인. 사용자와 의견을 나누며 결정하는 디렉터 세션은 `/studio-director [--root <프로젝트>]` (`.agent/tools/studio/README.md`)
 
 ## 관련 문서
 

@@ -41,8 +41,9 @@ def settings(st):
 
 # ---------------------------------------------------------------- 감시
 def actionable(st, role):
-    """(처리할 것이 있는가, 해당 티켓 목록). 정지 중이면 항상 False."""
-    if st.paused():
+    """(처리할 것이 있는가, 해당 티켓 목록). 정지 중이면 역할은 항상 False.
+    디렉터만 정지 중에도 깨어난다 — 사용량 정지 알림과 재개 판단은 정지 중에 처리해야 한다."""
+    if st.paused() and role != DIRECTOR:
         return False, []
     rows = st.inbox(role)
     todo = [r for r in rows if r["status"] == "in-progress" or (r["status"] == "open" and r["ready"])]
@@ -66,7 +67,7 @@ def fingerprint(st):
 
 
 def watch(st, role, timeout=0, interval=0, heartbeat=None):
-    st.check_role(role)
+    st.check_role(role, allow_director=True)
     interval = interval or settings(st)["pollSec"]
     start = time.monotonic()
     while True:
@@ -196,6 +197,8 @@ def _sleep_until_change(st, seconds, before, poll, beat):
 
 
 def dispatch(st, role, agent_name, max_runs=0, once=False, dry_run=False, force_lock=False, emit=print):
+    if role == DIRECTOR:
+        raise StudioError("director 는 헤드리스로 돌리지 않는다 — 사용자와 대화하는 /studio-director 세션이 맡는다")
     st.check_role(role)
     argv, exe, env, preset = build_command(st, role, agent_name)
     s = settings(st)

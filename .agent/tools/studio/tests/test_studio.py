@@ -111,6 +111,65 @@ def test_gate_only_director_can_approve(st, tmp_path):
     assert g["status"] == "approved" and g["history"][-1]["note"] == "좋음"
 
 
+def _requested_g1(st, root):
+    for a in st.gate("G1")["artifacts"]:
+        _touch(root, a)
+    st.set_gate("G1", "requested", "planning")
+
+
+# ---- 디렉터 세션 ----
+def test_gate_self_decision_blocked_by_default_policy(st, tmp_path):
+    _requested_g1(st, str(tmp_path))
+    with pytest.raises(S.StudioError, match="사용자 합의"):
+        st.set_gate("G1", "approved", "director", "단독", decided="self")
+    g = st.set_gate("G1", "approved", "director", "사용자와 합의")
+    assert g["history"][-1]["decided"] == "user"
+
+
+def test_gate_self_decision_allowed_when_policy_self(tmp_path):
+    cfg = S.load_config()
+    cfg["director"] = dict(cfg.get("director", {}), gates="self")
+    st = S.Studio(str(tmp_path), cfg)
+    _requested_g1(st, str(tmp_path))
+    assert st.set_gate("G1", "approved", "director", decided="self")["history"][-1]["decided"] == "self"
+
+
+def test_director_answer_alone_is_tagged_in_thread(st):
+    t = st.new_ticket("dev", "director", "question", "대기 칸 너비")
+    t = st.update_ticket(t["id"], "director", "done", "3칸", decided="self")
+    assert "[director·단독]" in t["thread"][-1]
+    cfg = dict(st.cfg, director={"questions": "user"})
+    t2 = S.Studio(st.root, cfg).new_ticket("dev", "director", "question", "b")
+    with pytest.raises(S.StudioError, match="director.questions=user"):
+        S.Studio(st.root, cfg).update_ticket(t2["id"], "director", "done", "x", decided="self")
+
+
+def test_director_policy_invalid_value_rejected(tmp_path):
+    cfg = dict(S.load_config(), director={"gates": "auto"})
+    with pytest.raises(S.StudioError, match="director.gates"):
+        S.Studio(str(tmp_path), cfg).director_policy
+
+
+def test_director_can_join_but_not_headless(st):
+    assert st.join("director", "unitygame-dd")["director"]["session"] == "unitygame-dd"
+    assert st.notify_session("director") == "unitygame-dd"
+    with pytest.raises(S.StudioError, match="director"):
+        st.join("director", "x", kind="dispatch")
+
+
+def test_cli_notifies_director_session_both_ways(tmp_path, capsys):
+    root = str(tmp_path)
+    S.main(["--root", root, "join", "director", "unitygame-dd"])
+    S.main(["--root", root, "join", "dev", "unitygame-d4"])
+    capsys.readouterr()
+    S.main(["--root", root, "--json", "new", "--from", "dev", "--to", "director", "--type", "question", "--title", "q"])
+    assert json.loads(capsys.readouterr().out)["notifySession"] == "unitygame-dd"
+    S.main(["--root", root, "--json", "new", "--from", "director", "--to", "dev", "--title", "t"])
+    tid = json.loads(capsys.readouterr().out)["id"]
+    S.main(["--root", root, "--json", "update", tid, "--by", "dev", "--status", "done", "--note", "ok"])
+    assert json.loads(capsys.readouterr().out)["notifySession"] == "unitygame-dd"
+
+
 def test_gate_g2_artifacts_follow_art_mode(tmp_path):
     cfg = S.load_config()
     assert "design/assets/requests/_style-tokens.json" in S.Studio(str(tmp_path), cfg).gate("G2")["artifacts"]

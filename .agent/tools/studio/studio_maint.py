@@ -6,15 +6,17 @@
   - 템플릿 갱신을 실행 중인 프로젝트에 직접 덮어써 디렉터 결정이 되돌려졌다.
 그래서 디렉터 영역(directorOwns)을 두고, 변경을 지문으로 감지해 기록하며, 갱신은 upgrade 로만 한다.
 """
+import datetime
 import fnmatch
 import glob
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 
-from studio import DIRECTOR, StudioError, deep_merge, now, read_json, write_json
+from studio import DIRECTOR, SYSTEM, StudioError, deep_merge, now, read_json, write_json
 
 PROTOCOL_FILE = "protocol.json"
 DEFAULT_PROTOCOL_FILES = [
@@ -28,8 +30,10 @@ DEFAULT_PROTOCOL_FILES = [
 # upgrade 가 템플릿에서 가져오는 범위 (도구 · 스튜디오 스킬 · 관련 워크플로)
 UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen",
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
+                 ".claude/skills/studio-director",
                  ".claude/skills/ko-art-gen"]
-UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md"]
+UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md",
+                 ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh"]
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)
 MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json"]
 SKIP_NAMES = ("__pycache__", ".pytest_cache")
@@ -176,3 +180,127 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
                        for role in st.roles]
     st.log("upgrade", template=template, rev=plan["templateRev"], files=len(touched))
     return plan
+
+
+# ---------------------------------------------------------------- Claude 주간 사용량 가드
+# 세 세션은 같은 계정의 한도를 함께 쓴다. statusLine(.claude/statusline.sh)이 받은 rate_limits 를
+# 여기로 넘기면, 주간 사용량이 임계값을 넘는 순간 전체를 정지시키고 인계 기록을 남긴다.
+USAGE_DEFAULTS = {"enabled": True, "weeklyPausePercent": 90}
+HANDOFF_FILE = "HANDOFF.md"
+
+
+def usage_settings(st):
+    s = dict(USAGE_DEFAULTS)
+    s.update(st.cfg.get("usageGuard", {}))
+    return s
+
+
+def _usage_path(st):
+    return os.path.join(st.dir, "locks", "usage.json")  # 런타임 상태 (git 무시)
+
+
+def usage_state(st):
+    return read_json(_usage_path(st), {})
+
+
+def _claim_trigger(st, window):
+    """리셋 주기마다 한 번만 발동 — 여러 세션의 statusLine 이 동시에 90% 를 봐도 하나만 통과한다."""
+    path = os.path.join(st.dir, "locks", "usage-trigger-" + (re.sub(r"[^0-9A-Za-z]", "_", window) or "none"))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        os.close(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY))
+        return True
+    except FileExistsError:
+        return False
+
+
+def fmt_epoch(epoch):
+    try:
+        return datetime.datetime.fromtimestamp(float(epoch), datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M")
+    except (TypeError, ValueError, OverflowError, OSError):
+        return "알 수 없음"
+
+
+def parse_statusline(data):
+    """statusLine stdin JSON → (주간 %, 리셋 epoch). 구독 플랜이 아니거나 첫 응답 전이면 (None, None)."""
+    week = ((data or {}).get("rate_limits") or {}).get("seven_day") or {}
+    pct = week.get("used_percentage")
+    return (float(pct) if pct is not None else None), week.get("resets_at")
+
+
+def record_usage(st, percent, resets_at=None, source="statusline"):
+    """사용량을 기록하고, 임계값 이상이면 리셋 주기당 한 번 정지 + 인계 기록 + 디렉터 티켓.
+    디렉터가 일부러 재개한 뒤에는 같은 주기에서 다시 정지시키지 않는다."""
+    if percent is None or not os.path.isdir(st.dir):
+        return {"recorded": False, "triggered": False}
+    cfg = usage_settings(st)
+    state = usage_state(st)
+    window = str(resets_at or "")
+    state.update(percent=percent, resetsAt=resets_at, at=now(), source=source)
+    out = {"recorded": True, "triggered": False, "percent": percent, "threshold": cfg["weeklyPausePercent"]}
+    if cfg["enabled"] and percent >= cfg["weeklyPausePercent"] and state.get("pausedWindow") != window \
+            and _claim_trigger(st, window):
+        reason = (f"Claude 주간 사용량 {percent:.0f}% ≥ {cfg['weeklyPausePercent']}% — "
+                  f"리셋 {fmt_epoch(resets_at)}. 인계: production/studio/{HANDOFF_FILE}")
+        # statusLine 은 새 갱신이 오면 실행 중인 스크립트를 취소한다 — 정지부터 걸고 나머지를 한다
+        if not st.paused():
+            st.set_paused(True, reason)
+        state["pausedWindow"] = window
+        write_json(_usage_path(st), state)
+        body = (f"{reason}\n\n전 세션 정지. 각 세션은 진행 중 티켓에 '인계:' note 를 남기고 멈춘다.\n"
+                f"인계 기록: production/studio/{HANDOFF_FILE}\n\n"
+                "디렉터 할 일: 사용자에게 알리고, 리셋 후 재개 시점을 정한다 (resume 은 사용자 합의).")
+        t = st.new_ticket(SYSTEM, DIRECTOR, "info", f"Claude 주간 사용량 {percent:.0f}% — 전체 정지 · 인계", body,
+                          priority="P0", refs=[f"production/studio/{HANDOFF_FILE}"])
+        path = write_handoff(st, reason, percent, resets_at)  # 티켓 뒤에 — 디렉터 대기열에 이 티켓이 보이게
+        st.log("usage.pause", percent=percent, resetsAt=resets_at, ticket=t["id"])
+        out.update(triggered=True, reason=reason, handoff=path, ticket=t["id"],
+                   notifySession=st.notify_session(DIRECTOR))
+        return out
+    write_json(_usage_path(st), state)
+    return out
+
+
+def write_handoff(st, reason, percent=None, resets_at=None):
+    """정지 시점의 스냅샷 — 다음 세션이 이 파일 + 티켓 스레드의 '인계:' note 로 이어서 작업한다."""
+    roster = st.roster()
+    lines = ["# 스튜디오 인계 기록", "", f"- 정지: {now()}", f"- 사유: {reason}"]
+    if percent is not None:
+        lines.append(f"- Claude 주간 사용량: {percent:.0f}% (리셋 {fmt_epoch(resets_at)})")
+    lines += ["", "## 이어서 하는 법", "",
+              "1. 사용량이 리셋되면 각 터미널에서 `/studio-join <역할>` (디렉터는 `/studio-director`).",
+              "2. 디렉터가 사용자와 합의해 `resume` 한다. 정지 중에는 새 티켓에 착수하지 않는다.",
+              "3. 각 세션은 아래 진행 중 티켓부터 재개 절차로 이어 간다. 스레드의 마지막 `인계:` note 가 출발점이다.",
+              "", "## 게이트", ""]
+    lines += [f"- {g['id']} {g['status']} — {g['name']}" for g in st.gates()]
+    lines += ["", "## 역할별 진행 상황", ""]
+    try:
+        shared = set(st.changed_files_for(list(st.cfg.get("shared", []))))
+    except StudioError:  # git 저장소가 아님
+        shared = None
+    for role in st.roles:
+        rows = st.inbox(role)
+        lines.append(f"### {role} (세션 {roster.get(role, {}).get('session', '-')})")
+        active = [r for r in rows if r["status"] in ("in-progress", "blocked")]
+        waiting = [r for r in rows if r["status"] == "open"]
+        for r in active:
+            last = r["thread"][-1] if r["thread"] else "(note 없음)"
+            lines.append(f"- {r['id']} {r['status']} {r['title']}")
+            lines.append(f"  - 마지막 note: {last}")
+        if waiting:
+            lines.append(f"- 대기 {len(waiting)}건: " + ", ".join(r["id"] for r in waiting[:10]))
+        mine = [] if shared is None else [f for f in st.changed_files(role) if f not in shared]
+        if mine:
+            lines.append(f"- 미커밋 변경 {len(mine)}개: " + ", ".join(mine[:15]) + (" …" if len(mine) > 15 else ""))
+        if not (active or waiting or mine):
+            lines.append("- 없음")
+        lines.append("")
+    queue = st.inbox(DIRECTOR)
+    lines += ["## 디렉터 판단 대기", ""]
+    lines += [f"- {t['id']} {t['type']} ({t['from']}) {t['title']}" for t in queue] or ["- 없음"]
+    os.makedirs(st.dir, exist_ok=True)
+    path = os.path.join(st.dir, HANDOFF_FILE)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+    st.log("handoff", reason=reason)
+    return path
