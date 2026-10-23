@@ -149,6 +149,23 @@ def test_upgrade_preserves_director_decisions_and_announces(repo, tmp_path):
     assert M.protocol_state(repo)["dirty"] is False                  # 업그레이드가 승인까지 기록
 
 
+def test_upgrade_unions_director_owns(repo, tmp_path):
+    # 프로젝트: 예전 템플릿의 directorOwns + 디렉터가 직접 넣은 항목
+    cfg_path = os.path.join(repo.root, ".agent", "tools", "studio", "studio.config.json")
+    cfg = json.load(open(cfg_path, encoding="utf-8"))
+    cfg["directorOwns"] = [x for x in cfg["directorOwns"] if x != ".agent/catalogs"] + ["docs/director-notes"]
+    json.dump(cfg, open(cfg_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    template = str(tmp_path / "template")
+    shutil.copytree(TOOL_DIR, os.path.join(template, ".agent", "tools", "studio"),
+                    ignore=shutil.ignore_patterns("__pycache__", "tests", "*.local.json"))
+
+    M.upgrade(repo, template)
+    owns = json.load(open(cfg_path, encoding="utf-8"))["directorOwns"]
+    assert ".agent/catalogs" in owns          # 템플릿의 새 도구 폴더가 들어온다
+    assert "docs/director-notes" in owns      # 프로젝트 항목은 유지
+    assert len(owns) == len(set(owns))
+
+
 def test_upgrade_rejects_non_template(repo, tmp_path):
     with pytest.raises(S.StudioError, match="템플릿"):
         M.upgrade(repo, str(tmp_path))
