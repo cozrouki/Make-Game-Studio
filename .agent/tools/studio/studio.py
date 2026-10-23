@@ -516,6 +516,17 @@ def main(argv=None):
 
     sub.add_parser("agents", help="에이전트 프리셋과 설치 여부")
 
+    p = sub.add_parser("launch", help="팀 정의(production/studio/team.json)대로 역할 세션들을 기동")
+    p.add_argument("--only", default="", help="일부 역할만 (쉼표 구분)")
+    p.add_argument("--backend", choices=("vscode", "console"), help="기본: team.json 의 backend")
+    p.add_argument("--resume", action="store_true", help="지난번 세션 ID 로 이전 대화를 이어서")
+    p.add_argument("--dry-run", action="store_true", help="실행할 명령과 사전 점검만 출력")
+    p.add_argument("--force", action="store_true", help="사전 점검 오류를 무시")
+
+    p = sub.add_parser("team", help="팀 정의 파일 만들기 · 보기")
+    p.add_argument("action", choices=("init", "show"))
+    p.add_argument("--force", action="store_true", help="init: 기존 파일 덮어쓰기")
+
     p = sub.add_parser("new", help="티켓 발행")
     p.add_argument("--from", dest="sender", required=True)
     p.add_argument("--to", required=True)
@@ -602,6 +613,21 @@ def main(argv=None):
             r = st.roster()
             out(r, "\n".join(f"{k:<9} {v['session']}  [{v.get('kind', 'claude')}/{v.get('agent') or 'claude'}]"
                              f"  (등록 {v['joinedAt']})" for k, v in r.items()) or "(등록 없음)")
+        elif args.cmd in ("launch", "team"):
+            sys.modules.setdefault("studio", sys.modules[__name__])
+            import studio_launch as L  # noqa: E402 — 같은 디렉터리
+            if args.cmd == "team":
+                if args.action == "init":
+                    path = L.team_init(st, args.force)
+                    out({"teamFile": path}, f"팀 정의 생성: {path} — 역할별 tool · model · permissionMode 를 확인하고 고친다")
+                else:
+                    team = L.load_team(st)
+                    out(team, json.dumps(team, ensure_ascii=False, indent=2))
+                return 0
+            r = L.launch(st, only=_split(args.only), backend=args.backend, resume=args.resume,
+                         dry_run=args.dry_run, force=args.force)
+            out(r, L.format_result(r))
+            return 1 if r.get("blocked") else 0
         elif args.cmd in ("watch", "dispatch", "agents"):
             # 스크립트로 실행되면 이 모듈은 __main__ — 'studio' 로 다시 import 되어 클래스가 두 벌 생기지 않게 한다
             sys.modules.setdefault("studio", sys.modules[__name__])
