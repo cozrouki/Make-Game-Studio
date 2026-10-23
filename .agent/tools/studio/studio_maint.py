@@ -37,6 +37,7 @@ UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh"]
+UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)
 MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json"]
 SKIP_NAMES = ("__pycache__", ".pytest_cache")
@@ -143,6 +144,10 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
         if rel in MERGE_JSON and os.path.isfile(dst):
             tpl, mine = read_json(src), read_json(dst)
             result = deep_merge(tpl, mine)  # 템플릿 기반 + 프로젝트 값 우선 → 디렉터 결정 보존, 새 키만 추가
+            # 디렉터 영역 목록은 합집합 — 템플릿이 새 도구 폴더를 추가하면 기존 프로젝트에서도 주인 없는 파일이 되지 않게
+            for key in UNION_LISTS:
+                if isinstance(tpl.get(key), list) and isinstance(mine.get(key), list):
+                    result[key] = mine[key] + [x for x in tpl[key] if x not in mine[key]]
             new_keys = sorted(set(result) - set(mine))
             if result != mine:
                 plan["merge"].append({"file": rel, "newTopLevelKeys": new_keys})
