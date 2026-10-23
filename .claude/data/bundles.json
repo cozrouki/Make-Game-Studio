@@ -185,7 +185,8 @@
         "release-checklist",
         "launch-checklist",
         "changelog",
-        "patch-notes"
+        "patch-notes",
+        "ext"
       ],
       "agents": [
         "devops-engineer",
