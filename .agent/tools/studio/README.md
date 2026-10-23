@@ -30,21 +30,49 @@
 
 ## 시작하기
 
-1. **같은 Unity 프로젝트 폴더**에서 터미널 3개를 열고 각각 `claude` 를 실행한다. **세 세션의 권한 모드를 같게 둔다.** 모드가 다르면 세션 간 메시지가 받는 쪽 사용자 승인 대기로 묶인다.
-2. 각 세션에서 역할을 등록한다.
+**권장 — 팀 정의 + 명령 하나로 기동 (`launch`)**
+
+1. 팀 정의를 만든다: `python .agent/tools/studio/studio.py team init` → `production/studio/team.json`
+   ```json
+   {
+     "permissionMode": "default",
+     "backend": "vscode",
+     "stagger": 20,
+     "roles": {
+       "director": { "tool": "claude", "model": "opus" },
+       "planning": { "tool": "claude", "model": "opus" },
+       "art":      { "tool": "claude", "model": "sonnet" },
+       "dev":      { "tool": "codex" }
+     }
+   }
    ```
-   /studio-join planning      (1번 터미널)
-   /studio-join art           (2번 터미널)
-   /studio-join dev           (3번 터미널)
-   ```
-   세션은 자기 이름을 `ListAgents` 로 확인해 `roster.json` 에 등록한다. 그다음 받은 티켓을 처리하기 시작한다.
-3. 디렉터가 기획 세션에 아이디어를 준다.
+   - `tool`: `claude` = 대화형 Claude Code 세션, 그 외(`codex` · `gemini` · `cursor` · `copilot` · `opencode`) = `dispatch` 감독 루프. director 는 `claude` 만.
+   - `permissionMode`: **팀 전체에 하나**다 (`default` · `acceptEdits` · `plan` · `auto` · `dontAsk` · `bypassPermissions`). 세션끼리 모드가 다르면 세션 간 메시지가 받는 쪽 승인 대기로 묶인다. 디렉터 세션을 따로 띄워 쓰면 그 세션과 같은 모드로 둔다.
+   - 디렉터를 다른 세션(예: 템플릿 저장소에서 `--root`)이 맡으면 `"director": {"enabled": false}`.
+   - `"enabled": false` 인 역할은 띄우지 않는다. 역할별 `prompt` 로 초기 프롬프트를 바꿀 수 있다.
+2. 미리 본다: `studio.py launch --dry-run` — 역할별 실행 명령과 사전 점검(정지 · 주간 사용량 · `index.lock` · 이미 떠 있는 창 · 실행 파일 · Unity MCP 포트 · ComfyUI).
+3. 기동한다: `/studio-status launch` (또는 `studio.py launch`).
+   - `backend: vscode` — `.vscode/tasks.json` 에 역할별 작업과 **`studio: 전체 기동`** 이 생긴다. VS Code 명령 팔레트 → **Tasks: Run Task → `studio: 전체 기동`**. 역할마다 전용 터미널이 열린다.
+   - `backend: console` — 역할마다 PowerShell 창을 연다 (VS Code 없이).
+   - 역할 사이에 `stagger` 초 간격을 둔다 (느린 디스크에서 기동이 몰리지 않게). 세션은 `studio-<역할>` 이름으로 뜨고 스스로 `/studio-join <역할>` (디렉터는 `/studio-director`) 을 실행한다.
+4. 디렉터가 기획 세션에 아이디어를 준다.
    ```
    /studio-ticket planning "컨셉: 엘리베이터 안에서만 벌어지는 2D 잠입 퍼즐" 모바일 세로, 10분 세션
    ```
    `/studio-ticket` 은 어느 세션에서 입력해도 되고, 발신자는 `director` 로 기록된다.
-4. 이후 디렉터는 `/studio-status` 로 현황을 보다가 게이트 요청이 오면 승인하거나 반려한다.
-   - 디렉터 세션을 쓰면 4번째 터미널(또는 다른 폴더의 세션)에서 `/studio-director [--root <프로젝트>]` 를 실행한다. 그 세션과 대화하며 결정하고, 판단 요청은 그 세션이 받아 처리한다.
+5. 이후 디렉터는 `/studio-status` 로 현황을 보다가 게이트 요청이 오면 승인하거나 반려한다. 디렉터 세션을 쓰면 그 세션과 대화하며 결정한다 ([디렉터 세션](#디렉터-세션--studio-director)).
+
+**다시 띄우기 · 이어서 하기** — 사용량 한도 · 재부팅 뒤 `/studio-status launch --resume`. 지난번 세션 ID(`locks/launch.json`)로 역할마다 **이전 대화를 그대로** 잇는다. 일부만: `--only planning,art`.
+
+**참고 — 기동 스크립트가 하는 일**
+- 처음 보는 폴더에서는 Claude Code 의 폴더 신뢰 확인이 한 번 뜬다 (이미 쓰는 프로젝트는 없음).
+- Claude 세션 안에서 `launch` 를 실행하면 새 세션이 부모의 세션 전용 환경변수(`CLAUDE_CODE_CHILD_SESSION` 등)를 물려받아 "자식 세션"이 된다 — 대화 기록이 꺼지고 세션 등록이 안 되어 SendMessage 를 받지 못한다. 스크립트가 그 변수들을 지우고 띄운다.
+
+**수동 — 터미널마다 직접**
+
+1. **같은 Unity 프로젝트 폴더**에서 터미널을 역할마다 열고 각각 `claude` 를 실행한다. **세션들의 권한 모드를 같게 둔다.**
+2. 각 세션에서 `/studio-join planning` · `/studio-join art` · `/studio-join dev` 를 입력한다. 세션은 자기 이름을 `ListAgents` 로 확인해 `roster.json` 에 등록하고 받은 티켓을 처리하기 시작한다.
+3. 위 4~5번과 같다. 디렉터 세션은 4번째 터미널(또는 다른 폴더의 세션)에서 `/studio-director [--root <프로젝트>]`.
 
 ## 디렉터 세션 — `/studio-director`
 
@@ -101,6 +129,8 @@ human 모드에서 아티스트는 art 세션의 터미널 앞에 앉아 대화�
 | **manual** (IDE) | Antigravity · Windsurf · Cursor IDE 등 헤드리스가 없는 에이전트 | 에이전트 터미널의 `studio.py watch` 종료 | Antigravity: `/studio-join` 워크플로 · 그 외: `prompts/agent-loop.md` 를 읽게 함 |
 
 **파일 감시 (`watch`)** — 역할에 처리할 티켓(진행 중, 또는 착수 가능한 open)이 생길 때까지 파일만 보며 기다린다. 이미 있으면 바로 끝난다(종료 코드 0, 시간 초과는 3). 정지 중에는 끝나지 않는다. 티켓을 누가 만들었든(Claude · 다른 도구 · 사람 · 디렉터) 같은 방식으로 깨어나고, 대기 중에는 AI 토큰을 쓰지 않는다.
+
+팀 정의(`team.json`)의 역할 `tool` 에 프리셋 이름(`codex` 등)을 쓰면 `launch` 가 그 역할을 `dispatch` 로 띄운다 — 대화형 Claude 세션과 감독 루프를 한 번에 기동한다.
 
 **감독 루프 (`dispatch`)**
 ```bash
@@ -209,6 +239,8 @@ python .agent/tools/studio/studio.py commit art -m "[studio:art] T-0012 전투 V
 S="python .agent/tools/studio/studio.py"
 $S join <role|director> <session> [--kind claude|dispatch|manual] [--agent <도구>]      $S roster
 $S watch <role|director> [--timeout 초]    # 처리할 티켓이 생길 때까지 대기 (0 = 생김, 3 = 시간 초과)
+$S team init | show              # 팀 정의 production/studio/team.json
+$S launch [--dry-run] [--only R,…] [--backend vscode|console] [--resume] [--force]   # 팀 정의대로 역할 세션 기동
 $S dispatch <role> --agent <프리셋> [--once] [--max-runs N] [--dry-run] [--force-lock]
 $S agents                        # 에이전트 프리셋 · 설치 여부
 $S new --from R --to R --type T --title "…" [--body-file f] [--priority P0|P1|P2] [--gate G2] [--depends T-1,T-2] [--refs a,b]
@@ -277,8 +309,9 @@ statusLine (.claude/statusline.sh — 60초마다 + 응답마다)
 
 **복구 (한도 초기화 후)**
 0. `production/studio/HANDOFF.md` 를 먼저 본다 (디렉터 세션은 자동으로 브리핑한다).
-1. 각 세션에 `/studio-join <역할>` 을 다시 입력한다. 업무 루프가 `in-progress` 티켓부터 처리한다. 재개 시에는 `studio.py changes <역할>` 로 반쯤 된 변경을 확인하고, 이어서 할지 되돌리고 다시 할지 정해 스레드에 기록한다.
-2. `/studio-status` 로 정체 티켓이 없는지 확인한다. 정지했던 경우에는 `/studio-status resume` 도 한다.
+1. 정지했던 경우 `/studio-status resume` 으로 정지를 푼다 (launch 사전 점검이 정지 중 기동을 막는다).
+2. **`/studio-status launch --resume`** — 역할마다 지난번 세션 ID 로 이전 대화를 그대로 잇는다 (세션이 아직 열려 있으면 그 창에 `/studio-join <역할>` 만 다시 입력해도 된다). 업무 루프가 `in-progress` 티켓부터 처리한다. 재개 시에는 `studio.py changes <역할>` 로 반쯤 된 변경을 확인하고, 이어서 할지 되돌리고 다시 할지 정해 스레드에 기록한다.
+3. `/studio-status` 로 정체 티켓이 없는지 확인한다.
 
 ## 한계
 

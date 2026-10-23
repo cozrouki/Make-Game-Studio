@@ -37,7 +37,7 @@ cd unity-fullstack-claude-skills
 6. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화·그래픽 생성).
 7. 진행 방식을 고릅니다.
    - **한 세션**: 위 흐름의 스킬을 순서대로 직접 호출합니다.
-   - **스튜디오 모드**: 터미널 3개로 기획·아트·개발 세션을 띄우고, 디렉터로서 게이트에서만 승인합니다 → [스튜디오 모드](#스튜디오-모드--3세션-자동-개발)
+   - **스튜디오 모드**: 기획·아트·개발 세션을 명령 하나(`/studio-status launch`)로 띄우고, 디렉터로서 게이트에서만 승인합니다 → [스튜디오 모드](#스튜디오-모드--3세션-자동-개발)
 
 - 옵션(멀티 게임, Cursor 병행, 미리보기, 덮어쓰기): [자동 설치](#자동-설치-권장--scriptsinstallps1)
 - 엔진 설정 상세: [6단계](#6단계-엔진-설정-자동수동-설치-공통--technology-stack--technical-preferencesmd)
@@ -164,7 +164,12 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
        ◀──질문/리뷰──    ◀──에셋 요청──         깨우기: 티켓 파일 감시 (+ Claude 끼리는 SendMessage)
 ```
 
-**시작**
+**시작 — 명령 하나로 (권장)**
+1. `python .agent/tools/studio/studio.py team init` → `production/studio/team.json` 에서 역할별 도구(`claude` · `codex` 등) · 모델 · 권한 모드(팀 전체 하나)를 정합니다.
+2. `/studio-status launch` → VS Code 명령 팔레트 → **Tasks: Run Task → `studio: 전체 기동`**. 역할마다 전용 터미널이 열리고 20초 간격으로 `studio-<역할>` 세션이 떠서 스스로 `/studio-join` 합니다 (`backend: console` 이면 PowerShell 창). 다시 띄울 때 `/studio-status launch --resume` 은 이전 대화를 그대로 잇습니다.
+3. 아래 3번부터 같습니다. 상세: 스튜디오 README "시작하기".
+
+**시작 — 터미널마다 직접**
 1. 프로젝트 폴더에서 역할마다 터미널을 하나씩 엽니다.
 2. 역할을 맡길 도구에 따라 참여시킵니다.
 

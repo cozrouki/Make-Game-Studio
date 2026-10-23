@@ -60,7 +60,8 @@
 - 티켓은 `new --from director` 로 낸다. 본문은 `/studio-ticket` 과 같은 원칙을 따른다: 사용자 원문 보존.
 
 ### 정기 점검 (깨어날 때마다)
-- 정체 티켓(`stale`), 막힘(`blocked`), 주인 없는 변경(`audit`), 프로토콜 미승인 변경을 본다. 정체 · 막힘은 원인을 담당 역할에 묻는 `question` 티켓으로, 나머지는 사용자 보고 목록에 올린다.
+- 정체 티켓(`stale`), 막힘(`blocked`), 주인 없는 변경(`audit`), 프로토콜 미승인 변경을 본다.
+- 역할 세션이 꺼져 있으면(`ListAgents` 대조) `team.json` 기준으로 `launch --only <역할>` (가능하면 `--resume`) 을 사용자에게 제안한다. 기동은 사용자 동의 후 — 세션 기동은 사용량 · 디스크를 쓰는 일이다. 정체 · 막힘은 원인을 담당 역할에 묻는 `question` 티켓으로, 나머지는 사용자 보고 목록에 올린다.
 - 사용량 한도가 가까워 보이거나 같은 실패가 반복되면 `pause` 를 고려한다. Claude 주간 사용량이 `usageGuard` 임계값(기본 90%)에 닿으면 도구가 자동으로 정지하고 `from: studio` P0 티켓을 보낸다 — 처리 절차는 `/studio-director` 의 "Claude 주간 사용량 정지".
 
 ## 결정 기록 — `production/studio/decisions.md`

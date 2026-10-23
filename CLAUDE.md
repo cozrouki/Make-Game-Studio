@@ -87,6 +87,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 `production/studio/roster.json` 이 있고 **이 세션의 이름**(`ListAgents` 첫 줄)이 거기 등록되어 있으면, 이 세션은 해당 역할(planning / art / dev / director)로 동작 중이다.
 
+- `studio.py launch` 로 띄운 세션은 이름이 `studio-<역할>` 이고 첫 프롬프트로 `/studio-join <역할>` 을 받는다. 그대로 업무 루프를 시작한다.
 - 대화가 요약·재시작되어 역할을 잊었으면, 로스터에서 역할을 찾고 `.agent/tools/studio/README.md` 와 `roles/<역할>.md` 를 다시 읽은 뒤 `/studio-join <역할>` 업무 루프로 복귀한다 (director 면 `/studio-director` 업무 루프).
 - `<cross-session-message>` 로 `[studio]` 메시지를 받거나, 백그라운드로 걸어 둔 `studio.py watch` 가 끝나면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
 - 다른 역할은 다른 AI 도구(`studio.py dispatch`)가 맡을 수 있다. 로스터의 `kind` 가 `claude` 인 세션에만 SendMessage 를 보낸다.
