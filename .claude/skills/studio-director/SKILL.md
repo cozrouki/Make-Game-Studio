@@ -32,6 +32,8 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, ListAgents, SendMessage, Ask
 `S status` 와 `S inbox director` 로 사용자에게 현황을 보여 준다.
 - 게이트 표 (`requested` 는 산출물 경로 포함)
 - 역할 표 (세션 살아 있음 ✅ / 꺼짐 ⚠ — `ListAgents` 대조)
+  - 꺼진 역할이 있고 `production/studio/team.json` 이 있으면 기동을 **제안**한다: `S launch --only <꺼진 역할> --dry-run` 결과를 보여 주고, 사용자가 동의하면 `/studio-status launch` 의 절차로 띄운다 (지난번 세션 ID 가 있으면 `--resume` 을 권한다 — 이전 대화를 잇는다). 디렉터가 혼자 기동하지 않는다.
+  - `team.json` 이 없으면 `S team init` 으로 만들 수 있다고 한 줄 안내한다.
 - 디렉터 대기열을 **둘로 나눈다**: "제가 처리하겠습니다"(questions 권한 안) / "함께 정해야 합니다"(게이트 · 비전)
 - 정체 · 막힘 · 주인 없는 변경 · 프로토콜 미승인 변경
 - 지난 사용자 대화 이후의 **단독 결정 보고** (`decisions.md` 에서 `디렉터 단독` 항목)
