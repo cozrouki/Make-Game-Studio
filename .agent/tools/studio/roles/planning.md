@@ -54,6 +54,40 @@
 14. 설계 변경이 생기면 `/propagate-design-change` 로 영향 범위를 파악하고 관련 티켓을 발행한다.
 15. 스프린트가 끝나면 `/sprint-status`, 마일스톤이 끝나면 `/milestone-review` → `gate add M<n>` → `gate request` → 디렉터 티켓.
 
+## 설계 감사 — gamedesign 카탈로그
+
+`.agent/gamedesign/UPSTREAM.json` 이 있으면 아래대로 감사한다.
+
+**번들이 없으면 설치를 요청한다.** 번들은 PolyForm Noncommercial 라이선스라, 받을지와 어떤 조건(비상업 / 상업 라이선스 보유)으로 받을지는 사용자가 정한다. planning 이 고르지 않는다.
+1. 이미 낸 요청이 있는지 본다: `S inbox director --all` 에서 제목이 `gamedesign 번들 설치` 인 티켓.
+   - 열려 있으면: 기다린다. 감사 없이 다른 일을 계속하고, 해당 GDD 의 감사는 설치 후로 미룬다(티켓 note 에 "감사 대기" 기록).
+   - 닫혔고 디렉터 답이 "설치 안 함" 이면: 이 절을 건너뛴다. 다시 묻지 않는다.
+2. 요청이 없으면 한 번만 낸다: `to: director`, type `question`, 제목 `gamedesign 번들 설치 — 라이선스 선택 필요`. 본문에 쓰는 것:
+   - 왜 필요한지 (어느 GDD 에 어떤 감사를 쓰려는지)
+   - 라이선스 요약: 개인 · 학습 · 비영리는 무료, 게임 회사 안에서의 사용 · 재배포는 작성자 상업 라이선스 필요 (https://www.stane-island.net/)
+   - 설치 명령: `python <템플릿>/scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial> --root <이 프로젝트>` (또는 디렉터 세션의 `/ext` 가 안내)
+3. 설치되면(디렉터 답 + `UPSTREAM.json` 생김) 미뤄 둔 감사부터 한다.
+
+**언제**
+1. GDD 하나를 v1 으로 마치면, 그 시스템에 맞는 감사를 **최대 3개** 고른다 (세 세션이 사용량을 함께 쓴다).
+2. 게이트 요청(G1 · G2 · G3 · M*) 직전에 `design-red-team-audit` 를 1회 돌린다.
+3. 디렉터 티켓이 스킬을 지정하면 그대로 한다.
+
+**고르는 기준** (전체 목록: `/ext list gamedesign`)
+
+| 설계가 다루는 것 | 감사 |
+|---|---|
+| 규칙 · 실패 · 판정 | `game-design-fairness-frustration-audit` · `game-design-failure-loop-audit` · `game-design-perceived-randomness-audit` |
+| 페이싱 · 세션 길이 | `game-design-flow-audit` · `game-design-goal-density-and-immediacy-audit` · `game-design-peak-end-audit` |
+| 첫 경험 · 온보딩 | `game-design-ftue-hero-journey-audit` · `game-design-friction-journey-audit` |
+| 범위 · 우선순위 | `game-design-one-thing-to-remove` · `game-design-feature-prioritization` |
+| 동기 · 리텐션 | `game-design-player-motivation-audit` · `game-design-zeigarnik-effect-audit` |
+
+**방법**
+- `/ext <스킬> <대상 GDD 경로>` — 결과는 `design/gdd/reviews/<시스템>-<스킬>.md`, 끝에 출처 한 줄 (`/ext` 가 붙인다).
+- 발견 사항은 **필러로 판정한다.** 필러를 강화하는 것만 GDD 에 반영하고 수정 위치를 감사 문서에 적는다. 필러 · 범위 · 플랫폼을 바꿔야 하는 발견은 반영하지 않고 `to: director` 질문 티켓으로 올린다.
+- 게이트 요청 티켓 본문에 감사 요약을 넣는다: 돌린 감사 · 반영한 것 · 보류한 것(사유).
+
 ## 판단 권한
 
 | 스스로 결정 | 디렉터에게 올림 (`to: director`) |

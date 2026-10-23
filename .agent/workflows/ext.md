@@ -13,7 +13,7 @@ description: 외부 스킬 카탈로그 (한국어) — 마케팅 · 게임 개�
 
 **1. 찾기** — `catalog.json` 에서 스킬을 찾는다. 목록은 그룹별 한 줄(`★` = `fit: core`), 기존 자산과 겹치면 `↔ <자산>` 을 붙인다. 이 템플릿의 기존 스킬 · 규칙이 우선이다.
 
-**2. 라이선스** — `gamedesign` 은 PolyForm Noncommercial 1.0.0 이다. `.agent/gamedesign/UPSTREAM.json` 이 없으면 설치 안 됨 — 사용자에게 라이선스를 알리고 `python scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial> [--root <프로젝트>]` 를 **사용자가 직접** 실행하도록 안내하고 중단한다. 에이전트가 대신 동의하지 않는다.
+**2. 라이선스** — `gamedesign` 은 PolyForm Noncommercial 1.0.0 이다. `.agent/gamedesign/UPSTREAM.json` 이 없으면 설치를 돕는다: 라이선스 요약을 보여 주고 사용자에게 `비상업 용도` / `상업 라이선스 보유` / `설치 안 함` 중 하나를 고르게 한 뒤(권장 표시 없이 — 사용 조건은 사용자만 안다), 고른 값으로 `python <템플릿>/scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial> [--root <프로젝트>]` 를 실행하고 `.gitignore` 에 `.agent/gamedesign/` 을 확인한다. 에이전트가 조건을 고르지 않는다. 스튜디오 역할 세션은 직접 묻지 않고 `to: director` 질문 티켓을 한 번 낸다.
 
 **3. 실행** — 그 스킬의 `SKILL.md` 를 끝까지 읽고 따른다. 상대 경로는 스킬 폴더 기준이다. 이 프로젝트 규칙을 덧씌운다:
 - 한국어 출력. 게임 컨텍스트는 `design/gdd/game-concept.md` · `game-pillars.md` · `design/art/art-bible.md` 에서 먼저 읽는다.
