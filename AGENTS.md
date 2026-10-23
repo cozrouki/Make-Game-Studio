@@ -50,7 +50,8 @@ When the User asks you to build a feature (e.g., "Build an inventory mechanism" 
 4. **Inject the Skill** (도구별 방식):
    - **Claude Code**: `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` (오프라인 정적 복사)
    - **기타 도구**: `.agent/skills/<category>/<skill>/templates/` 의 `.cs.txt` 를 대상 경로로 복사하고 `.cs` 로 확장자 변경, `{{NAMESPACE}}` placeholder 를 프로젝트 prefix 로 치환
-5. **신규 스킬 생성 시**: 적합한 스킬이 없으면, 필요성과 설계 방향을 설명하고 **반드시 사용자의 승인을 받은 후에만** 스킬을 생성한다.
+5. **외부 카탈로그도 확인**: 장르 골격 · 분야 실무(손맛 · 저장 · 카메라 등) · Unity 6.3 기능은 `.agent/gamedev/catalog.json`, 마케팅 · 출시는 `.agent/marketing/catalog.json` 에 있다 (Claude Code: `/ext`, 기타 도구: `.agent/workflows/ext.md`). `.agent/gamedesign/` (PolyForm Noncommercial) 은 사용자가 직접 설치한 경우에만 쓴다. 이 프로젝트 규칙 · L2 패턴이 외부 예시보다 우선한다.
+6. **신규 스킬 생성 시**: 적합한 스킬이 없으면, 필요성과 설계 방향을 설명하고 **반드시 사용자의 승인을 받은 후에만** 스킬을 생성한다.
    - *"'Vehicle Controller' 스킬이 없습니다. WheelCollider 기반 시스템을 설계하고 스킬로 추가할까요?"*
 
 ---

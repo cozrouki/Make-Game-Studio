@@ -60,6 +60,30 @@
   - MCP 도구 사용 가이드를 `.claude/docs/mcp-unity-guide.md` 에 작성
 - **분기 정책**: 패키지 자체는 `Packages/manifest.json` 의 URL로 관리. 본 통합 환경은 사용 가이드만 작성.
 
+## 6. marketingskills / coreyhaines31 (외부 카탈로그 `marketing`)
+
+- **저장소**: https://github.com/coreyhaines31/marketingskills
+- **라이선스**: MIT (Copyright (c) 2025 Corey Haines) — `.agent/marketing/LICENSE` 동봉
+- **사용 유형**: **카탈로그 미러** (`.agent/marketing/`, `.claude/skills/` 에 넣지 않음 — `/ext` 가 필요할 때 로드)
+- **미러 범위**: `skills/*` 52개 (평가 데이터 `evals/` 제외), `tools/*.md` · `tools/integrations/*.md` · `tools/composio/*.md` · `tools/aisa/*.md`. **제외**: 외부 API CLI `tools/clis/*.js` 66개
+- **로컬 추가**: 한국어 요약 · 그룹 · 게임 적합도 `.agent/catalogs/marketing.ko.json`
+- **분기 정책**: 원문 수정 없음. `scripts/sync-catalog.py marketing` 으로 재미러
+
+## 7. awesome-gamedev-agent-skills / gamedev-skills (외부 카탈로그 `gamedev`)
+
+- **저장소**: https://github.com/gamedev-skills/awesome-gamedev-agent-skills
+- **라이선스**: Apache-2.0 (Copyright 2026 Abhishek Barali and contributors) — `.agent/gamedev/LICENSE` · `NOTICE` 동봉
+- **사용 유형**: **카탈로그 미러** (`.agent/gamedev/`)
+- **미러 범위**: `skills/{disciplines,genres,unity,workflows}/*` 36개. **제외**: Godot · Unreal · Roblox · 웹 엔진 전용 39개, `router/`, 저장소 스크립트 · 테스트 (템플릿이 Unity 전용 — Game-Studios Godot/UE 에이전트 제외와 같은 정책)
+- **로컬 추가**: `.agent/catalogs/gamedev.ko.json`. 원문 수정 없음 (Apache-2.0 §4 — 변경 고지 대상 아님)
+
+## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
+
+- **저장소**: https://github.com/Stanestane/game-design-skills-bundle
+- **라이선스**: **PolyForm Noncommercial 1.0.0** (Required Notice: Copyright Stanislav Stankovic, https://www.stane-island.net/). 상업 사용 · 재배포 · 재패키징은 작성자의 상업 라이선스 필요 (`COMMERCIAL-LICENSE.md` — 구매해도 재배포 권리 없음)
+- **사용 유형**: **참조 · 선택 설치만.** 템플릿에 파일을 포함하지 않는다. 사용자가 `scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial>` 로 직접 받고, `.agent/gamedesign/` 은 `.gitignore` 대상이다 (`install.ps1` 은 git 추적 파일만 복사하므로 다른 프로젝트로도 퍼지지 않는다)
+- **로컬 추가**: `.agent/catalogs/gamedesign.ko.json` — 스킬 이름과 용도를 로컬에서 짧게 설명한 것 (원문 번역 · 복제 아님)
+
 ## 통합 시점
 
 - **Phase 1-2 완료**: 2026-05-13
@@ -79,3 +103,4 @@
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
 | 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |
+| 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

@@ -1,0 +1,344 @@
+{
+  "catalog": "gamedev",
+  "upstream": {
+    "repo": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills.git",
+    "commit": "38a4c25",
+    "syncedAt": "2026-10-23T14:39:43+09:00",
+    "license": "Apache-2.0",
+    "vendored": true
+  },
+  "builtAt": "2026-10-23T14:39:43+09:00",
+  "count": 36,
+  "groups": {
+    "disciplines": "분야별 실무 (AI · 오디오 · 카메라 · UI · 입력 · 레벨 · 성능 · 물리 · 저장 · 셰이더 등, 엔진 중립)",
+    "genres": "장르별 구현 골격 (카드 · FPS · 플랫포머 · 퍼즐 · 로그라이크 · RPG · 생존 · 타워 디펜스 · 비주얼 노벨)",
+    "unity": "Unity 6.3 LTS 기능별 사용법",
+    "workflows": "제작 · 배포 워크플로 (게임잼 · itch.io · Steam · 1시간 프로토타입)"
+  },
+  "skills": {
+    "ai-behavior-trees-utility-ai": {
+      "description": "Build a production behavior-tree runtime (Blackboard, action/condition leaves, sequence/selector/parallel composites, decorators) and a Utility AI system (response curves — linear, exponential, sigmoid, quadratic — considerations, and action evaluators), plus hybrid BT-drives-Utility agents. Use when implementing a reusable behavior-tree or utility-based decision system, or tuning enemy/NPC decisions beyond a simple FSM, or when the user mentions behavior tree, blackboard, decorator, selector, sequence, tick status, utility AI, response/scoring curve, or consideration. For choosing between FSM/BT/steering or for pathfinding, use game-ai; for Unreal's BehaviorTree/Blackboard assets, use unreal-behavior-trees.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/ai-behavior-trees-utility-ai/SKILL.md",
+      "ko": "행동 트리 런타임(블랙보드 · 컴포지트 · 데코레이터) + 유틸리티 AI(응답 곡선)",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/sf-list 05-ai · ai-programmer 에이전트"
+    },
+    "audio-design": {
+      "description": "Implement game audio practice — bus/mixer architecture and gain in decibels, ducking (sidechain), adaptive/dynamic music via layering and re-sequencing, SFX variation, and beat synchronization. Engine-neutral. Use when the user mentions audio mixing, audio buses, adaptive/dynamic music, ducking, SFX variation, music layers, or syncing gameplay to the beat.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/audio-design/SKILL.md",
+      "ko": "오디오 버스 · 믹서 · 덕킹 · 적응형 음악 · 효과음 변주",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/team-audio · audio-director 에이전트"
+    },
+    "camera-systems": {
+      "description": "Build game cameras that feel good — 2D follow with a deadzone, look-ahead, smoothing, and level-bounds clamping; 3D third-person orbit with collision and first-person look; plus multi-target framing and a shake hook. Engine-neutral techniques that pair with the engine's camera node and rigs like Unity Cinemachine or Godot Camera2D/PhantomCamera. Use when the user mentions camera follow, follow camera, deadzone, look-ahead, camera smoothing, camera bounds/ limits, third-person camera, orbit camera, first-person look, Cinemachine, or camera jitter.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/camera-systems/SKILL.md",
+      "ko": "2D 추적(데드존 · 룩어헤드) · 3D 3인칭/1인칭 카메라 · 셰이크",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "create-game-assets": {
+      "description": "Plan, generate, source, normalize, and validate cohesive visual game assets. Use for art direction, style bibles, sprites, tilesets, backgrounds, UI art, icons, textures, concept art, or 3D asset briefs.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/create-game-assets/SKILL.md",
+      "ko": "일관된 게임 비주얼 에셋 기획 · 생성 · 정규화 · 검증 (스타일 바이블 · 스프라이트 · 타일셋)",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/art-bible · /asset-spec · /ko-art-gen (artgen)"
+    },
+    "dialogue-systems": {
+      "description": "Build branching dialogue and narrative — a node/choice graph with conditions, variables, and localization hooks — and choose between authoring tools Ink and Yarn Spinner or a custom data-driven runner. Engine-neutral. Use when the user mentions dialogue system, branching dialogue, conversation tree, choices, Ink (.ink), Yarn Spinner (.yarn), or NPC dialogue.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/dialogue-systems/SKILL.md",
+      "ko": "분기 대화 그래프(조건 · 변수 · 로컬라이즈) · Ink / Yarn Spinner 선택",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/team-narrative"
+    },
+    "game-ai": {
+      "description": "Design NPC and enemy decision-making with finite state machines, behavior trees, steering behaviors, and A* pathfinding — engine-neutral algorithms that pair with the detected engine's navigation API. Use when building enemy AI, an FSM or behavior tree, steering/flocking, or pathfinding, or when the user mentions state machine, behavior tree, blackboard, A*, navmesh, seek, or patrol/chase.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/game-ai/SKILL.md",
+      "ko": "FSM · 행동 트리 · 스티어링 · A* — 엔진 중립 NPC · 적 의사결정",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/sf-list 05-ai"
+    },
+    "game-feel": {
+      "description": "Add \"juice\" and game feel that makes actions satisfying — screen shake, hit-stop/freeze frames, tweened/eased motion, squash & stretch, knockback, and layered audio-visual feedback — as engine-neutral techniques that pair with the detected engine's tween, particle, and camera APIs. Use when the user mentions game feel, juice, \"make it feel good/punchy\", screen shake, hit stop, screen freeze, easing, squash and stretch, impact frames, or feedback/polish on hits, jumps, pickups, and deaths.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/game-feel/SKILL.md",
+      "ko": "손맛(주스) — 화면 흔들림 · 히트스톱 · 트윈 · 스쿼시 앤 스트레치 · 넉백",
+      "group": "disciplines",
+      "fit": "core",
+      "overlap": ""
+    },
+    "game-ui-ux": {
+      "description": "Design and build game UI/UX — HUDs, menus, and overlays — that survive every screen: anchor- based responsive layout, resolution/aspect scaling and safe areas, keyboard/gamepad focus navigation, a screen/menu state stack, and event-driven (not polled) HUD updates. Engine- neutral patterns that pair with the detected engine's UI skill. Use when the user mentions HUD, health bar, main menu, pause menu, settings screen, UI layout, anchors, UI scaling, aspect ratio, safe area, controller/keyboard menu navigation, or wiring UI to game state.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/game-ui-ux/SKILL.md",
+      "ko": "HUD · 메뉴 · 반응형 레이아웃 · 세이프 에어리어 · 패드/키보드 내비게이션",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/team-ui · unity-ui-specialist 에이전트"
+    },
+    "input-systems": {
+      "description": "Architect game input — action mapping (abstracting keys into named actions), rebinding with conflict detection and persistence, multi-device support (keyboard, gamepad, touch), analog deadzones, and feel features like input buffering and coyote time, plus accessibility. Engine-neutral. Use when the user mentions input mapping, rebind controls, gamepad support, deadzone, input buffering, coyote time, or accessible controls.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/input-systems/SKILL.md",
+      "ko": "입력 아키텍처 — 액션 매핑 · 리바인딩 · 멀티 디바이스 · 입력 버퍼",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "level-design": {
+      "description": "Design and build playable levels — the blockout/whitebox-to-playable workflow, player metrics and grid layout, pacing and flow (tension/rest curve), gating and the critical path, and encounter design. Engine-neutral practice. Use when the user mentions level design, blockout/whitebox/greybox, level layout, level pacing, encounter design, or the critical path through a level.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/level-design/SKILL.md",
+      "ko": "레벨 블록아웃 → 플레이어블 · 플레이어 지표 · 페이싱 · 게이팅",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/team-level · level-designer 에이전트"
+    },
+    "performance-optimization": {
+      "description": "Find and fix game performance problems methodically — measure with the engine profiler first, reason about the frame-time budget, locate the CPU-vs-GPU bottleneck, then apply the right fix: object pooling, draw-call batching, fewer allocations/GC spikes, and asset budgets. Engine- neutral method that pairs with each engine's profiler. Use when the user mentions performance, optimize, low/dropping FPS, frame drops, stutter, lag, profiler, frame budget, draw calls, batching, garbage collection/GC spikes, object pooling, or \"the game runs slow\".",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/performance-optimization/SKILL.md",
+      "ko": "프로파일러 먼저 — 프레임 예산 · CPU/GPU 병목 · GC · 드로우콜",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "/ko-perf-profile · /sf-list 06-performance"
+    },
+    "physics-tuning": {
+      "description": "Tune game physics for stable, good-feeling motion — fixed vs variable timestep, render interpolation, mass/gravity/drag, continuous collision detection (CCD) to stop tunneling, fixing jitter, and collision layers/masks. Engine-neutral. Use when the user mentions physics feel, jitter, tunneling, fixed timestep, FixedUpdate, CCD, bouncing/unstable physics, or collision layers.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/physics-tuning/SKILL.md",
+      "ko": "물리 튜닝 — 고정 타임스텝 · 보간 · CCD · 손맛 좋은 이동",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "procedural-gen": {
+      "description": "Generate game content procedurally — seeded deterministic RNG, value/Perlin/ Simplex noise for terrain and heightmaps, grid dungeon generation (rooms + corridors, BSP, random walk), and weighted loot/drop tables. Engine-neutral algorithms. Use when the user mentions procedural generation, perlin/simplex noise, random seed, dungeon generator, heightmap/terrain, or loot tables.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/procedural-gen/SKILL.md",
+      "ko": "절차적 생성 — 시드 RNG · 노이즈 지형 · 던전(BSP · 셀룰러) · WFC",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "save-systems": {
+      "description": "Design save/load for game state — choosing what to serialize, file formats, save slots, atomic crash-safe writes, schema versioning and migration, and autosave. Engine-neutral. Use when the user mentions save system, save/load, game state persistence, save slots, autosave, save file corruption, or migrating old saves to a new version.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/save-systems/SKILL.md",
+      "ko": "저장 · 불러오기 — 직렬화 범위 · 슬롯 · 원자적 쓰기 · 스키마 마이그레이션 · 자동 저장",
+      "group": "disciplines",
+      "fit": "core",
+      "overlap": ""
+    },
+    "shader-programming": {
+      "description": "Write game shaders from cross-engine fundamentals — the vertex→fragment pipeline, coordinate spaces, UV math, and common 2D/3D effects (tint, UV scroll, dissolve, outline, fresnel rim, vignette) in GLSL with HLSL equivalents. Use when the user mentions shaders, fragment/pixel shader, vertex shader, UV, GLSL, HLSL, or effects like dissolve, outline, or rim light.",
+      "version": "",
+      "path": ".agent/gamedev/skills/disciplines/shader-programming/SKILL.md",
+      "ko": "셰이더 기초 — 파이프라인 · 좌표계 · UV · 디졸브 · 외곽선 등 공통 효과",
+      "group": "disciplines",
+      "fit": "useful",
+      "overlap": "unity-shader-specialist 에이전트"
+    },
+    "card-game": {
+      "description": "Build a card game: card data, deck/hand/discard zones, draw/shuffle/reshuffle, a turn structure, costs, and effect resolution. Use for a deckbuilder, TCG/CCG, or roguelike deckbuilder.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/card-game/SKILL.md",
+      "ko": "카드 게임 골격 — 덱 · 손패 · 버림 더미 · 턴 · 비용 · 효과 해결",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "fps-shooter": {
+      "description": "Build a first-person shooter: move+mouse-look controller, hitscan or projectile shooting, weapons, health, and enemy AI. Use for an FPS, or tuning aim feel, time-to-kill, recoil, or spread.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/fps-shooter/SKILL.md",
+      "ko": "FPS 골격 — 이동 · 마우스룩 · 히트스캔/투사체 · 무기 · 적 AI",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "platformer": {
+      "description": "Build a 2D platformer: run/jump control with coyote time, jump buffering, and variable jump height, plus tiled levels and hazards. Use for a platformer or Mario/Celeste-like, or tuning jump feel.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/platformer/SKILL.md",
+      "ko": "2D 플랫포머 — 코요테 타임 · 점프 버퍼 · 가변 점프 · 타일 레벨",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "puzzle": {
+      "description": "Build a puzzle game: grid/board state, move input, rule-based resolution (match-3 cascades, sokoban pushes, tile logic), scoring, and undo. Use for a match-3, sokoban, or grid-logic puzzle.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/puzzle/SKILL.md",
+      "ko": "퍼즐 골격 — 격자 상태 · 규칙 해결(매치3 · 소코반) · 점수 · 되돌리기",
+      "group": "genres",
+      "fit": "core",
+      "overlap": ""
+    },
+    "roguelike": {
+      "description": "Build a roguelike: turn-based grid movement, procedural dungeons, permadeath, field-of-view, and loot tables. Use for a roguelike/roguelite or turn-based grid dungeon crawler with procedural levels.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/roguelike/SKILL.md",
+      "ko": "로그라이크 — 턴제 격자 이동 · 절차적 던전 · 영구 사망 · 시야 · 루트 테이블",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "rpg": {
+      "description": "Build an RPG: stats and leveling, inventory and equipment, quests, branching dialogue, save/load, and combat. Use for an RPG/JRPG, or designing stat, inventory, quest, or combat systems.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/rpg/SKILL.md",
+      "ko": "RPG — 스탯 · 레벨 · 인벤토리 · 장비 · 퀘스트 · 대화 · 전투",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": "/sf-list 02-gameplay"
+    },
+    "survival-crafting": {
+      "description": "Build a survival-crafting game: resource gathering, inventory, crafting and a tech tree, needs (hunger/thirst/temperature), and base building. Use for a survival or crafting/base-building game.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/survival-crafting/SKILL.md",
+      "ko": "생존 · 제작 — 채집 · 인벤토리 · 제작 · 테크 트리 · 욕구 · 건설",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "tower-defense": {
+      "description": "Build a tower defense: enemies pathing along lanes, wave spawning, towers that auto-target and fire, an economy, and lives. Use for a tower-defense/wave-defense game, or balancing waves and economy.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/tower-defense/SKILL.md",
+      "ko": "타워 디펜스 — 경로 · 웨이브 · 자동 조준 타워 · 경제 · 목숨",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "visual-novel": {
+      "description": "Build a visual novel: a branching script, character and background display, a text box with choices, save/load, backlog, and skip/auto. Use for a VN, dating sim, or branching story game.",
+      "version": "",
+      "path": ".agent/gamedev/skills/genres/visual-novel/SKILL.md",
+      "ko": "비주얼 노벨 — 분기 스크립트 · 캐릭터/배경 · 선택지 · 저장 · 백로그",
+      "group": "genres",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "unity-animation": {
+      "description": "Drive Unity 6.3 LTS character animation with Animator Controllers: states, transitions, parameters, blend trees, animation layers, and humanoid Avatar IK. Use when wiring an Animator, setting parameters from script (SetFloat/SetBool/SetTrigger), building blend trees, or when the user mentions Animator, Mecanim, state machine, blend tree, or .controller.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-animation/SKILL.md",
+      "ko": "Animator Controller — 상태 · 전이 · 파라미터 · 블렌드 트리 · 레이어 · IK",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ""
+    },
+    "unity-build-pipeline": {
+      "description": "Build and ship Unity 6.3 LTS players: build settings and scenes, player/quality settings, the IL2CPP vs Mono scripting backend, managed code stripping, scripted BuildPipeline.BuildPlayer, and CI/headless builds. Use when configuring or automating a build, choosing a scripting backend, shrinking build size, or when the user mentions Unity build, player settings, IL2CPP, code stripping, or Addressables.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-build-pipeline/SKILL.md",
+      "ko": "빌드 · 출시 — 빌드 설정 · IL2CPP/Mono · 코드 스트리핑 · 스크립트 빌드",
+      "group": "unity",
+      "fit": "core",
+      "overlap": "/release-checklist"
+    },
+    "unity-csharp-scripting": {
+      "description": "Write Unity 6.3 LTS C# gameplay scripts: the MonoBehaviour lifecycle (Awake/OnEnable/Start/Update/FixedUpdate/LateUpdate), GameObject and component access, coroutines, and Inspector serialization. Use when creating or editing .cs scripts in a Unity project, or when the user mentions MonoBehaviour, Start/Update, GetComponent, SerializeField, coroutines, or \"Unity script\".",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-csharp-scripting/SKILL.md",
+      "ko": "C# 게임플레이 스크립트 — 생명주기 · 컴포넌트 접근 · 코루틴 · 이벤트",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ".claude/rules/gameplay-code.md (이 프로젝트 규칙이 우선)"
+    },
+    "unity-input-system": {
+      "description": "Wire player input in Unity 6.3 LTS with the Input System package: Input Actions, action maps, the PlayerInput component, and reading values via callbacks or polling. Use when the project has a .inputactions asset or com.unity.inputsystem, or when the user mentions the Unity Input System, InputAction, action maps, PlayerInput, control schemes, or rebinding.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-input-system/SKILL.md",
+      "ko": "Input System — Input Actions · 액션 맵 · PlayerInput · 콜백/폴링",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ""
+    },
+    "unity-navmesh": {
+      "description": "Add AI navigation in Unity 6.3 LTS: bake a NavMesh with the AI Navigation package (NavMeshSurface), move agents with NavMeshAgent.SetDestination, and handle dynamic obstacles. Use when setting up pathfinding, making an enemy chase the player, baking navigation, or when the user mentions NavMesh, NavMeshAgent, NavMeshSurface, NavMeshObstacle, or Unity pathfinding.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-navmesh/SKILL.md",
+      "ko": "AI Navigation — NavMeshSurface 베이크 · NavMeshAgent · 동적 장애물",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ""
+    },
+    "unity-physics": {
+      "description": "Set up 3D physics in Unity 6.3 LTS: Rigidbody movement and forces, colliders, triggers vs collisions, layer-based collision, raycasts, and joints. Use when adding a Rigidbody, handling OnCollisionEnter/OnTriggerEnter, tuning collision layers, casting rays, or when the user mentions Unity physics, AddForce, isKinematic, or linearVelocity.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-physics/SKILL.md",
+      "ko": "3D 물리 — Rigidbody · 콜라이더 · 트리거 · 레이어 충돌 · 레이캐스트 · 조인트",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ""
+    },
+    "unity-scriptableobjects": {
+      "description": "Architect Unity 6.3 LTS data and decoupling with ScriptableObjects: config/data assets, shared runtime variables, event channels, and runtime sets/registries. Use when designing data-driven systems, replacing singletons/managers, creating .asset data with CreateAssetMenu, or when the user mentions ScriptableObject, SO architecture, or data assets.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-scriptableobjects/SKILL.md",
+      "ko": "ScriptableObject — 데이터 에셋 · 공유 변수 · 이벤트 채널 · 런타임 세트",
+      "group": "unity",
+      "fit": "core",
+      "overlap": "/sf-list (SO 아키텍처 패턴)"
+    },
+    "unity-tilemap-2d": {
+      "description": "Build and script 2D tilemaps in Unity 6.3 LTS: the Grid + Tilemap components, the Tile Palette, tilemap colliders, rule tiles, and runtime SetTile/GetTile painting. Use when painting tile levels, adding a TilemapCollider2D, using rule or animated tiles, generating tilemaps from code, or when the user mentions Unity tilemap, tile palette, rule tile, or Grid.",
+      "version": "",
+      "path": ".agent/gamedev/skills/unity/unity-tilemap-2d/SKILL.md",
+      "ko": "2D 타일맵 — Grid · Tilemap · 팔레트 · 타일맵 콜라이더 · 룰 타일",
+      "group": "unity",
+      "fit": "core",
+      "overlap": ""
+    },
+    "game-jam": {
+      "description": "Plan and ship a game under a jam deadline: lock scope to the clock, schedule the hours, cut features, and submit on time. Use for a game jam (Ludum Dare, GMTK Jam, Global Game Jam), a 48-hour or weekend build, or scoping and submitting a jam entry.",
+      "version": "",
+      "path": ".agent/gamedev/skills/workflows/game-jam/SKILL.md",
+      "ko": "게임잼 — 시간에 맞춘 범위 고정 · 일정 · 기능 컷 · 제출",
+      "group": "workflows",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "itch-publish": {
+      "description": "Publish and update a game on itch.io: create the project page and upload builds with the butler CLI (butler push) to named channels. Use for itch.io publishing, butler push, channel naming for Windows/macOS/Linux/HTML5, versioning uploads, or shipping a jam or release build to itch.io.",
+      "version": "",
+      "path": ".agent/gamedev/skills/workflows/itch-publish/SKILL.md",
+      "ko": "itch.io 배포 — 프로젝트 페이지 · butler push 채널 업로드",
+      "group": "workflows",
+      "fit": "useful",
+      "overlap": ""
+    },
+    "prototype-fast": {
+      "description": "Build a playable prototype in about an hour to answer one question — is it fun? — with greybox primitives, a hard timebox, and explicit keep/kill criteria. Use when prototyping a mechanic, making a vertical slice or MVP, greyboxing/blockout, or judging throwaway vs keep.",
+      "version": "",
+      "path": ".agent/gamedev/skills/workflows/prototype-fast/SKILL.md",
+      "ko": "1시간 프로토타입 — 그레이박스 · 타임박스 · 유지/폐기 기준",
+      "group": "workflows",
+      "fit": "useful",
+      "overlap": "/ko-prototype · /prototype"
+    },
+    "steam-publish": {
+      "description": "Publish or update a game on Steam with Steamworks and SteamPipe: configure depots and packages, upload builds with steamcmd, set a build live on a branch, and run the release checklists. Use for Steam publishing, app_build.vdf/steamcmd uploads, depots, beta branches, or a store page release.",
+      "version": "",
+      "path": ".agent/gamedev/skills/workflows/steam-publish/SKILL.md",
+      "ko": "Steam 배포 — Steamworks · SteamPipe 디포 · steamcmd 업로드 · 브랜치 · 출시 체크",
+      "group": "workflows",
+      "fit": "core",
+      "overlap": "/launch-checklist"
+    }
+  }
+}

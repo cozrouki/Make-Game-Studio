@@ -43,6 +43,8 @@ production/studio/PAUSED
 production/studio/logs/
 production/studio/locks/
 .agent/tools/studio/studio.config.local.json
+# 외부 카탈로그 — 비상업 라이선스 번들은 재배포하지 않는다 (사용자가 scripts/sync-catalog.py 로 직접 받음)
+.agent/gamedesign/
 __pycache__/
 
 # Build artifacts

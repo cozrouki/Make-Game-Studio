@@ -9,7 +9,8 @@ bundled, so no redistribution obligation).
 For a per-asset breakdown (what was copied verbatim, mirrored, forked, or only
 referenced), see [`.claude/docs/ATTRIBUTION.md`](.claude/docs/ATTRIBUTION.md).
 
-Licenses verified against the GitHub API on **2026-07-20**.
+Licenses verified against the GitHub API on **2026-07-20** (items 1–5) and against the
+upstream LICENSE files on **2026-10-23** (items 6–8).
 
 ---
 
@@ -75,6 +76,67 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+### 6. marketingskills — `marketing` external catalog
+
+- Source: https://github.com/coreyhaines31/marketingskills
+- License: **MIT**
+- Bundled here: 52 skills under `.agent/marketing/skills/` (without `evals/`) and the
+  integration docs under `.agent/marketing/tools/` (`*.md` only — the 66 API CLI
+  scripts in `tools/clis/` are not included). Unmodified; Korean summaries are a
+  separate local file (`.agent/catalogs/marketing.ko.json`).
+
+```
+MIT License
+
+Copyright (c) 2025 Corey Haines
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### 7. awesome-gamedev-agent-skills — `gamedev` external catalog
+
+- Source: https://github.com/gamedev-skills/awesome-gamedev-agent-skills
+- License: **Apache-2.0** — full text in `.agent/gamedev/LICENSE`
+- Bundled here: 36 skills under `.agent/gamedev/skills/{disciplines,genres,unity,workflows}/`
+  (engine-specific skills for Godot, Unreal, Roblox and web engines, the router,
+  and repository scripts/tests are not included). Files are unmodified; Korean
+  summaries are a separate local file (`.agent/catalogs/gamedev.ko.json`).
+- NOTICE (reproduced as required by Apache-2.0 §4(d)):
+
+```
+awesome-gamedev-agent-skills
+Copyright 2026 Abhishek Barali and the awesome-gamedev-agent-skills contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+All skills in this repository are original works. They were authored from primary
+documentation (engine and framework docs, language references, and platform
+specifications). Third-party sources and other skill collections were studied for
+general patterns only; no text or code was copied from them.
+
+Game engine, framework, and platform names referenced in this repository
+(including but not limited to Godot, Unity, Unreal Engine, Phaser, PixiJS,
+three.js, Babylon.js, Bevy, GameMaker, LÖVE, and MonoGame) are trademarks of
+their respective owners and are used for identification and descriptive purposes
+only. Their use does not imply any affiliation with or endorsement by those owners.
+```
+
 ---
 
 ## Referenced / separately installed (NOT bundled — no redistribution)
@@ -101,6 +163,22 @@ SOFTWARE.
 - Source: https://github.com/Besty0728/Unity-Skills
 - **Not installed / not bundled.** Referenced by URL only as an optional future
   integration. No files copied.
+
+### 8. game-design-skills-bundle — `gamedesign` external catalog (NOT bundled)
+
+- Source: https://github.com/Stanestane/game-design-skills-bundle
+- License: **PolyForm Noncommercial 1.0.0**
+  (Required Notice: Copyright Stanislav Stankovic (https://www.stane-island.net/)).
+  Commercial use — including use inside a company that develops, publishes or
+  operates games — and any redistribution or repackaging require a commercial
+  licence from the author (see the upstream `COMMERCIAL-LICENSE.md`).
+- **Not redistributed here.** No files from this bundle are in this repository.
+  A user who qualifies (noncommercial use, or holder of a commercial licence) fetches
+  it directly from upstream with
+  `python scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial>`;
+  the files land in `.agent/gamedesign/`, which is git-ignored and excluded from
+  `scripts/install.ps1`. `.agent/catalogs/gamedesign.ko.json` contains only short
+  locally written descriptions of the skill names, not upstream text.
 
 ---
 

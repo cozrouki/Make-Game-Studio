@@ -9,6 +9,10 @@
     Upstream:
       - Donchitos/Claude-Code-Game-Studios (L1 프로세스)
       - nlelouche/Unity-SkillForge          (L2 코드 패턴)
+      - 외부 카탈로그 (scripts/sync-catalog.py — /ext):
+          coreyhaines31/marketingskills               → .agent/marketing/ (MIT)
+          gamedev-skills/awesome-gamedev-agent-skills → .agent/gamedev/   (Apache-2.0, Unity · 분야 · 장르 · 워크플로만)
+          (Stanestane/game-design-skills-bundle 은 비상업 라이선스라 동기화 대상이 아니다 — 사용자가 직접 받음)
 
     미러 영역 (자동 갱신):
       - .agent/skills/                    (SkillForge 전체 미러)
@@ -30,6 +34,12 @@
 .PARAMETER SkillForgeClone
     Unity-SkillForge (Unity3D-AntiGravitySkills) 로컬 clone 경로
 
+.PARAMETER MarketingClone
+    marketingskills 로컬 clone 경로 (없으면 임시 clone)
+
+.PARAMETER GamedevClone
+    awesome-gamedev-agent-skills 로컬 clone 경로 (없으면 임시 clone)
+
 .PARAMETER DryRun
     변경 시도 표시만, 파일 쓰기 안 함
 
@@ -48,6 +58,8 @@ param(
     # 다른 위치면 -GameStudiosClone / -SkillForgeClone 로 override.
     [string]$GameStudiosClone = (Join-Path $PSScriptRoot "..\..\Claude-Code-Game-Studios"),
     [string]$SkillForgeClone  = (Join-Path $PSScriptRoot "..\..\Unity3D-AntiGravitySkills"),
+    [string]$MarketingClone   = (Join-Path $PSScriptRoot "..\..\marketingskills"),
+    [string]$GamedevClone     = (Join-Path $PSScriptRoot "..\..\awesome-gamedev-agent-skills"),
     [switch]$DryRun,
     [switch]$SkipPull
 )
@@ -106,11 +118,11 @@ Write-Host "Game-Studios 클론:  $GameStudiosClone" -ForegroundColor Gray
 Write-Host "SkillForge 클론:    $SkillForgeClone"  -ForegroundColor Gray
 Write-Host "DryRun=$DryRun, SkipPull=$SkipPull"    -ForegroundColor Gray
 
-# === [1/5] upstream pull ===
+# === [1/6] upstream pull ===
 if (-not $SkipPull) {
     Write-Host ""
-    Write-Host "[1/5] upstream git pull..." -ForegroundColor Yellow
-    foreach ($repo in @($GameStudiosClone, $SkillForgeClone)) {
+    Write-Host "[1/6] upstream git pull..." -ForegroundColor Yellow
+    foreach ($repo in @($GameStudiosClone, $SkillForgeClone, $MarketingClone, $GamedevClone)) {
         if (-not (Test-Path $repo)) {
             Write-Warning "  스킵: $repo 가 존재하지 않음"
             continue
@@ -124,12 +136,12 @@ if (-not $SkipPull) {
     }
 } else {
     Write-Host ""
-    Write-Host "[1/5] upstream pull SKIPPED" -ForegroundColor DarkGray
+    Write-Host "[1/6] upstream pull SKIPPED" -ForegroundColor DarkGray
 }
 
-# === [2/5] SkillForge → .agent/skills/ 미러 ===
+# === [2/6] SkillForge → .agent/skills/ 미러 ===
 Write-Host ""
-Write-Host "[2/5] SkillForge → .agent/skills/ 미러..." -ForegroundColor Yellow
+Write-Host "[2/6] SkillForge → .agent/skills/ 미러..." -ForegroundColor Yellow
 $skfSrc = Join-Path $SkillForgeClone ".agent\skills"
 $skfDst = Join-Path $pkg ".agent\skills"
 if (-not (Test-Path $skfSrc)) {
@@ -145,9 +157,9 @@ if (-not (Test-Path $skfSrc)) {
     Write-Host "  완료: $cnt 파일 미러" -ForegroundColor Green
 }
 
-# === [3/5] Game-Studios skills/agents 미러 ===
+# === [3/6] Game-Studios skills/agents 미러 ===
 Write-Host ""
-Write-Host "[3/5] Game-Studios → .claude/ 미러 (skills + agents)..." -ForegroundColor Yellow
+Write-Host "[3/6] Game-Studios → .claude/ 미러 (skills + agents)..." -ForegroundColor Yellow
 
 # 3a. skills — GS 72개 디렉토리를 패키지에 덮어쓰기
 $gsSkillsSrc = Join-Path $GameStudiosClone ".claude\skills"
@@ -198,9 +210,9 @@ if (Test-Path $gsAgentsSrc) {
     Write-Host "  agents: $cnt agent 유지 (Godot/UE 자동 제외)" -ForegroundColor Green
 }
 
-# === [4/5] Game-Studios docs/rules/hooks 미러 ===
+# === [4/6] Game-Studios docs/rules/hooks 미러 ===
 Write-Host ""
-Write-Host "[4/5] Game-Studios → .claude/ 미러 (docs + rules + hooks)..." -ForegroundColor Yellow
+Write-Host "[4/6] Game-Studios → .claude/ 미러 (docs + rules + hooks)..." -ForegroundColor Yellow
 
 # 4a. docs (gs- prefix)
 $gsDocsSrc = Join-Path $GameStudiosClone ".claude\docs"
@@ -278,9 +290,22 @@ if (Test-Path $gsHooksSrc) {
     Write-Host "  hooks: $n GS hooks 미러 (session-*.sh 보존)" -ForegroundColor Green
 }
 
-# === [5/5] git status 요약 ===
+# === [5/6] 외부 카탈로그 (marketing · gamedev) ===
 Write-Host ""
-Write-Host "[5/5] git status 요약" -ForegroundColor Yellow
+Write-Host "[5/6] 외부 카탈로그 → .agent/marketing · .agent/gamedev (scripts/sync-catalog.py)" -ForegroundColor Yellow
+$catScript = Join-Path $PSScriptRoot "sync-catalog.py"
+foreach ($cat in @(@{ Name = "marketing"; Clone = $MarketingClone }, @{ Name = "gamedev"; Clone = $GamedevClone })) {
+    $catArgs = @($catScript, $cat.Name)
+    if (Test-Path $cat.Clone) { $catArgs += @("--src", $cat.Clone) } else { $catArgs += "--fetch" }
+    if ($DryRun) { $catArgs += "--dry-run" }
+    & python @catArgs 2>&1 | ForEach-Object { Write-Host "  $_" }
+    if ($LASTEXITCODE -ne 0) { Write-Warning "  $($cat.Name) 동기화 실패 (exit $LASTEXITCODE)" }
+}
+Write-Host "  새 스킬에 '한국어 요약 없음' 이 뜨면 .agent/catalogs/<카탈로그>.ko.json 에 추가 후 --index-only" -ForegroundColor DarkGray
+
+# === [6/6] git status 요약 ===
+Write-Host ""
+Write-Host "[6/6] git status 요약" -ForegroundColor Yellow
 Push-Location $pkg
 try {
     if (Test-Path (Join-Path $pkg ".git")) {

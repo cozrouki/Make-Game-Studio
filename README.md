@@ -67,6 +67,7 @@ git checkout -- .claude/hooks
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 생성** | 기획 → 이미지 생성 → 아트 바이블 검수 → Unity 임포트 (백엔드 중립, 어댑터로 나중에 연결) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 그래픽 생성 — `/ko-art-gen`
@@ -106,6 +107,48 @@ git checkout -- .claude/hooks
 
 - 실측 (RTX 2070 SUPER 8GB): 256px 스프라이트 2장에 약 45~55초, 1024×768 2장에 약 76초 (첫 실행은 모델 로딩 포함).
 - **한계:** SDXL 기본 모델은 짧고 단순한 단일 오브젝트(이펙트 · 아이콘)는 잘 만들지만, 긴 프롬프트 · 격자 시트 · 엄격한 시점(탑다운) · 정확한 팔레트는 따르지 못합니다. 캐릭터 스프라이트는 요청을 단일 이미지로 쪼개고, 스타일 LoRA · ControlNet · IP-Adapter 를 쓴 **사용자 워크플로**(`providers.comfyui.workflow`)로 보강하세요.
+
+## 외부 스킬 카탈로그 — `/ext`
+
+외부 스킬 저장소 3개를 **카탈로그**로 붙였습니다. `.claude/skills/` 에 넣으면 스킬 설명 150여 개가 매 세션 컨텍스트에 상시 올라가므로(스튜디오 모드면 세션마다), `.agent/<카탈로그>/` 에 두고 `/ext` 가 필요할 때 한 스킬만 읽어 실행합니다.
+
+| 카탈로그 | 업스트림 | 라이선스 | 템플릿 포함 | 내용 |
+|---|---|---|---|---|
+| `marketing` | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) | MIT | ✅ `.agent/marketing/` | 52개 — ASO · 런칭 · 가격 · 페이월 · 광고 크리에이티브 · 커뮤니티 · 인플루언서 · 분석 등 (B2B 영업 · 웹 SEO 계열은 `fit: low`) |
+| `gamedev` | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) | Apache-2.0 | ✅ `.agent/gamedev/` | 36개 — 분야(손맛 · 저장 · 카메라 · AI 등) · 장르 9종 · Unity 6.3 기능 8종 · 배포(Steam · itch.io). Godot · Unreal · Roblox · 웹 엔진 전용 39개는 제외 |
+| `gamedesign` | [Stanestane/game-design-skills-bundle](https://github.com/Stanestane/game-design-skills-bundle) | **PolyForm Noncommercial 1.0.0** | ❌ 선택 설치 (git 무시) | 62개 — 플레이어 심리 · 경험 구조 감사, 발상 · 우선순위, 리더보드 · 패스, 예산 · 일정 추정 |
+
+```
+/ext                              # 세 카탈로그 상태 · 추천 묶음
+/ext list marketing               # 그룹별 목록 (★ = 게임 마케팅 핵심)
+/ext info aso                     # 메타 + When to Use
+/ext aso 스토어 페이지 점검해 줘    # 그 스킬을 이 프로젝트 규칙으로 실행
+```
+
+- **이 프로젝트 규칙이 우선합니다.** 한국어 출력, 게임 컨텍스트는 `game-concept.md` · `game-pillars.md` · `art-bible.md` 에서 먼저 읽고, Unity 코드는 `gameplay-code.md` · `technical-preferences.md` 가 업스트림 예시보다 우선합니다. 기존 스킬과 겹치는 항목은 목록에 `↔ /brainstorm` 처럼 표시됩니다.
+- **마케팅 컨텍스트 정본**은 `design/marketing/product-marketing.md` 입니다 (업스트림의 `.agents/product-marketing.md` 대신 — 스튜디오 모드에서 기획 영역).
+- **확인 후에만:** 업스트림 연동 문서에는 파트너사 CLI 설치(`npm install -g`, `curl … | sh`)와 API 연동 안내가 있습니다. 외부 설치 · API 호출 · 게시 · 발송 · 스킬 딸린 스크립트 실행은 사용자 확인을 받습니다. 마케팅의 외부 API CLI(JS 66개)는 미러하지 않았습니다.
+- 한국어 요약 · 그룹 · 게임 적합도는 로컬에서 쓴 `.agent/catalogs/<카탈로그>.ko.json` 이고, `scripts/sync-catalog.py` 가 업스트림 메타와 합쳐 `catalog.json` 을 만듭니다.
+
+### ⚠ `gamedesign` 라이선스 — 직접 받아야 합니다
+
+PolyForm Noncommercial 1.0.0 입니다. **개인 · 취미 · 학습 · 교육기관 · 비영리는 무료**이고, **게임을 개발 · 퍼블리싱 · 운영하는 회사 안에서의 사용, 외주 · 컨설팅, 유료 교육, 재배포 · 재패키징은 작성자의 상업 라이선스가 필요**합니다 (구매해도 재배포 권리는 없음 — [COMMERCIAL-LICENSE.md](https://github.com/Stanestane/game-design-skills-bundle/blob/main/COMMERCIAL-LICENSE.md), 문의 https://www.stane-island.net/).
+
+그래서 이 템플릿은 번들을 **포함하지 않고**, 라이선스를 확인한 사용자가 직접 받습니다. 받은 파일은 `.agent/gamedesign/` 에만 있고 git 무시 대상이라 커밋 · 다른 프로젝트 설치(`install.ps1` 은 git 추적 파일만 복사)로 퍼지지 않습니다.
+
+```powershell
+# 비상업 용도 (개인 · 학습 · 교육 · 비영리)
+python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
+# 상업 라이선스를 보유한 경우
+python scripts/sync-catalog.py gamedesign --fetch --accept-license commercial
+# 설치된 Unity 프로젝트에 직접
+python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial --root D:\Projects\MyGame
+```
+`--accept-license` 가 없으면 라이선스 요약만 보여 주고 멈춥니다. 동의 방식과 시각은 `.agent/gamedesign/UPSTREAM.json` 에 남고, `/ext` 는 이 기록이 없으면 실행하지 않습니다(에이전트가 대신 동의하지 않음).
+
+### 갱신
+
+`scripts/sync-upstream.ps1` 의 [5/6] 단계가 `marketing` · `gamedev` 를 갱신합니다(형제 폴더에 clone 이 있으면 그것을, 없으면 임시 clone). 단독: `python scripts/sync-catalog.py <marketing|gamedev> --fetch`, 상태: `--status`. 새 스킬이 생기면 "한국어 요약 없음" 이 출력되니 오버레이에 추가하고 `--index-only` 로 다시 만듭니다.
 
 ## 스튜디오 모드 — 3세션 자동 개발
 
@@ -156,14 +199,15 @@ git checkout -- .claude/hooks
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 86개 (Game-Studios 72 + 한국어 wrapper 7 + 스튜디오 모드 3 + 마스터 진입 1 + SkillForge 헬퍼 3)
+- **Skills (L1)**: 88개 (Game-Studios 72 + 한국어 wrapper 7 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
 - **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
 - **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
-- **Hooks**: 12개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent 등)
+- **Hooks**: 13개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent, 스튜디오 정지 알림 등)
 - **Docs**: 9개 (MCP 가이드, 결정 매트릭스, GS 원본 6개, 출처 1개)
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
-- **Tools**: 2개 — `artgen` (그래픽 생성 CLI · 어댑터 4종 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 4종 · 아트 디렉션 브리프 템플릿). 둘 다 테스트 포함
+- **Tools**: 2개 — `artgen` (그래픽 생성 CLI · 어댑터 4종 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 템플릿). 둘 다 테스트 포함
+- **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
 
@@ -402,6 +446,9 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 3. **Besty0728/Unity-Skills** — L3 보조 카탈로그 (현재 미설치, 외부 URL 참조)
 4. **sickn33/antigravity-awesome-skills** — L4 패키징 포맷 차용
 5. **CoplayDev/unity-mcp (MCPForUnity)** — L3 Editor 실행 백엔드
+6. **coreyhaines31/marketingskills** — 외부 카탈로그 `marketing` (MIT, 포함)
+7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
+8. **Stanestane/game-design-skills-bundle** — 외부 카탈로그 `gamedesign` (PolyForm Noncommercial 1.0.0, **미포함** — 사용자가 직접 받음)
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
 
@@ -522,6 +569,7 @@ scripts/
 │   ├── studio-director/
 │   ├── studio-ticket/
 │   ├── studio-status/
+│   ├── ext/                     외부 스킬 카탈로그 진입 (marketing · gamedev · gamedesign)
 │   ├── sf-list/                 SkillForge 오프라인 헬퍼 3개
 │   ├── sf-info/
 │   ├── sf-add/
@@ -650,15 +698,18 @@ See the Korean guide above for the full step-by-step (settings, MCP install,
 cross-tool mirrors, upstream sync via `scripts/sync-upstream.ps1`). The artgen
 and studio docs are Korean only.
 
-## Credits (upstreams — all MIT)
+## Credits (upstreams)
 
 - [Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) — L1 process skills
 - [Unity-SkillForge](https://github.com/nlelouche/Unity-SkillForge) — L2 code-pattern skills
 - [unity-mcp / MCPForUnity](https://github.com/CoplayDev/unity-mcp) — L3 Editor backend (installed as a UPM package)
 - antigravity-awesome-skills — L4 packaging format (format only)
+- [marketingskills](https://github.com/coreyhaines31/marketingskills) — `marketing` catalog (MIT, bundled)
+- [awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) — `gamedev` catalog (Apache-2.0, bundled with LICENSE + NOTICE; Unity / discipline / genre / workflow skills only)
+- [game-design-skills-bundle](https://github.com/Stanestane/game-design-skills-bundle) — `gamedesign` catalog (**PolyForm Noncommercial 1.0.0 — not bundled**; fetch it yourself with `scripts/sync-catalog.py gamedesign --fetch --accept-license …` only if your use is noncommercial or you hold a commercial licence)
 
 ## License
 
 [MIT](LICENSE) for the original integration work. Bundled upstream components
-remain under their own MIT licenses — see
+remain under their own licenses (MIT, Apache-2.0) — see
 [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
