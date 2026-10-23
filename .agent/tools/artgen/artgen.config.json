@@ -12,6 +12,19 @@
     "manual": { "inboxDir": "production/artgen/_inbox" },
     "comfyui": {
       "url": "http://127.0.0.1:8188",
+      "graph": "sdxl",
+      "graphs": {
+        "z-image-turbo": {
+          "unet": "z_image_turbo_bf16.safetensors",
+          "clip": "qwen_3_4b.safetensors",
+          "vae": "ae.safetensors",
+          "steps": 8,
+          "cfg": 1,
+          "sampler": "res_multistep",
+          "scheduler": "simple",
+          "shift": 3
+        }
+      },
       "checkpoint": "sd_xl_base_1.0.safetensors",
       "vae": "sdxl_vae_fp16_fix.safetensors",
       "removeBackground": { "model": "birefnet.safetensors" },

@@ -222,6 +222,17 @@ def test_usage_over_threshold_pauses_once_per_window(st):
     assert M.record_usage(st, 92, 1800604800)["triggered"] is True
 
 
+def test_usage_unchanged_value_skips_write(st):
+    # 회귀: statusLine 이 1분마다 같은 값을 넘길 때 매번 쓰면 느린 HDD 에서 프로세스가 쌓였다 (2026-10-23)
+    M.record_usage(st, 57, 1800000000)
+    path = os.path.join(st.dir, "locks", "usage.json")
+    before = os.path.getmtime(path)
+    os.utime(path, (before - 100, before - 100))
+    r = M.record_usage(st, 57, 1800000000)
+    assert r["unchanged"] is True and os.path.getmtime(path) == before - 100
+    assert M.record_usage(st, 58, 1800000000).get("unchanged") is None   # 값이 바뀌면 기록
+
+
 def test_usage_guard_disabled_or_custom_threshold(tmp_path):
     cfg = S.load_config()
     cfg["usageGuard"] = {"enabled": False}

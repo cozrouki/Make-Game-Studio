@@ -4,15 +4,19 @@
 변형마다 시드 하나씩 따로 제출한다 (변형별 재현성).
 
 워크플로 두 가지:
-  1. 기본 그래프 (설정만으로 동작) — 체크포인트 → 프롬프트 → SDXL 해상도 생성 → 디코드
+  1. 내장 그래프 (설정만으로 동작) — graph 로 고른다. 모델 부분만 다르고 후처리는 공유한다
      → [배경 제거 노드] → 요청 크기로 축소 → 저장
+       sdxl          체크포인트 하나 (기본)
+       z-image-turbo UNET + Qwen3 텍스트 인코더 + ae VAE, 8 스텝 · cfg 1 (graphs.z-image-turbo 로 덮어쓰기)
   2. 사용자 워크플로 — ComfyUI 에서 "Export (API)" 로 저장한 JSON. 문자열 값 안의 토큰을 치환한다:
      {{positive}} {{negative}} {{seed}} {{width}} {{height}} {{gen_width}} {{gen_height}}
      값 전체가 토큰인 숫자 필드({{seed}} 등)는 숫자로 바뀐다. 결과는 모든 SaveImage 류 출력에서 수집한다.
 
 설정 (artgen.config.json → providers.comfyui, 요청별 덮어쓰기는 request.providerOptions.comfyui):
     url              ComfyUI 주소 (기본 http://127.0.0.1:8188)
-    checkpoint       models/checkpoints 안의 파일명 (기본 그래프)
+    graph            내장 그래프 프리셋 sdxl | z-image-turbo (기본 sdxl). 아래 최상위 모델 · 샘플링 키는 sdxl 용
+    graphs.<이름>    프리셋별 값 (z-image-turbo: unet · clip · clipType · vae · shift · steps · cfg · sampler · scheduler)
+    checkpoint       models/checkpoints 안의 파일명 (sdxl)
     vae              models/vae 안의 파일명 — 비우면 체크포인트 내장 VAE
     steps · cfg · sampler · scheduler
     genArea          생성 해상도 면적 기준 (SDXL 1024*1024). 요청 비율에 맞춰 64 배수로 정한다
@@ -59,9 +63,29 @@ def adapt_prompt(positive, negative, transparent, remove_background):
     return positive, negative
 
 
-def build_default_graph(o, positive, negative, seed, width, height, transparent):
-    positive, negative = adapt_prompt(positive, negative, transparent, o.get("removeBackground"))
-    gw, gh = gen_size(width, height, o.get("genArea", 1024 * 1024))
+# 내장 그래프 프리셋별 기본값 — 설정의 graphs.<이름> 이 덮어쓰고, 그 위에 최상위 키(SDXL 용)는 sdxl 에만 적용된다
+GRAPH_DEFAULTS = {
+    "sdxl": {"steps": 28, "cfg": 6.5, "sampler": "dpmpp_2m", "scheduler": "karras"},
+    # Z-Image Turbo (Tongyi-MAI, Apache-2.0) — ComfyUI 템플릿 image_z_image_turbo 와 같은 구성.
+    # 증류 모델이라 cfg 1 · 8 스텝이고 부정 프롬프트는 쓰지 않는다 (ConditioningZeroOut).
+    "z-image-turbo": {"unet": "z_image_turbo_bf16.safetensors", "weightDtype": "default",
+                      "clip": "qwen_3_4b.safetensors", "clipType": "lumina2", "vae": "ae.safetensors",
+                      "shift": 3, "steps": 8, "cfg": 1, "sampler": "res_multistep", "scheduler": "simple"},
+}
+
+
+def graph_options(o):
+    """선택한 프리셋의 옵션. sdxl 은 기존 최상위 키를 그대로 쓰고, 다른 프리셋은 최상위 SDXL 값을 무시한다."""
+    name = o.get("graph", "sdxl")
+    if name not in GRAPH_DEFAULTS:
+        raise ArtgenError(f"providers.comfyui.graph 는 {', '.join(GRAPH_DEFAULTS)} 중 하나 (현재: {name})")
+    if name == "sdxl":
+        return name, {**GRAPH_DEFAULTS[name], **o}
+    shared = {k: o[k] for k in ("removeBackground", "genArea") if k in o}
+    return name, {**GRAPH_DEFAULTS[name], **shared, **o.get("graphs", {}).get(name, {})}
+
+
+def _sdxl_model(o, positive, negative, seed, gw, gh):
     g = {
         "ckpt": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": o["checkpoint"]}},
         "pos": {"class_type": "CLIPTextEncode", "inputs": {"text": positive, "clip": ["ckpt", 1]}},
@@ -69,14 +93,42 @@ def build_default_graph(o, positive, negative, seed, width, height, transparent)
         "latent": {"class_type": "EmptyLatentImage", "inputs": {"width": gw, "height": gh, "batch_size": 1}},
         "sample": {"class_type": "KSampler", "inputs": {
             "model": ["ckpt", 0], "positive": ["pos", 0], "negative": ["neg", 0], "latent_image": ["latent", 0],
-            "seed": seed, "steps": o.get("steps", 28), "cfg": o.get("cfg", 6.5),
-            "sampler_name": o.get("sampler", "dpmpp_2m"), "scheduler": o.get("scheduler", "karras"), "denoise": 1.0}},
+            "seed": seed, "steps": o["steps"], "cfg": o["cfg"],
+            "sampler_name": o["sampler"], "scheduler": o["scheduler"], "denoise": 1.0}},
     }
     vae_ref = ["ckpt", 2]
     if o.get("vae"):
         g["vae"] = {"class_type": "VAELoader", "inputs": {"vae_name": o["vae"]}}
         vae_ref = ["vae", 0]
     g["decode"] = {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": vae_ref}}
+    return g
+
+
+def _zimage_model(o, positive, negative, seed, gw, gh):
+    return {
+        "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": o["unet"], "weight_dtype": o["weightDtype"]}},
+        "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": o["clip"], "type": o["clipType"], "device": "default"}},
+        "vae": {"class_type": "VAELoader", "inputs": {"vae_name": o["vae"]}},
+        "shift": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["unet", 0], "shift": o["shift"]}},
+        "pos": {"class_type": "CLIPTextEncode", "inputs": {"text": positive, "clip": ["clip", 0]}},
+        "neg": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["pos", 0]}},
+        "latent": {"class_type": "EmptySD3LatentImage", "inputs": {"width": gw, "height": gh, "batch_size": 1}},
+        "sample": {"class_type": "KSampler", "inputs": {
+            "model": ["shift", 0], "positive": ["pos", 0], "negative": ["neg", 0], "latent_image": ["latent", 0],
+            "seed": seed, "steps": o["steps"], "cfg": o["cfg"],
+            "sampler_name": o["sampler"], "scheduler": o["scheduler"], "denoise": 1.0}},
+        "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": ["vae", 0]}},
+    }
+
+
+GRAPH_BUILDERS = {"sdxl": _sdxl_model, "z-image-turbo": _zimage_model}
+
+
+def build_default_graph(o, positive, negative, seed, width, height, transparent):
+    name, o = graph_options(o)
+    positive, negative = adapt_prompt(positive, negative, transparent, o.get("removeBackground"))
+    gw, gh = gen_size(width, height, o.get("genArea", 1024 * 1024))
+    g = GRAPH_BUILDERS[name](o, positive, negative, seed, gw, gh)
     image = ["decode", 0]
     rb = o.get("removeBackground")
     if transparent and rb:
@@ -166,9 +218,11 @@ class ComfyUIProvider(Provider):
         except ArtgenError as e:
             return False, f"{e} — ComfyUI 를 먼저 실행 (run_nvidia_gpu.bat)"
         devices = ", ".join(d.get("name", "?") for d in stats.get("devices", []))
-        if not self.options.get("workflow") and not self.options.get("checkpoint"):
+        graph = self.options.get("graph", "sdxl")
+        if not self.options.get("workflow") and graph == "sdxl" and not self.options.get("checkpoint"):
             return False, "providers.comfyui.checkpoint 미설정 (기본 그래프) 또는 workflow 지정 필요"
-        return True, f"{self.url} · {devices}"
+        label = "workflow" if self.options.get("workflow") else f"graph={graph}"
+        return True, f"{self.url} · {devices} · {label}"
 
     def _graph(self, job, seed):
         o = self.options

@@ -80,13 +80,27 @@ python .agent/tools/artgen/artgen.py status   [ASSET-001]
 | SDXL base 1.0 `sd_xl_base_1.0.safetensors` | `models/checkpoints/` | CreativeML Open RAIL++-M (상업 가능) |
 | `sdxl_vae_fp16_fix.safetensors` | `models/vae/` | MIT |
 | BiRefNet `birefnet.safetensors` ([Comfy-Org/BiRefNet](https://huggingface.co/Comfy-Org/BiRefNet)) | `models/background_removal/` | MIT |
+| (Z-Image) `z_image_turbo_bf16.safetensors` ([Comfy-Org/Z-Image-Turbo](https://huggingface.co/Comfy-Org/Z-Image-Turbo) `split_files/`) | `models/diffusion_models/` | Apache-2.0 (Tongyi-MAI) |
+| (Z-Image) `qwen_3_4b.safetensors` | `models/text_encoders/` | Apache-2.0 (Qwen3-4B) |
+| (Z-Image) `ae.safetensors` | `models/vae/` | Apache-2.0 |
+
+**그래프 프리셋 `graph`** — 모델 부분만 다르고 배경 제거 · 축소 · 저장은 공유한다.
+
+| `graph` | 구성 | 기본 샘플링 | 특징 |
+|---|---|---|---|
+| `sdxl` (기본) | 체크포인트 하나 (최상위 `checkpoint` · `vae` · `steps` …) | 28 스텝 · cfg 6.5 · dpmpp_2m/karras | CLIP 77 토큰 한계, 긴 지시를 잘 못 따른다 |
+| `z-image-turbo` | UNET + Qwen3-4B 텍스트 인코더(`lumina2`) + `ae` VAE (`graphs.z-image-turbo` 로 덮어쓰기) | 8 스텝 · cfg 1 · res_multistep/simple · shift 3 | 증류 모델 — 부정 프롬프트를 쓰지 않음(ConditioningZeroOut). LLM 인코더라 긴 프롬프트 · 구도 지시를 SDXL 보다 잘 따른다 |
+
+전환: `artgen.config.local.json` 에 `{"provider": "comfyui", "providers": {"comfyui": {"graph": "z-image-turbo"}}}`, 또는 요청별 `providerOptions.comfyui.graph`. 8GB VRAM 에서 bf16(12.3GB)은 오프로드로 느리다 — `graphs.z-image-turbo.unet` 을 `z_image_turbo_int8_convrot.safetensors`(6.2GB) 로 바꿀 수 있다. 시점 · 형태를 강제하려면 ComfyUI 템플릿 `image_z_image_turbo_fun_union_controlnet` 을 Export (API) 해 `workflow` 로 쓴다.
 
 **설정** (`artgen.config.json` → `providers.comfyui`, 요청별 덮어쓰기는 `request.providerOptions.comfyui`)
 
 | 키 | 기본값 | 설명 |
 |---|---|---|
 | `url` | `http://127.0.0.1:8188` | ComfyUI 주소 |
-| `checkpoint` · `vae` | SDXL base · fp16 VAE | 기본 그래프의 모델 파일명 |
+| `graph` | `sdxl` | 내장 그래프 프리셋 (`sdxl` · `z-image-turbo`) |
+| `graphs.<이름>` | 프리셋별 기본값 | 프리셋의 모델 · 샘플링 덮어쓰기 (sdxl 외 프리셋은 최상위 SDXL 값을 쓰지 않는다) |
+| `checkpoint` · `vae` | SDXL base · fp16 VAE | `sdxl` 그래프의 모델 파일명 |
 | `steps` · `cfg` · `sampler` · `scheduler` | 28 · 6.5 · dpmpp_2m · karras | 샘플링 |
 | `genArea` | 1048576 (1024²) | 생성 해상도 면적. 요청 비율을 유지한 64 배수로 생성한 뒤 요청 크기로 lanczos 축소 |
 | `removeBackground` | `{"model": "birefnet.safetensors"}` | 투명 배경. 비우면 `capabilities.transparent=false`. `"threshold": null` 로 이진화 끔 |
