@@ -1,7 +1,7 @@
 ---
 name: studio-status
 description: 스튜디오 모드 디렉터 콘솔 — 현황판, 게이트 승인/반려, 판단 요청 답변, 전체 정지/재개 (어느 세션에서든)
-argument-hint: "[approve <G#> [메모] | reject <G#> <사유> | answer <T-####> <답변> | pause [사유] | resume | show <T-####> | audit | protocol [ack <메모>] | commit <메시지> | upgrade <템플릿경로>]"
+argument-hint: "[approve <G#> [메모] | reject <G#> <사유> | answer <T-####> <답변> | pause [사유] | resume | launch [--resume] [--only 역할] | show <T-####> | audit | protocol [ack <메모>] | commit <메시지> | upgrade <템플릿경로>]"
 user-invocable: true
 allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 ---
@@ -67,6 +67,19 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 1. `S upgrade --from <경로> --dry-run` 결과(교체 · 추가 · 병합 · 새 설정 키)를 보여 주고 확인받는다.
 2. `S upgrade --from <경로>` — 설정은 프로젝트 값 우선 병합, 지문 승인, 역할마다 공지 티켓.
 3. 로스터의 `kind: claude` 세션에 `[studio] 프로토콜 갱신 — 공지 티켓 확인` 을 알린다.
+
+## launch [--resume] [--only <역할,…>] [--backend vscode|console]
+
+팀 정의(`production/studio/team.json`)대로 역할 세션들을 기동한다. 팀 정의가 없으면 `S team init` 을 제안하고, 만든 뒤 역할별 `tool` · `model` 과 `permissionMode` 를 사용자와 확인한다.
+1. `S launch --dry-run [인수]` 로 역할별 실행 명령과 사전 점검 결과를 보여 준다.
+   - `permissionMode` 는 팀 전체에 하나다. **이 세션(디렉터)과 같은 모드여야** 세션 간 메시지가 승인 대기로 묶이지 않는다 — 다르면 알린다.
+   - 이 세션이 디렉터로 등록돼 있으면 `team.json` 의 `director` 는 `"enabled": false` 여야 한다 (디렉터 두 명 방지).
+2. 오류(✗)가 있으면 해결 방법을 안내하고 멈춘다. 경고(⚠)만 있으면 그대로 진행할지 묻는다. 사용자가 확인하면 `S launch [인수]`.
+3. 결과에 따라 안내한다:
+   - `vscode`: "VS Code 에서 명령 팔레트 → Tasks: Run Task → `studio: 전체 기동`" (작업 파일 `.vscode/tasks.json`). 역할마다 전용 터미널이 열리고 stagger 초 간격으로 기동한다.
+   - `console`: 창을 열었다 — 역할별 PID.
+4. 기동된 세션은 `studio-<역할>` 이름으로 `ListAgents` 에 나타나고 스스로 `/studio-join` 업무 루프를 시작한다. 1~2분 뒤 `ListAgents` 로 확인해 보고한다.
+5. `--resume`: 사용량 한도 · 재부팅 뒤 지난번 세션 ID(`locks/launch.json`)로 **이전 대화를 그대로** 잇는다. 정지 중이면 먼저 `resume` 으로 정지를 푼다 (사전 점검이 막는다).
 
 ## show <T-####>
 
