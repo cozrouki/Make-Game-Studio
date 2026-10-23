@@ -36,6 +36,23 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
 9. 문제가 있으면 → art `bug` 티켓을 보낸다. 정상이면 done 처리하고 note 에 "임포트 확인, .meta 생성" 을 남긴다. 이 note 가 art 쪽 `.meta` 커밋의 신호가 된다.
 10. 이 에셋을 기다리던 스토리가 있으면 이어서 연결한다.
 
+## 구현 참고 — gamedev 카탈로그
+
+`.agent/gamedev/` (Apache-2.0, 템플릿 포함 — 없으면 `python <템플릿>/scripts/sync-catalog.py gamedev --fetch --root <이 프로젝트>` 로 받는다. 라이선스 확인 절차 없음). 스토리를 구현하기 전에, 그 스토리가 다루는 분야의 스킬 **하나**를 `/ext info <스킬>` 로 훑고 필요하면 `/ext <스킬>` 로 따른다.
+
+| 스토리가 다루는 것 | 참고 |
+|---|---|
+| 장르 골격 | `genres/` 의 해당 장르 (예: 격자 퍼즐 → `puzzle` — 격자 상태 · 규칙 해결 · 되돌리기) |
+| 저장 · 진행 | `save-systems` |
+| 손맛 · 연출 · 카메라 | `game-feel` · `camera-systems` |
+| 입력 · UI | `unity-input-system` · `input-systems` · `game-ui-ux` (세이프 에어리어 · 세로 화면) |
+| 데이터 · 레벨 | `unity-scriptableobjects` · `unity-tilemap-2d` · `procedural-gen` |
+| AI · 이동 | `game-ai` · `ai-behavior-trees-utility-ai` · `unity-navmesh` · `unity-physics` · `physics-tuning` |
+| 빌드 · 성능 · 배포 | `unity-build-pipeline` · `performance-optimization` · `steam-publish` · `itch-publish` |
+
+**우선순위**: 이 프로젝트 규칙(`.claude/rules/gameplay-code.md`, `AGENTS.md` §3) · ADR · `technical-preferences.md` → L2 SkillForge(`/sf-list`) → gamedev 카탈로그. 카탈로그 예시가 규칙과 다르면(매직 넘버 · 싱글톤 · Update 할당 등) 규칙을 따르고, 카탈로그는 설계 아이디어와 함정 목록으로만 쓴다. 카탈로그의 Unity 스킬은 Unity 6.3 LTS 기준이다 — 프로젝트 버전과 API 가 다르면 `docs/engine-reference/` 를 따른다.
+참고한 스킬은 스토리 완료 note 에 한 줄 남긴다 (`참고: gamedev/puzzle — 되돌리기 스냅샷 패턴`).
+
 ## 판단 권한
 
 | 스스로 결정 | 올림 |
