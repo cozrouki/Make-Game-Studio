@@ -152,3 +152,111 @@ def test_upgrade_preserves_director_decisions_and_announces(repo, tmp_path):
 def test_upgrade_rejects_non_template(repo, tmp_path):
     with pytest.raises(S.StudioError, match="템플릿"):
         M.upgrade(repo, str(tmp_path))
+
+
+# ---- Claude 주간 사용량 가드 ----
+HOOK = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(TOOL_DIR))), ".claude", "hooks",
+                    "studio-pause-notice.sh")
+
+
+def _bash():
+    """Claude Code 훅과 같은 Git Bash — Windows 의 PATH 에서는 WSL bash.exe 가 먼저 잡힐 수 있다."""
+    if os.name == "nt":
+        p = subprocess.run(["git", "--exec-path"], capture_output=True, text=True).stdout.strip()
+        cand = os.path.normpath(os.path.join(p, "..", "..", "..", "bin", "bash.exe")) if p else ""
+        if os.path.isfile(cand):
+            return cand
+    return shutil.which("bash")
+
+
+@pytest.fixture
+def st(tmp_path):
+    s = S.Studio(str(tmp_path), S.load_config())
+    os.makedirs(s.dir)
+    return s
+
+
+def test_usage_parse_statusline_reads_seven_day():
+    data = {"rate_limits": {"five_hour": {"used_percentage": 99}, "seven_day": {"used_percentage": 91.5, "resets_at": 1800000000}}}
+    assert M.parse_statusline(data) == (91.5, 1800000000)
+    assert M.parse_statusline({"model": {}}) == (None, None)  # API 키 사용자 · 첫 응답 전
+
+
+def test_usage_below_threshold_only_records(st):
+    r = M.record_usage(st, 72, 1800000000)
+    assert r["recorded"] and not r["triggered"]
+    assert st.paused() is None and M.usage_state(st)["percent"] == 72
+
+
+def test_usage_over_threshold_pauses_once_per_window(st):
+    st.new_ticket("planning", "dev", "task", "진행 중 작업")
+    st.update_ticket("T-0001", "dev", "in-progress", "§1 완료")
+    r = M.record_usage(st, 90, 1800000000)
+    assert r["triggered"] and "90%" in st.paused()
+    handoff = open(os.path.join(st.dir, "HANDOFF.md"), encoding="utf-8").read()
+    assert "T-0001" in handoff and "§1 완료" in handoff and "/studio-join" in handoff
+    assert f"- {r['ticket']} info (studio)" in handoff  # 디렉터 대기열에 정지 티켓
+    t = st.load_ticket(r["ticket"])
+    assert (t["from"], t["to"], t["priority"]) == ("studio", "director", "P0")
+    # 같은 주기: 디렉터가 일부러 재개한 뒤에도 다시 정지하지 않는다
+    st.set_paused(False)
+    assert M.record_usage(st, 95, 1800000000)["triggered"] is False and st.paused() is None
+    # 다음 주기에는 다시 발동
+    assert M.record_usage(st, 92, 1800604800)["triggered"] is True
+
+
+def test_usage_guard_disabled_or_custom_threshold(tmp_path):
+    cfg = S.load_config()
+    cfg["usageGuard"] = {"enabled": False}
+    s = S.Studio(str(tmp_path), cfg)
+    os.makedirs(s.dir)
+    assert M.record_usage(s, 99, 1800000000)["triggered"] is False
+    cfg["usageGuard"] = {"weeklyPausePercent": 80}
+    assert M.record_usage(S.Studio(str(tmp_path), cfg), 81, 1800000000)["triggered"] is True
+
+
+def test_usage_fmt_epoch_handles_bad_values():
+    assert M.fmt_epoch(None) == "알 수 없음" and M.fmt_epoch("x") == "알 수 없음"
+    assert M.fmt_epoch(1800000000).startswith("2027-01-15")
+
+
+def test_usage_ignored_without_studio_dir(tmp_path):
+    s = S.Studio(str(tmp_path), S.load_config())
+    assert M.record_usage(s, 99, 1) == {"recorded": False, "triggered": False}
+    assert not os.path.exists(s.dir)
+
+
+def test_usage_cli_stdin_from_statusline(st, capsys, monkeypatch):
+    import io
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"rate_limits": {"seven_day": {"used_percentage": 93, "resets_at": 1800000000}}})))
+    assert S.main(["--root", st.root, "usage", "--stdin"]) == 0
+    assert "정지 발동" in capsys.readouterr().out
+    monkeypatch.setattr(sys, "stdin", io.StringIO("not json"))
+    assert S.main(["--root", st.root, "usage", "--stdin"]) == 0
+    assert capsys.readouterr().out.strip() == "기록 안 함"
+
+
+def test_watch_director_wakes_while_paused(st):
+    import studio_dispatch as D
+    M.record_usage(st, 90, 1800000000)
+    assert D.watch(st, "director", timeout=1, interval=0.1)["actionable"] is True
+    st.new_ticket("planning", "dev", "task", "x")
+    assert D.watch(st, "dev", timeout=0.3, interval=0.1)["actionable"] is False
+
+
+@pytest.mark.skipif(_bash() is None, reason="bash 없음")
+def test_pause_notice_hook_injects_once_per_session(tmp_path):
+    root = str(tmp_path)
+    env = dict(os.environ, CLAUDE_PROJECT_DIR=root)
+
+    def run(sid):
+        return subprocess.run([_bash(), HOOK], input=json.dumps({"session_id": sid}), capture_output=True,
+                              text=True, encoding="utf-8", env=env).stdout.strip()
+
+    assert run("a") == ""  # 정지 없음
+    _touch(root, "production/studio/PAUSED", "2026-10-23 Claude 주간 사용량 91%\n")
+    out = json.loads(run("a"))["hookSpecificOutput"]
+    assert out["hookEventName"] == "PostToolUse" and "91%" in out["additionalContext"]
+    assert run("a") == "" and run("b") != ""  # 세션마다 한 번
+    _touch(root, "production/studio/PAUSED", "2026-10-24 디렉터 정지\n")
+    assert "디렉터 정지" in run("a")  # 새 정지는 다시 알림

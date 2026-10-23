@@ -25,11 +25,15 @@ TYPES = ("task", "question", "asset-request", "assets-ready", "story", "review",
 PRIORITIES = ("P0", "P1", "P2")
 GATE_STATUSES = ("pending", "requested", "approved", "rejected")
 DIRECTOR = "director"
+SYSTEM = "studio"  # 도구가 자동으로 내는 티켓의 발신자 (사용량 가드 등) — 발신 전용
 ART_MODES = ("ai", "human")
 TICKET_RE = re.compile(r"^T-(\d{4,})\.md$")
 FIELDS = ("id", "title", "from", "to", "type", "status", "priority", "gate", "depends", "refs", "created", "updated")
 LIST_FIELDS = ("depends", "refs")
 ROSTER_KINDS = ("claude", "dispatch", "manual")  # claude = 대화형 Claude Code(SendMessage 가능)
+DIRECTOR_KINDS = ("claude", "manual")  # 디렉터는 사용자와 대화해야 하므로 헤드리스(dispatch) 불가
+DECIDED = ("user", "self")  # 디렉터 결정 주체: user = 사용자 합의, self = 디렉터 세션 단독
+DIRECTOR_POLICY = {"gates": "user", "vision": "user", "questions": "self"}
 
 
 class StudioError(Exception):
@@ -95,6 +99,22 @@ class Studio:
     def roles(self):
         return list(self.cfg["roles"])
 
+    @property
+    def director_policy(self):
+        """디렉터 세션의 결정 권한 — 항목마다 user(사용자 합의 필수) 또는 self(단독 결정 후 보고)."""
+        pol = dict(DIRECTOR_POLICY)
+        pol.update({k: v for k, v in self.cfg.get("director", {}).items() if k in DIRECTOR_POLICY})
+        for k, v in pol.items():
+            if v not in DECIDED:
+                raise StudioError(f"director.{k} 는 {DECIDED} 중 하나 (현재: {v})")
+        return pol
+
+    def check_decided(self, scope, decided):
+        if decided not in DECIDED:
+            raise StudioError(f"decided 는 {DECIDED} 중 하나")
+        if decided == "self" and self.director_policy[scope] != "self":
+            raise StudioError(f"디렉터 단독 결정 불가 — director.{scope}=user (사용자 합의 후 --decided user)")
+
     def check_role(self, role, allow_director=False):
         valid = self.roles + ([DIRECTOR] if allow_director else [])
         if role not in valid:
@@ -113,9 +133,11 @@ class Studio:
         return read_json(self.roster_path(), {})
 
     def join(self, role, session, kind="claude", agent=""):
-        self.check_role(role)
+        self.check_role(role, allow_director=True)
         if kind not in ROSTER_KINDS:
             raise StudioError(f"kind 는 {ROSTER_KINDS} 중 하나")
+        if role == DIRECTOR and kind not in DIRECTOR_KINDS:
+            raise StudioError(f"director 는 사용자와 대화하는 세션만 가능 (kind: {', '.join(DIRECTOR_KINDS)})")
         roster = self.roster()
         prev = roster.get(role, {}).get("session")
         roster[role] = {"session": session, "kind": kind, "agent": agent or ("claude" if kind == "claude" else ""),
@@ -150,7 +172,8 @@ class Studio:
                 n += 1
 
     def new_ticket(self, sender, to, ttype, title, body="", priority="P1", gate="", depends=(), refs=()):
-        self.check_role(sender, allow_director=True)
+        if sender != SYSTEM:
+            self.check_role(sender, allow_director=True)
         self.check_role(to, allow_director=True)
         if sender == to:
             raise StudioError("자기 자신에게 티켓을 보낼 수 없음")
@@ -200,8 +223,10 @@ class Studio:
         with open(self._ticket_path(t["id"]), "w", encoding="utf-8", newline="\n") as f:
             f.write(text)
 
-    def update_ticket(self, tid, by, status=None, note="", to=None):
+    def update_ticket(self, tid, by, status=None, note="", to=None, decided="user"):
         self.check_role(by, allow_director=True)
+        if by == DIRECTOR:
+            self.check_decided("questions", decided)
         t = self.load_ticket(tid)
         changes = []
         if status:
@@ -220,7 +245,8 @@ class Studio:
             t["to"] = to
         if not changes and not note:
             raise StudioError("변경 없음 — --status / --to / --note 중 하나 필요")
-        entry = f"{now()} [{by}] " + "; ".join(changes) + (": " if changes and note else "") + note.replace("\n", " ")
+        tag = f"{by}·단독" if by == DIRECTOR and decided == "self" else by
+        entry = f"{now()} [{tag}] " + "; ".join(changes) + (": " if changes and note else "") + note.replace("\n", " ")
         t["thread"].append(entry)
         t["updated"] = now()
         self._save_ticket(t)
@@ -301,7 +327,7 @@ class Studio:
         self.log("gate.add", id=gid)
         return self.gate(gid)
 
-    def set_gate(self, gid, status, by, note=""):
+    def set_gate(self, gid, status, by, note="", decided="user"):
         g = self.gate(gid)
         if status == "requested":
             if g["status"] == "approved":
@@ -312,12 +338,16 @@ class Studio:
         elif status in ("approved", "rejected"):
             if by != DIRECTOR:
                 raise StudioError("게이트 승인·반려는 director 만 가능 (--by director)")
+            self.check_decided("gates", decided)
             if g["status"] != "requested":
                 raise StudioError(f"{gid} 는 요청 상태가 아님 ({g['status']})")
         state = read_json(self.gates_path(), {})
         s = state.setdefault(gid, {"history": []})
         s["status"] = status
-        s["history"].append({"at": now(), "by": by, "status": status, "note": note})
+        entry = {"at": now(), "by": by, "status": status, "note": note}
+        if status in ("approved", "rejected"):
+            entry["decided"] = decided
+        s["history"].append(entry)
         write_json(self.gates_path(), state)
         self.log("gate." + status, id=gid, by=by)
         return self.gate(gid)
@@ -359,6 +389,7 @@ class Studio:
         gates = [{"id": g["id"], "name": g["name"], "status": g["status"], "unlocks": g["unlocks"]} for g in self.gates()]
         maint = _maint()
         return {"artMode": self.art_mode, "paused": self.paused(), "roster": self.roster(), "gates": gates, "roles": per_role,
+                "directorPolicy": self.director_policy,
                 "directorQueue": director_queue, "stale": stale, "total": len(tickets),
                 "audit": maint.audit(self), "protocol": maint.protocol_state(self)}
 
@@ -510,6 +541,7 @@ def main(argv=None):
     p.add_argument("--status")
     p.add_argument("--to")
     p.add_argument("--note", default="")
+    p.add_argument("--decided", default="user", choices=DECIDED, help="director 결정 주체 (user = 사용자 합의)")
 
     p = sub.add_parser("gate", help="게이트 조회·요청·승인·반려·추가")
     p.add_argument("action", choices=("list", "request", "approve", "reject", "add"))
@@ -520,6 +552,7 @@ def main(argv=None):
     p.add_argument("--owner", default="planning")
     p.add_argument("--artifacts", default="")
     p.add_argument("--unlocks", default="")
+    p.add_argument("--decided", default="user", choices=DECIDED, help="승인·반려 결정 주체 (user = 사용자 합의)")
 
     sub.add_parser("status", help="디렉터 현황판")
 
@@ -540,6 +573,14 @@ def main(argv=None):
     p = sub.add_parser("upgrade", help="템플릿 저장소에서 스튜디오 · artgen 도구 갱신 (프로젝트 설정 보존 · 공지 티켓)")
     p.add_argument("--from", dest="template", required=True, help="템플릿 저장소 경로")
     p.add_argument("--dry-run", action="store_true")
+
+    p = sub.add_parser("usage", help="Claude 주간 사용량 기록 · 임계값 이상이면 전체 정지 + 인계 기록 (statusLine 이 호출)")
+    p.add_argument("--stdin", action="store_true", help="statusLine JSON 을 stdin 으로 받음")
+    p.add_argument("--percent", type=float, help="주간 사용량 %% 를 직접 지정 (수동 · 테스트)")
+    p.add_argument("--resets-at", type=float, help="리셋 시각 (Unix epoch 초)")
+
+    p = sub.add_parser("handoff", help="인계 기록(production/studio/HANDOFF.md)을 지금 상태로 다시 쓰기")
+    p.add_argument("--reason", default="수동 인계 기록")
 
     p = sub.add_parser("commit", help="역할(또는 director) 쓰기 영역 + 공유 영역만 커밋")
     p.add_argument("role")
@@ -584,7 +625,7 @@ def main(argv=None):
             t = st.new_ticket(args.sender, args.to, args.type, args.title, body, args.priority, args.gate,
                               _split(args.depends), _split(args.refs))
             ready, why = st.readiness(t)
-            session = st.notify_session(t["to"]) if t["to"] != DIRECTOR else None
+            session = st.notify_session(t["to"])  # director 도 디렉터 세션이 등록돼 있으면 알림
             out(dict(t, ready=ready, readyReason=why, notifySession=session),
                 f"{t['id']} 발행 → {t['to']} ({'착수 가능' if ready else why})"
                 + (f"\n알림 대상 세션: {session}" if session else "\n알림 없음 — 대상은 파일 감시(watch/dispatch)로 깨어남"))
@@ -606,8 +647,8 @@ def main(argv=None):
             text = "\n".join(f"{k}: {t[k]}" for k in FIELDS) + f"\n착수: {why}\n\n{t['body']}\n\n" + "\n".join(t["thread"])
             out(dict(t, ready=ready, readyReason=why), text)
         elif args.cmd == "update":
-            t = st.update_ticket(args.id, args.by, args.status, args.note, args.to)
-            session = st.notify_session(t["from"]) if t["from"] != DIRECTOR else None
+            t = st.update_ticket(args.id, args.by, args.status, args.note, args.to, args.decided)
+            session = st.notify_session(t["from"])
             out(dict(t, notifySession=session), f"{t['id']} {t['status']} — {t['thread'][-1]}")
         elif args.cmd == "gate":
             if args.action == "list":
@@ -620,7 +661,7 @@ def main(argv=None):
                 if not args.id or not args.by:
                     raise StudioError("gate request/approve/reject 는 <id> 와 --by 필요")
                 status = {"request": "requested", "approve": "approved", "reject": "rejected"}[args.action]
-                g = st.set_gate(args.id, status, args.by, args.note)
+                g = st.set_gate(args.id, status, args.by, args.note, args.decided)
                 out(dict(g, roster=st.roster()), f"{g['id']} {g['status']}")
         elif args.cmd == "status":
             s = st.status()
@@ -669,6 +710,26 @@ def main(argv=None):
             if r.get("tickets"):
                 lines.append(f"공지 티켓: {', '.join(r['tickets'])}")
             out(r, "\n".join(lines))
+        elif args.cmd == "usage":
+            m = _maint()
+            if args.stdin or args.percent is not None:
+                pct, resets = args.percent, args.resets_at
+                if args.stdin:
+                    try:
+                        pct, resets = m.parse_statusline(json.loads(sys.stdin.read() or "{}"))
+                    except ValueError:
+                        pct, resets = None, None
+                r = m.record_usage(st, pct, resets, "statusline" if args.stdin else "manual")
+                out(r, f"주간 {r['percent']:.0f}% — 정지 발동 (인계: production/studio/HANDOFF.md)" if r["triggered"]
+                    else (f"주간 {r['percent']:.0f}% (임계 {r['threshold']}%)" if r["recorded"] else "기록 안 함"))
+            else:
+                r = dict(m.usage_state(st), settings=m.usage_settings(st))
+                cfg = r["settings"]
+                out(r, f"주간 {r.get('percent', '?')}% · 리셋 {m.fmt_epoch(r.get('resetsAt'))} · 갱신 {r.get('at', '-')}"
+                       f" · 임계 {cfg['weeklyPausePercent']}% ({'켜짐' if cfg['enabled'] else '꺼짐'})")
+        elif args.cmd == "handoff":
+            path = _maint().write_handoff(st, args.reason)
+            out({"handoff": path}, f"인계 기록: {path}")
         elif args.cmd == "commit":
             r = st.commit(args.role, args.message, args.dry_run, args.only)
             text = (f"커밋 {r['sha']} — {len(r['files'])}개 파일" if r["committed"]

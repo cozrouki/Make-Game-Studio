@@ -14,7 +14,7 @@
 
 ## 1. 루프
 
-1. `S inbox <ROLE>` 를 실행한다. `paused` 가 있으면 즉시 종료한다. `protocolChanged` 가 있으면 0번의 문서를 다시 읽고 그대로 진행한다 (디렉터가 확인할 일이므로 보고하지 않는다).
+1. `S inbox <ROLE>` 를 실행한다. `paused` 가 있으면 진행 중 티켓에 `인계: 한 일 / 남은 일 / 미커밋 파일 / 재개 첫 단계` note 를 남기고 즉시 종료한다(커밋하지 않음). 정지가 풀린 뒤에는 `production/studio/HANDOFF.md` 의 내 역할 절과 마지막 `인계:` note 에서 이어 간다. `protocolChanged` 가 있으면 0번의 문서를 다시 읽고 그대로 진행한다 (디렉터가 확인할 일이므로 보고하지 않는다).
 2. 처리할 티켓을 고른다. `in-progress` 가 먼저이고, 그다음은 `ready: true` 인 첫 `open` 티켓이다. 없으면 **종료한다** (감독 루프가 다음 변화를 기다린다).
 3. 착수한다:
    - `open` 이면 `S update <id> --by <ROLE> --status in-progress`.

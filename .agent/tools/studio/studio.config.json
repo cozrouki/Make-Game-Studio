@@ -83,6 +83,17 @@
       "note": "IDE 에이전트 — 헤드리스 없음. 에이전트 터미널에서 studio.py watch 로 참여 (manual)"
     }
   },
+  "director": {
+    "note": "디렉터 세션(/studio-director) 결정 권한 — user = 사용자 합의 후 실행, self = 디렉터 단독 결정 후 보고. gates · questions 는 studio.py 가 검사, vision(컨셉 · 필러 · 범위 · 플랫폼 · 외부 비용)은 헌장으로 지킨다. 결정 기록: production/studio/decisions.md",
+    "gates": "user",
+    "vision": "user",
+    "questions": "self"
+  },
+  "usageGuard": {
+    "note": "Claude 주간(7일) 사용량이 weeklyPausePercent 이상이면 전체 정지 + production/studio/HANDOFF.md 인계 기록 + 디렉터 P0 티켓. 값은 .claude/statusline.sh 가 statusLine 의 rate_limits.seven_day 로 넘긴다 (구독 플랜만). 리셋 주기당 한 번만 발동",
+    "enabled": true,
+    "weeklyPausePercent": 90
+  },
   "directorOwns": [
     "CLAUDE.md", "AGENTS.md", "AGENT.md", "GEMINI.md", ".gitignore",
     ".claude", ":(exclude).claude/docs/technical-preferences.md",

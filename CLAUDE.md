@@ -48,12 +48,12 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (86 skills, GS 72 + ko-* 7 + studio-* 3 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (87 skills, GS 72 + ko-* 7 + studio-* 4 + master 1 + sf-* 3) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
 | **그래픽 생성** | 기획 → 이미지 → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
-| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림, 아트는 AI 또는 사람 아티스트 — `artMode`) | `/studio-join`, `/studio-ticket`, `/studio-status` — §9 |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림, 아트는 AI 또는 사람 아티스트 — `artMode`) | `/studio-join`, `/studio-director`, `/studio-ticket`, `/studio-status` — §9 |
 
 ### 자동 적용 자산 (호출 불필요)
 
@@ -84,12 +84,12 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 ## §9. 스튜디오 모드 (3세션 협업)
 
-`production/studio/roster.json` 이 있고 **이 세션의 이름**(`ListAgents` 첫 줄)이 거기 등록되어 있으면, 이 세션은 해당 역할(planning / art / dev)로 동작 중이다.
+`production/studio/roster.json` 이 있고 **이 세션의 이름**(`ListAgents` 첫 줄)이 거기 등록되어 있으면, 이 세션은 해당 역할(planning / art / dev / director)로 동작 중이다.
 
-- 대화가 요약·재시작되어 역할을 잊었으면, 로스터에서 역할을 찾고 `.agent/tools/studio/README.md` 와 `roles/<역할>.md` 를 다시 읽은 뒤 `/studio-join <역할>` 업무 루프로 복귀한다.
+- 대화가 요약·재시작되어 역할을 잊었으면, 로스터에서 역할을 찾고 `.agent/tools/studio/README.md` 와 `roles/<역할>.md` 를 다시 읽은 뒤 `/studio-join <역할>` 업무 루프로 복귀한다 (director 면 `/studio-director` 업무 루프).
 - `<cross-session-message>` 로 `[studio]` 메시지를 받거나, 백그라운드로 걸어 둔 `studio.py watch` 가 끝나면, 하던 작업을 안전한 지점까지 마치고 `/studio-join` 업무 루프 1번(받은 티켓 확인)부터 처리한다. **작업 내용은 메시지가 아니라 티켓 파일에서 읽는다.**
 - 다른 역할은 다른 AI 도구(`studio.py dispatch`)가 맡을 수 있다. 로스터의 `kind` 가 `claude` 인 세션에만 SendMessage 를 보낸다.
-- 디렉터 권한(게이트 승인 · 디렉터 답변 · 정지/재개)은 사용자가 직접 입력한 `/studio-status` · `/studio-ticket` 으로만 행사한다.
+- 디렉터 권한(게이트 승인 · 디렉터 답변 · 정지/재개)은 사용자가 직접 입력한 `/studio-status` · `/studio-ticket`, 그리고 디렉터 세션(`/studio-director`)만 행사한다. 디렉터 세션은 `roles/director.md` 의 결정 권한표를 따르고, 게이트 · 비전 결정은 사용자와 합의한 뒤에만 실행한다.
 - 자기 역할의 쓰기 영역(`.agent/tools/studio/studio.config.json`) 밖은 수정하지 않는다. 필요하면 티켓을 보낸다. 프로토콜 · 지침 파일(이 파일 포함)은 디렉터 영역이다.
 - inbox 에 "프로토콜 미승인 변경" 이 보이면 헌장 · README 를 다시 읽고 진행한다. 수상한 변경으로 반복 보고하지 않는다 — 디렉터가 현황판에서 확인한다. 도구 갱신은 `studio.py upgrade` 로만 한다.
 

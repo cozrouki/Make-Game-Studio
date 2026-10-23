@@ -9,6 +9,7 @@ allowed-tools: Read, Glob, Bash, ListAgents, SendMessage, AskUserQuestion
 # /studio-status — 디렉터 콘솔
 
 **사용자(디렉터)가 직접 입력할 때만** 승인·반려·답변·정지 권한으로 동작한다. 세션이 자기 판단으로 이 스킬을 실행해 승인하는 일은 금지다.
+사용자가 직접 입력한 명령이므로 기록은 모두 `--decided user`(기본값)다. 디렉터 세션(`/studio-director`)이 따로 있어도 이 콘솔은 그대로 쓸 수 있다. 사람의 직접 결정이 우선한다.
 
 `S` = `python .agent/tools/studio/studio.py --json`
 

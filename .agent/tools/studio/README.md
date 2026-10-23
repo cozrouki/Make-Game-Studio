@@ -2,6 +2,7 @@
 
 > 디렉터(사용자) 1명 + Claude Code 세션 3개(기획 · 그래픽 아트 · Unity 개발)가 같은 Unity 프로젝트 폴더에서 서로 일을 주고받으며 게임을 만든다.
 > 디렉터는 **단계 게이트**에서만 승인하고, 그 사이에는 세션끼리 자율로 진행한다.
+> 디렉터는 사람이 직접 맡거나, **디렉터 세션**(`/studio-director`)을 두어 사용자와 의견을 나누며 맡게 할 수 있다 → [디렉터 세션](#디렉터-세션--studio-director)
 
 ## 구성
 
@@ -9,6 +10,7 @@
                 ┌──────────── 디렉터 (사용자) ────────────┐
                 │  게이트 승인 · 판단 요청 응답 · 정지/재개 │
                 │  /studio-status  (어느 세션에서든)        │
+                │  또는 디렉터 세션 /studio-director ⇄ 사용자 │
                 └───────────────▲──────────────────────────┘
                                 │ to: director 티켓
    ┌──────────────┐  티켓+알림  ┌──────────────┐  티켓+알림  ┌──────────────┐
@@ -42,6 +44,31 @@
    ```
    `/studio-ticket` 은 어느 세션에서 입력해도 되고, 발신자는 `director` 로 기록된다.
 4. 이후 디렉터는 `/studio-status` 로 현황을 보다가 게이트 요청이 오면 승인하거나 반려한다.
+   - 디렉터 세션을 쓰면 4번째 터미널(또는 다른 폴더의 세션)에서 `/studio-director [--root <프로젝트>]` 를 실행한다. 그 세션과 대화하며 결정하고, 판단 요청은 그 세션이 받아 처리한다.
+
+## 디렉터 세션 — `/studio-director`
+
+사용자와 의견을 나누며 게임의 전체 결정을 맡는 Claude Code 세션이다. 헌장: `roles/director.md`.
+
+| | 사람 디렉터 (`/studio-status`) | 디렉터 세션 (`/studio-director`) |
+|---|---|---|
+| 판단 요청 · 게이트 | 사용자가 현황판을 보고 직접 명령 | 세션이 받아 **브리핑 + 권장안**으로 사용자에게 묻고, 합의되면 실행 |
+| 승인된 비전 안의 질문 | 사용자가 답함 | 세션이 단독 결정 → 결정 기록 → 사용자에게 보고 |
+| 깨어나는 방법 | — | `studio.py watch director` (정지 중에도 깨어남) + 역할 세션의 SendMessage |
+| 다른 폴더에서 지휘 | `--root` CLI | `/studio-director --root <프로젝트>` |
+
+**결정 권한 (혼합형)** — `studio.config.json` 의 `director`. `user` = 사용자 합의 후 실행, `self` = 디렉터 단독 결정 후 보고.
+
+| 항목 | 기본 | 강제 |
+|---|---|---|
+| `gates` — 게이트 승인 · 반려 | user | `gate approve/reject --decided self` 를 거부 |
+| `vision` — 컨셉 · 필러 · 범위 · 플랫폼 · 일정 · 외부 비용 · artMode | user | 헌장 |
+| `questions` — 승인된 문서로 판정 가능한 판단 요청 | self | `update --by director --decided self` 를 정책으로 검사, 스레드에 `[director·단독]` 표시 |
+
+- `--decided` 의 기본값은 `user` 다. 사람이 `/studio-status` 로 입력한 명령은 그대로 사용자 결정으로 기록된다. 게이트 이력에는 `decided` 가 남는다.
+- 결정은 `production/studio/decisions.md` 에 `D-###` 로 쌓는다. 주체(사용자 합의 · 디렉터 단독 · 사용자 위임)와 근거를 적는다. 다른 세션은 이 파일을 판단 근거로 읽는다.
+- 디렉터 세션은 헤드리스(`dispatch`)로 돌리지 않는다. 사용자와 대화하는 것이 이 역할의 본질이다. 로스터 `kind` 는 `claude` 또는 `manual` 만 허용한다.
+- 디렉터 세션이 있어도 사람은 `/studio-status` 로 언제든 직접 결정할 수 있다. 사람의 직접 결정이 우선한다.
 
 Unity 에디터는 1개만 띄운다. **Unity MCP 는 dev 세션만 사용한다.**
 
@@ -115,7 +142,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 | **M1, M2 …** | planning (`gate add`) | 마일스톤 리뷰 문서 | 다음 마일스톤 |
 
 - 티켓에 `gate` 를 지정하면 그 게이트가 승인되기 전에는 **착수할 수 없다** (`update --status in-progress` 거부).
-- 승인과 반려는 `--by director` 로만 할 수 있다. 세션이 스스로 승인하지 않는다.
+- 승인과 반려는 `--by director` 로만 할 수 있다. 역할 세션이 스스로 승인하지 않는다. 디렉터 세션은 사용자와 합의한 뒤 `--decided user` 로 승인한다.
 - 게이트 사이에서 역할 권한을 넘는 결정(비전·범위·일정·외부 비용)은 `to: director` 티켓으로 올린다.
 
 ## 티켓
@@ -144,7 +171,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 | planning | `design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones` |
 | art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/ArtGen`, `art-source` (아티스트 원본, human 모드) |
 | dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
-| **director** (사람) | 프로토콜 · 지침 · 도구: `CLAUDE.md` · `AGENTS.md` · `.claude/**` · `.agent/tools` · `.agent/rules` · `.agent/workflows` · 도구별 미러(`.cursor` · `.github/instructions` 등). dev 가 `/setup-engine` 으로 `CLAUDE.md` Technology Stack 을 고치면 **디렉터가 확인 후 커밋**한다 |
+| **director** (사람 · 디렉터 세션) | 프로토콜 · 지침 · 도구: `CLAUDE.md` · `AGENTS.md` · `.claude/**` · `.agent/tools` · `.agent/rules` · `.agent/workflows` · 도구별 미러(`.cursor` · `.github/instructions` 등). dev 가 `/setup-engine` 으로 `CLAUDE.md` Technology Stack 을 고치면 **디렉터가 확인 후 커밋**한다 |
 | 공유 | `production/studio` (티켓 · 게이트), `doc/work_log.md` (최상단에 한 줄 추가만) |
 
 다른 역할의 영역을 고쳐야 하면 **그 역할에 티켓을 보낸다.** 정의 정본은 `studio.config.json` 이다 (`roles.*.owns` · `directorOwns` · `shared` · `allowedOverlaps`).
@@ -180,15 +207,17 @@ python .agent/tools/studio/studio.py commit art -m "[studio:art] T-0012 전투 V
 
 ```bash
 S="python .agent/tools/studio/studio.py"
-$S join <role> <session> [--kind claude|dispatch|manual] [--agent <도구>]      $S roster
-$S watch <role> [--timeout 초]    # 처리할 티켓이 생길 때까지 대기 (0 = 생김, 3 = 시간 초과)
+$S join <role|director> <session> [--kind claude|dispatch|manual] [--agent <도구>]      $S roster
+$S watch <role|director> [--timeout 초]    # 처리할 티켓이 생길 때까지 대기 (0 = 생김, 3 = 시간 초과)
 $S dispatch <role> --agent <프리셋> [--once] [--max-runs N] [--dry-run] [--force-lock]
 $S agents                        # 에이전트 프리셋 · 설치 여부
 $S new --from R --to R --type T --title "…" [--body-file f] [--priority P0|P1|P2] [--gate G2] [--depends T-1,T-2] [--refs a,b]
 $S inbox <role> [--all]          $S show T-0001
-$S update T-0001 --by R [--status S] [--to R] [--note "…"]
-$S gate list | request G1 --by planning | approve G1 --by director --note "…" | reject … | add M1 --name … --artifacts … --unlocks …
+$S update T-0001 --by R [--status S] [--to R] [--note "…"] [--decided user|self]
+$S gate list | request G1 --by planning | approve G1 --by director [--decided user|self] --note "…" | reject … | add M1 --name … --artifacts … --unlocks …
 $S status                        $S pause --reason "…" | resume
+$S usage [--stdin | --percent N --resets-at <epoch>]   # Claude 주간 사용량 기록 · 가드 (statusLine 이 호출)
+$S handoff [--reason "…"]        # 인계 기록 HANDOFF.md 다시 쓰기
 $S changes <role>                # 내 영역 미커밋 변경 + 진행 중 티켓 (중단 후 재개 점검)
 $S audit                         # 주인 없는 변경 · 역할 겹침
 $S protocol [ack --by director --note "…"]   # 프로토콜 변경 확인 · 승인
@@ -218,12 +247,36 @@ $S commit <role|director> -m "…" [--dry-run] [--only <경로…>]
 | 작업 중 파일 | 반쯤 된 상태로 작업 트리에 남는다. 커밋은 티켓 완료 시점에만 하므로 미완성 작업은 커밋되지 않는다 |
 | 세션 간 알림 | 받는 세션의 대기열에 남았다가 다시 움직일 때 전달된다. 놓쳐도 일감은 티켓 파일에 있다 |
 
+**자동 정지 — Claude 주간 사용량 가드**
+
+Claude 계정의 **주간(7일) 사용량**이 `usageGuard.weeklyPausePercent`(기본 90%)에 닿으면 전 세션을 자동으로 세우고 인계 기록을 남긴다.
+
+```
+statusLine (.claude/statusline.sh — 60초마다 + 응답마다)
+   └─ rate_limits.seven_day → studio.py usage --stdin
+         ├─ < 90%: production/studio/locks/usage.json 에 기록, 상태줄에 "주간 N%" 표시
+         └─ ≥ 90% (리셋 주기당 1회): ① PAUSED ② HANDOFF.md 스냅샷 ③ director P0 info 티켓
+작업 중인 세션 ── PostToolUse 훅(studio-pause-notice.sh)이 다음 도구 호출 직후 정지를 알림
+   └─ 안전한 지점에서 멈추고 진행 중 티켓에 "인계: 한 일 / 남은 일 / 미커밋 파일 / 재개 첫 단계" note
+대기 중인 세션 ── watch 는 정지 중 깨어나지 않음 (디렉터의 watch 만 깨어나 사용자에게 알림)
+```
+
+- 값은 statusLine 입력 JSON 의 `rate_limits.seven_day.used_percentage` · `resets_at` 이다. **claude.ai 구독(Pro/Max) 로그인**에서만 들어오고, 세션의 첫 응답 이후부터 나온다. API 키 사용자는 가드가 동작하지 않는다.
+- 세 세션 중 하나라도 statusLine 이 돌면 발동한다(같은 계정 · 같은 값). 동시에 발동해도 잠금 파일로 하나만 통과한다.
+- **리셋 주기당 한 번만** 발동한다. 디렉터가 일부러 `resume` 하면 같은 주기에서는 다시 세우지 않는다. 남은 사용량을 쓸지는 디렉터 판단이다.
+- 자동 재개는 하지 않는다. 리셋 뒤 디렉터가 사용자와 합의해 `resume` 한다.
+- 인계 기록 `production/studio/HANDOFF.md`: 정지 시각 · 사용량 · 리셋 시각, 게이트, 역할별 진행 중 티켓과 마지막 note, 미커밋 변경, 디렉터 대기열, 이어서 하는 법. `studio.py handoff` 로 언제든 다시 쓸 수 있다.
+- 설정: `studio.config.json` 의 `usageGuard` (`enabled`, `weeklyPausePercent`). 현재 값: `studio.py usage`. 수동 시험: `studio.py usage --percent 91 --resets-at <epoch>`.
+- 설치 조건: `.claude/settings.json` 에 statusLine(`bash .claude/statusline.sh` + `refreshInterval`)과 PostToolUse 훅(`studio-pause-notice.sh`, matcher `""`)이 있어야 한다. `upgrade` 는 두 스크립트를 갱신하지만 `settings.json` 은 건드리지 않는다. 기존 프로젝트는 디렉터가 한 번 등록한다.
+- Claude 외 도구(Codex · Gemini 등)의 사용량은 보지 않는다. 다만 `dispatch` 는 정지 중 새 실행을 하지 않으므로 함께 선다.
+
 **예방**
 - 한도가 가까우면 `/studio-status pause` 로 먼저 정지한다. 진행 중 티켓만 마무리하고 멈추므로 깔끔하게 선다. 사용량은 `/usage` 로 확인한다.
 - 역할별로 모델을 나눈다. 판단이 많은 planning 은 상위 모델, 정해진 절차를 반복하는 art · dev 는 `/model` 로 가벼운 모델.
 - 작업량을 줄인다. `/asset-spec` · 리뷰 스킬은 `--review lean`, `/ko-art-gen` 은 `--variants` 를 작게.
 
 **복구 (한도 초기화 후)**
+0. `production/studio/HANDOFF.md` 를 먼저 본다 (디렉터 세션은 자동으로 브리핑한다).
 1. 각 세션에 `/studio-join <역할>` 을 다시 입력한다. 업무 루프가 `in-progress` 티켓부터 처리한다. 재개 시에는 `studio.py changes <역할>` 로 반쯤 된 변경을 확인하고, 이어서 할지 되돌리고 다시 할지 정해 스레드에 기록한다.
 2. `/studio-status` 로 정체 티켓이 없는지 확인한다. 정지했던 경우에는 `/studio-status resume` 도 한다.
 

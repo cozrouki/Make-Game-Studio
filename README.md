@@ -62,12 +62,12 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (86 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (87 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 생성** | 기획 → 이미지 생성 → 아트 바이블 검수 → Unity 임포트 (백엔드 중립, 어댑터로 나중에 연결) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
-| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 그래픽 생성 — `/ko-art-gen`
 
@@ -113,6 +113,7 @@ git checkout -- .claude/hooks
 
 ```
               디렉터 — 게이트 승인 · 판단 요청 답변 · 정지/재개 (/studio-status)
+                       또는 디렉터 세션 (/studio-director) ⇄ 사용자와 의견을 나누며 결정
                  ▲
    planning ──티켓──▶ art ──티켓──▶ dev        상태: production/studio/ (티켓·게이트·로스터)
        ◀──질문/리뷰──    ◀──에셋 요청──         깨우기: 티켓 파일 감시 (+ Claude 끼리는 SendMessage)
@@ -131,6 +132,7 @@ git checkout -- .claude/hooks
    예: 기획 = Claude Code, 아트 = Claude Code(+사람 아티스트), 개발 = `dispatch dev --agent codex`.
 3. 아무 터미널에서 디렉터 지시를 입력합니다: `/studio-ticket planning "컨셉: …" <설명>`.
 4. `/studio-status` 로 현황을 봅니다. 게이트 요청이 오면 `/studio-status approve G1 "<메모>"`, 세션이 질문하면 `/studio-status answer T-0007 "<답>"` 으로 처리합니다.
+5. (선택) **디렉터 세션**: 터미널을 하나 더 열고 `/studio-director` 를 실행합니다. 다른 폴더에서 지휘하려면 `/studio-director --root <프로젝트 경로>` 입니다. 이 세션이 판단 요청과 게이트를 받아 브리핑하고, 사용자와 의견을 나눈 뒤 실행합니다. 게이트 · 비전(컨셉 · 범위 · 플랫폼 · 비용)은 사용자 합의가 필요하고, 승인된 문서로 답할 수 있는 질문은 디렉터 세션이 혼자 결정한 뒤 보고합니다(`studio.config.json` 의 `director` 로 조정). 결정은 `production/studio/decisions.md` 에 쌓입니다.
 
 **운영 규칙**
 - **단계 게이트:** G1 컨셉 → G2 아트 디렉션 → G3 프리프로덕션 → M1, M2 … 게이트에 묶인 티켓은 승인 전에는 시작할 수 없습니다. 승인은 디렉터만 합니다.
@@ -141,6 +143,7 @@ git checkout -- .claude/hooks
   - `"ai"`: art 세션이 artgen 으로 생성합니다.
   - `"human"`: art 세션이 **사람 아티스트의 보조**가 됩니다. 티켓을 대화 브리프로 전하고, 질문과 결정을 티켓으로 옮기고, 납품물을 검사해 승격합니다. 기획은 아트 디렉션 브리프부터 쓰고, 개발은 자리표시 그래픽으로 먼저 진행합니다.
 - **정지와 재개:** `/studio-status pause` 를 하면 각 세션이 진행 중인 티켓만 마무리하고 멈춥니다. 재개는 `/studio-status resume` 입니다.
+- **사용량 자동 정지:** Claude 주간 사용량이 90%(`usageGuard.weeklyPausePercent`)에 닿으면 statusLine 이 감지해 전 세션을 세웁니다. 각 세션은 진행 중 티켓에 `인계:` note 를 남기고 멈추고, `production/studio/HANDOFF.md` 에 인계 기록이 남습니다. 리셋 뒤 `/studio-join` · `/studio-director` 로 이어서 합니다 (claude.ai 구독 로그인에서만 동작).
 
 **여러 도구를 섞을 때**
 - 깨우기는 **티켓 파일 감시**(`studio.py watch`)가 기본이라 도구 종류와 무관합니다. 대기 중에는 AI 토큰을 쓰지 않습니다.
@@ -515,7 +518,8 @@ scripts/
 │   ├── ko-prototype/
 │   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh)
 │   ├── ko-art-gen/              그래픽 생성 파이프라인 (artgen CLI 오케스트레이션)
-│   ├── studio-join/             스튜디오 모드 3종 (역할 등록·업무 루프 / 디렉터 지시 / 디렉터 콘솔)
+│   ├── studio-join/             스튜디오 모드 4종 (역할 등록·업무 루프 / 디렉터 세션 / 디렉터 지시 / 디렉터 콘솔)
+│   ├── studio-director/
 │   ├── studio-ticket/
 │   ├── studio-status/
 │   ├── sf-list/                 SkillForge 오프라인 헬퍼 3개
@@ -599,7 +603,7 @@ Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
 | Tool | What | Entry |
 |---|---|---|
 | **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into `Assets/` with TextureImporter settings applied. **Backend-neutral**: `mock` (placeholder), `comfyui` (local ComfyUI server — SDXL graph or your own exported workflow, BiRefNet transparency), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
-| **Studio mode** — 3-session auto-dev | You act as **director**; three AI sessions (planning · art · dev) in one project pass work to each other via ticket files. Each role can use a **different AI tool**: interactive Claude Code, or Codex / Gemini / Cursor / Copilot / OpenCode CLIs driven headless by a supervisor loop, or IDE agents (Antigravity, Windsurf). Sessions wake on ticket-file changes, so the tools don't need to talk to each other directly. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-ticket` · `/studio-status` · `studio.py dispatch` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
+| **Studio mode** — 3-session auto-dev | You act as **director**; three AI sessions (planning · art · dev) in one project pass work to each other via ticket files. Each role can use a **different AI tool**: interactive Claude Code, or Codex / Gemini / Cursor / Copilot / OpenCode CLIs driven headless by a supervisor loop, or IDE agents (Antigravity, Windsurf). Sessions wake on ticket-file changes, so the tools don't need to talk to each other directly. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-director` · `/studio-ticket` · `/studio-status` · `studio.py dispatch` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
 
 Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytest` for their tests), git 2.25+. Studio mode runs all roles in one working tree on one machine; the director console skills need Claude Code, but everything is also available through the `studio.py` CLI.
 
@@ -637,7 +641,10 @@ permission mode). For another CLI, run
 `python .agent/tools/studio/studio.py dispatch <role> --agent codex` (or
 `gemini`, `cursor`, `copilot`, `opencode`). Give the idea with
 `/studio-ticket planning "Concept: …"`, and check progress and approve gates
-with `/studio-status`.
+with `/studio-status`. Optionally, run `/studio-director [--root <project>]` in
+another session: it acts as director, briefs you on gates and questions, and
+executes after you agree (it decides routine questions within the approved
+vision on its own and reports them).
 
 See the Korean guide above for the full step-by-step (settings, MCP install,
 cross-tool mirrors, upstream sync via `scripts/sync-upstream.ps1`). The artgen
