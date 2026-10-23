@@ -11,7 +11,8 @@ STUDIO_PY="$REPO_ROOT/.agent/tools/studio/studio.py"
 INPUT=$(cat)
 USAGE=""
 if [ -f "$STUDIO_PY" ] && [ -d "$REPO_ROOT/production/studio" ]; then
-    USAGE=$(printf '%s' "$INPUT" | python "$STUDIO_PY" --root "$REPO_ROOT" usage --stdin 2>/dev/null | head -1)
+    # 5초 제한 — 디스크가 느릴 때 statusLine 이 부를 때마다 프로세스가 쌓이지 않게 한다
+    USAGE=$(printf '%s' "$INPUT" | timeout 5 python "$STUDIO_PY" --root "$REPO_ROOT" usage --stdin 2>/dev/null | head -1)
     [ "$USAGE" = "기록 안 함" ] && USAGE=""
 fi
 if [ -f "$REPO_ROOT/production/studio/PAUSED" ]; then

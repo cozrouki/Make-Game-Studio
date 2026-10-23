@@ -244,8 +244,13 @@ def record_usage(st, percent, resets_at=None, source="statusline"):
     cfg = usage_settings(st)
     state = usage_state(st)
     window = str(resets_at or "")
-    state.update(percent=percent, resetsAt=resets_at, at=now(), source=source)
     out = {"recorded": True, "triggered": False, "percent": percent, "threshold": cfg["weeklyPausePercent"]}
+    below = not (cfg["enabled"] and percent >= cfg["weeklyPausePercent"])
+    if below and state.get("percent") == percent and state.get("resetsAt") == resets_at:
+        # 값이 그대로면 쓰지 않는다 — statusLine 이 세션마다 1분 주기로 부르므로 느린 디스크(HDD)에서 쓰기가 쌓인다
+        out["unchanged"] = True
+        return out
+    state.update(percent=percent, resetsAt=resets_at, at=now(), source=source)
     if cfg["enabled"] and percent >= cfg["weeklyPausePercent"] and state.get("pausedWindow") != window \
             and _claim_trigger(st, window):
         reason = (f"Claude 주간 사용량 {percent:.0f}% ≥ {cfg['weeklyPausePercent']}% — "

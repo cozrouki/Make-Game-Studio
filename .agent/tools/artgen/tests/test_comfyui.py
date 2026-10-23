@@ -189,3 +189,31 @@ def test_comfyui_check_fails_cleanly_when_server_down():
     from artgen_lib.providers.comfyui import ComfyUIProvider
     ok, msg = ComfyUIProvider({"url": "http://127.0.0.1:9", "checkpoint": "c"}).check()
     assert not ok and "run_nvidia_gpu" in msg
+
+
+def test_comfyui_zimage_graph_uses_unet_qwen_and_zeroed_negative():
+    o = {"graph": "z-image-turbo", "checkpoint": "sdxl.safetensors", "steps": 28, "cfg": 6.5,
+         "removeBackground": {"model": "birefnet.safetensors"}}
+    g = build_default_graph(o, "p", "n", 9, 256, 256, True)
+    assert g["unet"]["inputs"]["unet_name"] == "z_image_turbo_bf16.safetensors"
+    assert g["clip"]["inputs"] == {"clip_name": "qwen_3_4b.safetensors", "type": "lumina2", "device": "default"}
+    assert g["neg"]["class_type"] == "ConditioningZeroOut"
+    assert g["latent"]["class_type"] == "EmptySD3LatentImage"
+    s = g["sample"]["inputs"]
+    assert (s["steps"], s["cfg"], s["sampler_name"], s["scheduler"], s["seed"]) == (8, 1, "res_multistep", "simple", 9)
+    assert "ckpt" not in g                       # 최상위 SDXL 키는 섞이지 않는다
+    assert "bg_join" in g and g["scale"]["inputs"]["width"] == 256  # 후처리는 공유
+
+
+def test_comfyui_zimage_graph_overrides_from_graphs_section():
+    o = {"graph": "z-image-turbo", "graphs": {"z-image-turbo": {"steps": 6, "unet": "z_image_turbo_int8_convrot.safetensors"}}}
+    g = build_default_graph(o, "p", "", 1, 1024, 1024, False)
+    assert g["sample"]["inputs"]["steps"] == 6 and g["unet"]["inputs"]["unet_name"].endswith("int8_convrot.safetensors")
+    assert "scale" not in g and "bg_join" not in g
+
+
+def test_comfyui_unknown_graph_rejected():
+    from artgen_lib import ArtgenError
+    import pytest
+    with pytest.raises(ArtgenError, match="graph"):
+        build_default_graph({"graph": "flux"}, "p", "", 1, 64, 64, False)
