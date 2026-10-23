@@ -69,22 +69,26 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion
 - 이 템플릿은 번들을 포함하지 않는다. `.agent/gamedesign/` 은 git 무시 대상이고, 커밋 · 다른 프로젝트로 복사하지 않는다.
 
 실행 전에:
-1. `.agent/gamedesign/UPSTREAM.json` 이 없으면 설치 안 됨 → 아래 "gamedesign 설치" 를 안내하고 중단한다. **에이전트가 대신 동의하지 않는다.**
+1. `.agent/gamedesign/UPSTREAM.json` 이 없으면 → 아래 **"gamedesign 설치 돕기"** 를 한다. 설치되면 원래 요청을 이어서 실행한다.
 2. 있으면 `licenseAccepted.mode` 를 확인한다. 이 세션에서 처음 쓰는 것이면 한 줄로 상기시킨다: "gamedesign 은 비상업 라이선스입니다 (설치 시 동의: <mode>)".
 3. 산출물에 스킬 출처 한 줄을 남긴다: `참고: game-design-skills-bundle / <스킬> (Stanislav Stankovic, PolyForm NC 1.0.0)`.
 
-## gamedesign 설치 (사용자가 직접)
+## gamedesign 설치 돕기
 
-라이선스를 읽고 해당하는 경우에만, **사용자가 직접** 실행한다 (템플릿 저장소에서):
-```
-python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial   # 비상업 용도
-python scripts/sync-catalog.py gamedesign --fetch --accept-license commercial      # 상업 라이선스 보유
-```
-설치된 Unity 프로젝트에는 `scripts/` 가 복사되지 않는다. 템플릿 저장소의 스크립트로 그 프로젝트에 직접 받는다:
-```
-python <템플릿>/scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial --root <Unity 프로젝트>
-```
-그 프로젝트의 `.gitignore` 에 `.agent/gamedesign/` 이 있는지 확인한다 (`scripts/install.ps1` 이 넣는다).
+받을지와 어떤 조건으로 받을지는 **사용자가 고른다.** 에이전트는 고르지 않고, 사용자가 고른 값으로 명령을 실행해 준다.
+
+1. 위 "라이선스 확인" 의 요약(무료 범위 · 상업 라이선스가 필요한 경우 · 문의처 · 원문 링크)을 보여 준다.
+2. `AskUserQuestion` 으로 묻는다. **권장 표시를 붙이지 않는다** (사용자의 사용 조건은 에이전트가 알 수 없다):
+   - `비상업 용도` — 개인 · 취미 · 학습, 학생 · 학술, 교육기관 · 비영리 · 공공 기관
+   - `상업 라이선스 보유` — 작성자에게 상업 라이선스를 받았다
+   - `설치 안 함`
+3. 고른 값으로 실행한다 (`<mode>` = `noncommercial` | `commercial`):
+   - 템플릿 저장소: `python scripts/sync-catalog.py gamedesign --fetch --accept-license <mode>`
+   - 설치된 Unity 프로젝트(`scripts/` 가 복사되지 않음): `python <템플릿>/scripts/sync-catalog.py gamedesign --fetch --accept-license <mode> --root <프로젝트>`. 템플릿 경로를 모르면 사용자에게 묻는다.
+4. 그 프로젝트의 `.gitignore` 에 `.agent/gamedesign/` 이 없으면 추가한다 (`install.ps1` 이 넣지만 예전 설치에는 없을 수 있다). `git check-ignore .agent/gamedesign/UPSTREAM.json` 으로 확인한다.
+5. `설치 안 함` 이면 이 세션에서는 다시 묻지 않는다. 다른 카탈로그(`gamedev` · 이 템플릿 L1 스킬)에서 비슷한 것을 제안한다.
+
+**스튜디오 모드의 역할 세션**(planning 등)은 라이선스 선택이 역할 권한 밖이므로 직접 묻지 않는다. `to: director` 질문 티켓(제목 `gamedesign 번들 설치 — 라이선스 선택 필요`)을 한 번 내고 다른 일을 계속한다 — `roles/planning.md` "설계 감사". 디렉터 세션은 그 티켓을 받으면 이 절차로 사용자에게 묻고 설치한 뒤 답변한다 (`설치 안 함` 이면 그대로 답한다).
 
 ## 업스트림 갱신 (템플릿 관리자)
 

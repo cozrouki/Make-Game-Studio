@@ -144,7 +144,9 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license commercial
 # 설치된 Unity 프로젝트에 직접
 python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial --root D:\Projects\MyGame
 ```
-`--accept-license` 가 없으면 라이선스 요약만 보여 주고 멈춥니다. 동의 방식과 시각은 `.agent/gamedesign/UPSTREAM.json` 에 남고, `/ext` 는 이 기록이 없으면 실행하지 않습니다(에이전트가 대신 동의하지 않음).
+`--accept-license` 가 없으면 라이선스 요약만 보여 주고 멈춥니다. 동의 방식과 시각은 `.agent/gamedesign/UPSTREAM.json` 에 남습니다.
+
+명령을 직접 치지 않아도 됩니다. 번들이 없을 때 `/ext <gamedesign 스킬>` 을 부르면 `/ext` 가 라이선스를 요약해 보여 주고 **`비상업 용도` / `상업 라이선스 보유` / `설치 안 함` 중에서 고르게 한 뒤** 그 값으로 설치합니다. 조건은 사용자가 고르고 에이전트는 고르지 않습니다. 스튜디오 모드에서 planning 이 감사를 쓰려는데 번들이 없으면, planning 이 디렉터에게 설치 요청 티켓을 한 번 내고 디렉터(세션)가 사용자에게 물어 설치합니다 (`roles/planning.md` "설계 감사").
 
 ### 갱신
 
