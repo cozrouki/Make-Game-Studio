@@ -33,9 +33,10 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
    - [ ] 데이터: <ScriptableObject · 설정 값>
    - [ ] 에셋: <ASSET ID — 있음 / 자리표시 / 요청 T-xxxx>
    - [ ] 증거: QA 계획의 수동 확인 항목 → 스크린샷 · 로그
+   가정: <구현 전에 정한 가정 — 해석이 갈리면 적지 말고 planning question>
    적용 스킬: L2 <sf 스킬> · gamedev <스킬> · 에이전트 <dev-story 라우팅 결과> (아래 스킬 사용 맵 S1)
    ```
-   태스크 하나는 커밋 하나 크기(반나절 이하)로 자른다. 진행하면서 체크하고, 새로 발견한 일은 목록에 추가한다. 스토리 범위를 넘는 일은 추가하지 않고 planning `question` 으로 올린다. 이 파일이 planning · 디렉터가 진척을 보는 창이다.
+   태스크 하나는 커밋 하나 크기(반나절 이하)로 자른다. 진행하면서 체크하고, 새로 발견한 일은 목록에 추가한다. 스토리 범위를 넘는 일은 추가하지 않고 planning `question` 으로 올린다. 구현 중 눈에 띈 다른 코드의 문제는 고치지 말고 태스크 파일 끝 `발견:` 에 적고 bug · question 티켓으로 낸다 (`AGENTS.md` §3-1 수술적 변경). 이 파일이 planning · 디렉터가 진척을 보는 창이다.
 4. 태스크 순서대로 `/ko-story-cycle <스토리 파일>` 로 readiness → 구현 → 완료 검증을 진행한다. 스튜디오 모드의 AskUserQuestion 처리:
    - 구현 세부·리팩터링 범위 → 권장안을 채택하고 티켓 note 에 기록한다
    - 수용 기준이 모호하거나 GDD 와 충돌 → planning `question` 티켓을 보내고, 이 스토리는 `blocked` 로 바꾼 뒤 다음 티켓으로 넘어간다
@@ -108,7 +109,7 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 | (Android 대상) ANR · 메인 스레드 블로킹 보고 | android `anr-audit-and-fix` |
 
 ### S3. 품질 게이트 (매 스토리 done 전, 필수)
-1. `/ko-code-review <바뀐 파일>` — 필요하면 L2 `ai-code-reviewer` 관점을 더한다.
+1. `/ko-code-review <바뀐 파일>` — 필요하면 L2 `ai-code-reviewer` 관점을 더한다. 변경 범위 · 단순성(§3-1) 항목에서 걸린 것은 먼저 되돌린다 (스토리와 무관한 변경 · 요청 없는 확장 · 구현 하나짜리 추상화).
 2. `/simplify` — 중복 · 과잉 구현 정리 (동작 변경 없음, 테스트 재실행). Claude Code 내장 스킬이라 다른 AI 도구가 dev 를 맡으면 L2 `ai-code-reviewer` 로 대신한다.
 3. 증거를 planning 에 넘기기 전에 `/test-evidence-review` 로 자체 점검한다.
 4. `/story-done` (`/ko-story-cycle` 의 마지막 단계) — 수용 기준 · GDD · ADR 편차 확인.

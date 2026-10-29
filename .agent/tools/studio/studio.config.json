@@ -105,7 +105,7 @@
     "CLAUDE.md", "AGENTS.md", "AGENT.md", "GEMINI.md", ".gitignore",
     ".claude", ":(exclude).claude/docs/technical-preferences.md",
     ".agent/tools", ".agent/rules", ".agent/workflows", ".agent/skills",
-    ".agent/marketing", ".agent/gamedev", ".agent/catalogs", ".vscode/tasks.json",
+    ".agent/marketing", ".agent/gamedev", ".agent/android", ".agent/catalogs", ".vscode/tasks.json",
     ".cursor", ".agents", ".gemini", ".opencode", ".windsurf",
     ".github/instructions", ".github/prompts", ".github/skills", ".github/copilot-instructions.md"
   ],
