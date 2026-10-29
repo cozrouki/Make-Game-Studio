@@ -23,19 +23,21 @@ DEFAULT_PROTOCOL_FILES = [
     ".agent/tools/studio/*.py", ".agent/tools/studio/studio.config.json", ".agent/tools/studio/README.md",
     ".agent/tools/studio/roles/*.md", ".agent/tools/studio/prompts/*.md",
     ".agent/tools/artgen/artgen.config.json", ".agent/tools/artgen/artgen_lib/*.py",
-    ".agent/tools/artgen/artgen_lib/providers/*.py",
+    ".agent/tools/artgen/artgen_lib/providers/*.py", ".agent/tools/setup/*.py",
     ".claude/skills/studio-*/SKILL.md", ".claude/skills/ko-art-gen/SKILL.md", ".claude/skills/ext/SKILL.md",
+    ".claude/skills/ko-prereq/SKILL.md",
     "CLAUDE.md", "AGENTS.md",
 ]
 # upgrade 가 템플릿에서 가져오는 범위 (도구 · 스튜디오 스킬 · 관련 워크플로 · 외부 카탈로그 진입)
 # 외부 카탈로그 미러(.agent/marketing · .agent/gamedev)는 크기가 커서 넣지 않는다 — 필요하면 sync-catalog.py --root.
 # 비상업 번들(.agent/gamedesign)은 절대 넣지 않는다 (사용자가 직접 받음).
-UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen",
+UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup",
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
                  ".claude/skills/studio-director",
-                 ".claude/skills/ko-art-gen",
+                 ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
+                 ".agent/workflows/ko-prereq.md",
                  ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh"]
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)

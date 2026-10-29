@@ -28,15 +28,16 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 세션이 시작되면 다음 절차를 따른다:
 
 1. **MCP for Unity**: MCP for Unity 연결을 확인한다. 상세 도구 가이드는 `.claude/docs/mcp-unity-guide.md`.
-2. **통합 진입점 안내**: 사용자가 처음이거나 어떤 명령을 쓸지 모를 때는 `/unity-fullstack` 호출을 안내한다. 4계층(프로세스·코드 패턴·에디터 자동화·번들) 메뉴가 한국어로 표시된다.
-3. **스킬 목록 확인**:
+2. **사전 설치 안내**: 이 PC 에서 처음이거나 `studio launch` 가 "사전 설치 누락" 을 경고하면 `/ko-prereq` 를 안내한다.
+3. **통합 진입점 안내**: 사용자가 처음이거나 어떤 명령을 쓸지 모를 때는 `/unity-fullstack` 호출을 안내한다. 4계층(프로세스·코드 패턴·에디터 자동화·번들) 메뉴가 한국어로 표시된다.
+4. **스킬 목록 확인**:
    - L1 워크플로 슬래시 커맨드 → `/help` 또는 `.claude/skills/`
    - L2 C# 코드 패턴 → `/sf-list` (카테고리별 한국어 출력)
-4. **프로젝트 질문**: "어떤 게임 프로젝트를 작업할까요?" 라고 물어본다.
-5. **아키텍처 문서 로드**: 사용자가 프로젝트를 지정하면 해당 게임의 분석 문서를 먼저 읽는다:
+5. **프로젝트 질문**: "어떤 게임 프로젝트를 작업할까요?" 라고 물어본다.
+6. **아키텍처 문서 로드**: 사용자가 프로젝트를 지정하면 해당 게임의 분석 문서를 먼저 읽는다:
    - `doc/{GameName}/architecture.md` — 아키텍처 분석 인덱스 (존재할 경우). `arch/` 폴더가 있으면 필요한 섹션 파일을 추가 로드한다.
    - `doc/{GameName}/task.md` — 작업 현황 대시보드. `tasks/` 폴더가 있으면 현재 작업 중인 마일스톤 파일(`ms{N}_*.md`)을 추가 로드한다.
-6. **컨텍스트 확인**: 문서 내용을 바탕으로 현재 프로젝트 상태를 파악한 후 작업을 시작한다.
+7. **컨텍스트 확인**: 문서 내용을 바탕으로 현재 프로젝트 상태를 파악한 후 작업을 시작한다.
 
 ---
 
@@ -48,11 +49,12 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (88 skills, GS 72 + ko-* 7 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (89 skills, GS 72 + ko-* 8 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
-| **그래픽 생성** | 기획 → 이미지 → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
+| **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악(로컬 ComfyUI) · 효과음(CC0 라이브러리) → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
+| **사전 설치** | 자동화 실행 전 도구 · 모델 · 라이브러리 · 설정 점검 · 자동 설치 | `/ko-prereq`, `.agent/tools/setup/prereq.py` |
 | **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 (포함) + 게임 디자인 렌즈 62 (PolyForm NC — 선택 설치, 재배포 금지). 필요할 때 한 스킬만 로드 | `/ext`, `.agent/catalogs/*.ko.json`, `scripts/sync-catalog.py` |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림, 아트는 AI 또는 사람 아티스트 — `artMode`) | `/studio-join`, `/studio-director`, `/studio-ticket`, `/studio-status` — §9 |
 
