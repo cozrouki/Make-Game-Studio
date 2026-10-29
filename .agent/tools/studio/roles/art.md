@@ -55,6 +55,7 @@
    - 라이브러리가 없으면(`library search` 가 색인 없음) director `question` "사전 설치 필요 — prereq.py install sound-library" 를 한 번 낸다.
 3. 검수는 **기술 검사만 자동**이다 (길이 · 클리핑 · 음량 · 앞 무음 · 루프 이음매). 기술 점수 최고 변형을 선택 · 승격하고(라이브러리 소리는 출처가 `credits.json` 에 자동으로 남는다), `assets-ready` 티켓 본문에 "청취 미검수 — 플레이테스트에서 확인" 과 파일 목록을 적는다.
 4. 사용자가 청취 후 반려하면(planning 이 `asset-request` 로 다시 보냄) 방향 문서의 어느 항목과 어긋났는지를 history 에 적고 재생성한다.
+5. 같은 원인으로 루브릭 탈락 · 반려가 반복되면 기록한다: `studio.py lesson add <종류> --by art --note "…"` (예: `palette-drift` · `view-angle` · `loop-gap` · `import-setting`) — 두 번 쌓이면 디렉터가 스타일 토큰 · 그래프 · 검사 규칙으로 막는다.
 
 ### 참고 — gamedev 카탈로그 `create-game-assets`
 에셋 묶음을 처음 양산하거나, 생성 결과의 일관성(스타일 · 팔레트 · 크기 · 여백)이 깨질 때 `/ext info create-game-assets` 를 훑고 필요한 점검 항목을 가져온다 (`.agent/gamedev/`, Apache-2.0). **아트 바이블 · `_style-tokens.json` · `/ko-art-gen` 루브릭이 우선**이고, 카탈로그는 정규화 · 검증 체크리스트로만 쓴다. 딸린 스크립트(`asset_report.py` · `build_preview_sheet.py`)는 읽어 본 뒤 결과물 경로를 `production/artgen/` 안으로 지정해 실행한다. 참고했으면 asset-request 완료 note 에 한 줄 남긴다.

@@ -91,6 +91,12 @@
 - **라이선스**: MIT
 - **사용 유형**: **지침 재작성** — 파일을 복사하지 않고, 4원칙(생각 먼저 · 단순함 · 수술적 변경 · 목표 중심)을 `AGENTS.md` §3-1 로 한국어로 다시 쓰고 §1 · §3 과 충돌하지 않게 범위를 조정했다 (분리 원칙은 시스템 경계에만). `/ko-code-review` 점검 항목 · dev 헌장 작업 태스크(`가정:` · `발견:`)에 연결
 
+## 7-3. Microsoft.Unity.Analyzers (참조 · 사용자 설치)
+
+- **저장소**: https://github.com/microsoft/Microsoft.Unity.Analyzers — NuGet `Microsoft.Unity.Analyzers`
+- **라이선스**: MIT
+- **사용 유형**: **재배포하지 않음.** `prereq.py install unity-analyzers` 가 NuGet 에서 고정 버전(1.28.0, SHA256 확인)을 받아 대상 프로젝트 `Assets/Analyzers/` 에 둔다. 템플릿에는 규칙 심각도 파일(`.agent/tools/lint/Default.ruleset`, 자체 작성)만 있다. 2026-10-29 Unity 6000.3.24f1 에서 UNT 경고 출력 확인
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle

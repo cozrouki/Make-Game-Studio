@@ -237,3 +237,23 @@ def test_prereq_graphify_warns_without_backend_none(project, monkeypatch):
     assert prereq.c_graphify(_ctx(project))[0] == "warn"
     monkeypatch.setenv("GRAPHIFY_BACKEND", "none")
     assert prereq.c_graphify(_ctx(project))[0] == "ok"
+
+
+# ---- Unity 공식 분석기 ----
+def test_prereq_unity_analyzers_requires_roslyn_label_and_ruleset(project):
+    (project / "Assets" / "Analyzers").mkdir(parents=True)
+    dll = project / "Assets" / "Analyzers" / "Microsoft.Unity.Analyzers.dll"
+    dll.write_bytes(b"x")
+    ctx = _ctx(project, roles=["dev"])
+    assert prereq.c_unity_analyzers(ctx)[0] == "missing"                 # .meta 라벨 없음 → 분석기로 안 씀
+    (project / "Assets" / "Analyzers" / "Microsoft.Unity.Analyzers.dll.meta").write_text(
+        prereq.ANALYZER_META.format(guid=prereq.UNITY_ANALYZERS["guid"]), encoding="utf-8")
+    assert prereq.c_unity_analyzers(ctx)[0] == "warn"                    # ruleset 없음
+    (project / "Assets" / "Default.ruleset").write_text("<RuleSet/>", encoding="utf-8")
+    assert prereq.c_unity_analyzers(ctx)[0] == "ok"
+
+
+def test_prereq_unity_analyzers_meta_is_valid_roslyn_plugin():
+    meta = prereq.ANALYZER_META.format(guid=prereq.UNITY_ANALYZERS["guid"])
+    assert "- RoslynAnalyzer" in meta and "guid: b9fbeda283c554d29f25b4ebf23983c8" in meta
+    assert meta.count("enabled: 0") == 2                                  # 모든 플랫폼 · 에디터에서 끔 (분석기 전용)

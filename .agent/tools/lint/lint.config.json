@@ -1,0 +1,6 @@
+{
+  "_note": "unity_lint 설정. blocking 에 든 규칙만 커밋을 막는다 (studio.py commit · validate-commit 훅). 처음엔 비워 두고, 같은 지적이 반복되면 디렉터가 래칫으로 올린다 (studio.py lesson resolve <종류> --how \"lint blocking ULxxx\"). 디렉터 영역 파일",
+  "blocking": [],
+  "disabled": [],
+  "exclude": ["Packages/**", "Library/**", "**/Plugins/**", "**/ThirdParty/**"]
+}

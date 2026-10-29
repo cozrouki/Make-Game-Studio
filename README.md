@@ -215,7 +215,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 - **Docs**: 9개 (MCP 가이드, 결정 매트릭스, GS 원본 6개, 출처 1개)
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
-- **Tools**: 3개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿), `setup` (사전 설치 점검 · 설치). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests -q`
+- **Tools**: 4개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿 · 하네스: 래칫 · 지표 · 쓰기 가드), `setup` (사전 설치 점검 · 설치 · Unity 공식 분석기), `lint` (Unity C# 규칙 검사 UL001~008 · 분석기 ruleset). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests .agent/tools/lint/tests -q`
 - **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) · android 4 (Apache-2.0, Google) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
@@ -563,7 +563,8 @@ scripts/
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
 .agent/workflows/                11개 (Antigravity 슬래시 — ko-* 8 + unity-fullstack + studio-join + ext)
 .agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · Unity 임포터 템플릿 · 테스트
-.agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 모델 · 라이브러리 · 설정) · 테스트
+.agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 모델 · 라이브러리 · 설정 · Unity 분석기) · 테스트
+.agent/tools/lint/               Unity C# 규칙 검사 (unity_lint.py UL001~008 · lint.config.json blocking · Default.ruleset) · 테스트
 .agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 도구 공통 업무 루프 프롬프트 · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋/감시/디스패치 CLI · 테스트
 
 .claude/

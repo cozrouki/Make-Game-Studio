@@ -35,6 +35,13 @@ Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한�
 
 게임별로 그룹화해서 출력 헤더에 표시.
 
+## Phase 2-1: 결정적 검사 먼저
+
+AI 리뷰 전에 기계 검사를 돌리고 결과를 리뷰 보고에 그대로 붙인다 (하네스: 결정적 센서 + AI 센서).
+- `python .agent/tools/lint/unity_lint.py <바뀐 .cs>` — UL001~008. 오탐은 `// unity-lint: ignore ULxxx` 와 이유가 있는지 본다.
+- Unity 공식 분석기(`Assets/Analyzers/Microsoft.Unity.Analyzers.dll`)가 있으면 Unity 콘솔 · 컴파일 로그의 UNT 경고를 확인한다. 없으면 `prereq.py install unity-analyzers` 를 권한다.
+- 같은 지적이 이 프로젝트에서 반복되면(스튜디오 모드) `studio.py lesson add <종류> --by <역할> --note "…"` 로 기록하라고 보고에 적는다.
+
 ## Phase 3: 본 skill 위임
 
 `.claude/skills/code-review/SKILL.md` 절차에 따라 진행. 추가 점검 항목 (한국어로 보고):

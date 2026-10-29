@@ -60,7 +60,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 ### 자동 적용 자산 (호출 불필요)
 
-- **Hooks 12개** (`.claude/hooks/`) — `SessionStart`/`SessionEnd`/`Stop`에 한국어 컨텍스트 + 스프린트/마일스톤/코드헬스 출력, `PreToolUse(Bash)` 에 validate-commit/push, `PostToolUse(Write|Edit)` 에 validate-assets/skill-change, `Notification` 에 Windows toast, `Pre/PostCompact` 에 컨텍스트 보존, `SubagentStart/Stop` 에 agent 감사 로그.
+- **Hooks 14개** (`.claude/hooks/`) — `SessionStart`/`SessionEnd`/`Stop`에 한국어 컨텍스트 + 스프린트/마일스톤/코드헬스 출력, `PreToolUse(Bash)` 에 validate-commit(+ unity_lint)/push, `PreToolUse(Write|Edit)` 에 스튜디오 쓰기 영역 가드(studio-write-guard), `PostToolUse` 에 스튜디오 정지 알림(studio-pause-notice), `PostToolUse(Write|Edit)` 에 validate-assets/skill-change, `Notification` 에 Windows toast, `Pre/PostCompact` 에 컨텍스트 보존, `SubagentStart/Stop` 에 agent 감사 로그.
 - **Rules 12개** (`.claude/rules/`) — `gameplay-code.md` 는 Unity `.cs` 파일에 자동 적용 (globs 매칭), `doc-writing.md` 는 문서 작성 시. 그 외 GS 10개 룰 (ai-code, data-files, design-docs, engine-code, narrative, network-code, prototype-code, shader-code, test-standards, ui-code) 도 글로벌 적용. (Cursor/Antigravity 용 미러는 `.cursor/rules/`, `.agent/rules/`)
 - **Docs 9개** (`.claude/docs/`) — `mcp-unity-guide.md`, `editor-automation-decision.md`, `gs-*` 6개 (코딩 표준·조정 룰·agent roster·workflow catalog 등), `ATTRIBUTION.md`.
 - **Agents 39개** (`.claude/agents/`) — Tier 1-3 Game-Studios agents (Godot/UE 10개 제외). `Task` 도구로 자동 호출 가능.
