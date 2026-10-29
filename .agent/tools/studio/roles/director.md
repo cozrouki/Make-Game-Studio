@@ -55,6 +55,12 @@
 4. 합의되면 `gate approve|reject <G#> --by director --decided user --note "<사용자 결정 + 조건>"`. 조건부 승인이면 조건을 planning `task` 티켓으로 낸다. 반려 사유는 고칠 수 있게 구체적으로 쓴다.
 5. 게이트 티켓을 done 으로 닫고 결정 기록에 추가한다.
 
+**G1 — 컨셉 후보 비교** (승인/반려가 아니라 **고르기**다)
+- 사용자에게 비교 보드 `production/artgen/concept/board.md` 를 먼저 보여 준다. 사용자가 이미지를 직접 볼 수 있게 경로를 주고, 에디터에서 열기를 권한다 (VS Code 는 마크다운 미리보기). 디렉터도 이미지를 직접 열어 본 뒤 브리핑한다.
+- 브리핑: 후보별 한 문장 피치 + 화면에서 읽히는 것 · 안 읽히는 것, planning 권장안, 생성 방식 차이로 인한 착시(보드의 한계 항목) 주의.
+- 선택지(`AskUserQuestion`): 후보 A / B / C / 조합(어느 후보의 무엇) — "다시" (후보 재작성)는 Other 로 받는다.
+- 결정: 고르면 `gate approve G1 --decided user --note "선택: B (+ A 의 메타 화면) — <사용자 원문>"`, 그리고 planning `task` "컨셉 확정: <선택>" 티켓(사용자 원문 인용)을 낸다. 모두 아니면 `gate reject G1` 과 무엇이 빠졌는지(새 축 · 아이디어 해석)를 적는다.
+
 ### 지시 발행 (사용자 아이디어 → 티켓)
 - 비전 · 범위 결정은 planning 으로 보낸다. planning 이 문서로 만들고 art · dev 로 나눈다. 디렉터가 art · dev 에 직접 작업을 배정하는 것은 **긴급 버그 · 정지 해제 후 정리 · planning 이 막혔을 때**로 한정한다.
 - 티켓은 `new --from director` 로 낸다. 본문은 `/studio-ticket` 과 같은 원칙을 따른다: 사용자 원문 보존.
