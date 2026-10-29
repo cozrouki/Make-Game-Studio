@@ -85,6 +85,12 @@
 - **미러 범위**: `profilers/android-profiler` · `play/play-policy-insights` · `performance/anr-audit-and-fix` · `performance/r8-analyzer` 4개. **제외**: Compose · Navigation · Wear · TV · Cars · CameraX · Media3 · device-ai · xr 등 네이티브 앱 전용 (Unity Android 빌드에 통하는 기기 · 스토어 단만)
 - **로컬 추가**: `.agent/catalogs/android.ko.json`. 원문 수정 없음. 대상 플랫폼에 Android 가 있을 때만 쓴다 (`prereq.py` [Android] 묶음 · dev 헌장 스킬 사용 맵)
 
+## 7-2. andrej-karpathy-skills / multica-ai (지침 차용)
+
+- **저장소**: https://github.com/multica-ai/andrej-karpathy-skills
+- **라이선스**: MIT
+- **사용 유형**: **지침 재작성** — 파일을 복사하지 않고, 4원칙(생각 먼저 · 단순함 · 수술적 변경 · 목표 중심)을 `AGENTS.md` §3-1 로 한국어로 다시 쓰고 §1 · §3 과 충돌하지 않게 범위를 조정했다 (분리 원칙은 시스템 경계에만). `/ko-code-review` 점검 항목 · dev 헌장 작업 태스크(`가정:` · `발견:`)에 연결
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle
