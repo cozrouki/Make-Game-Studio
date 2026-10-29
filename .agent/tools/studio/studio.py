@@ -427,6 +427,21 @@ class Studio:
         p = self._git("status", "--porcelain", "-z", "-uall", "--no-renames", "--", *specs)
         return sorted({e[3:] for e in p.stdout.split("\0") if len(e) > 3})
 
+    def _lint(self, cs_files):
+        """커밋할 .cs 를 unity_lint 로 검사 (.agent/tools/lint 가 있을 때만). → run() 결과 또는 None."""
+        path = os.path.join(self.root, ".agent", "tools", "lint", "unity_lint.py")
+        if not cs_files or not os.path.isfile(path):
+            return None
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("unity_lint", path)
+        mod = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(mod)
+            return mod.run(cs_files, self.root)
+        except Exception as e:  # 검사 도구의 고장이 커밋을 막지 않게 — 경고로만 남긴다
+            return {"files": 0, "findings": [{"path": "-", "line": 0, "rule": "LINT", "message": f"검사 실패: {e}"}],
+                    "blocking": []}
+
     def commit(self, role, message, dry_run=False, only=None):
         files = self.changed_files(role)
         notes = []
@@ -452,6 +467,13 @@ class Studio:
         warnings = notes + [f"{f}: .meta 없음 — Unity 임포트 후 커밋 권장" for f in files
                     if f.startswith("Assets/") and not f.endswith(".meta")
                     and os.path.isfile(os.path.join(self.root, f)) and not os.path.exists(os.path.join(self.root, f + ".meta"))]
+        lint = self._lint([f for f in files if f.endswith(".cs") and os.path.isfile(os.path.join(self.root, f))])
+        if lint:
+            warnings += [f"unity-lint {x['path']}:{x['line']} {x['rule']} {x['message']}" for x in lint["findings"]
+                         if x not in lint["blocking"]]
+            if lint["blocking"]:
+                raise StudioError("unity-lint 차단 규칙 위반 — 고치거나, 오탐이면 그 줄에 `// unity-lint: ignore ULxxx`:\n  "
+                                  + "\n  ".join(f"{x['path']}:{x['line']} {x['rule']} {x['message']}" for x in lint["blocking"]))
         if dry_run:
             return {"committed": False, "dryRun": True, "files": files, "warnings": warnings}
         # 파일을 명시해 커밋 — 다른 세션이 스테이징해 둔 파일이 섞이지 않는다
@@ -470,6 +492,12 @@ def _maint():
     sys.modules.setdefault("studio", sys.modules[__name__])
     import studio_maint  # noqa: E402 — 같은 디렉터리
     return studio_maint
+
+
+def _harness():
+    sys.modules.setdefault("studio", sys.modules[__name__])
+    import studio_harness  # noqa: E402 — 같은 디렉터리
+    return studio_harness
 
 
 # ---------------------------------------------------------------- CLI
@@ -590,6 +618,21 @@ def main(argv=None):
     p.add_argument("--percent", type=float, help="주간 사용량 %% 를 직접 지정 (수동 · 테스트)")
     p.add_argument("--resets-at", type=float, help="리셋 시각 (Unix epoch 초)")
 
+    p = sub.add_parser("lesson", help="하네스 래칫 — 반복 실수 기록 (임계값이면 디렉터 '하네스 개선' 티켓) · 해결")
+    p.add_argument("action", choices=("add", "list", "resolve"))
+    p.add_argument("kind", nargs="?", help="실수 종류 (예: update-alloc · acceptance-mismatch · missing-evidence)")
+    p.add_argument("--by", help="add: 기록한 역할")
+    p.add_argument("--note", default="", help="add: 무엇이 어디서 반복됐는지")
+    p.add_argument("--ref", default="", help="add: 근거 티켓 · 파일")
+    p.add_argument("--how", default="", help="resolve: 구조로 막은 방법 (파일 · 규칙 id)")
+
+    sub.add_parser("metrics", help="하네스 지표 — 검수 반려율 · 다시 열림 · 차단 · 스토리 소요 · 래칫 현황")
+
+    p = sub.add_parser("guard", help="쓰기 시점 가드 — 역할 쓰기 영역 밖이면 종료 코드 2 (PreToolUse 훅이 --hook 으로 호출)")
+    p.add_argument("--hook", action="store_true", help="표준 입력의 훅 JSON(session_id · tool_input.file_path)을 읽는다")
+    p.add_argument("--file", help="검사할 경로")
+    p.add_argument("--role", help="역할 (생략하면 STUDIO_ROLE · launch 세션 ID)")
+
     p = sub.add_parser("handoff", help="인계 기록(production/studio/HANDOFF.md)을 지금 상태로 다시 쓰기")
     p.add_argument("--reason", default="수동 인계 기록")
 
@@ -705,6 +748,7 @@ def main(argv=None):
             if pr["dirty"]:
                 lines.append(f"[프로토콜] 미승인 변경 — 수정 {len(pr['changed'])} · 추가 {len(pr['added'])} · 삭제 {len(pr['removed'])}"
                              f" (마지막 승인 {pr['ackedAt']} {pr['ackedBy']}) — studio.py protocol")
+            lines += ["[하네스]"] + ["  " + ln for ln in _harness().format_metrics(_harness().metrics(st)).splitlines()]
             out(s, "\n".join(lines))
         elif args.cmd in ("pause", "resume"):
             st.set_paused(args.cmd == "pause", getattr(args, "reason", ""))
@@ -753,6 +797,43 @@ def main(argv=None):
                 cfg = r["settings"]
                 out(r, f"주간 {r.get('percent', '?')}% · 리셋 {m.fmt_epoch(r.get('resetsAt'))} · 갱신 {r.get('at', '-')}"
                        f" · 임계 {cfg['weeklyPausePercent']}% ({'켜짐' if cfg['enabled'] else '꺼짐'})")
+        elif args.cmd == "lesson":
+            h = _harness()
+            if args.action == "list":
+                kinds = h.load_lessons(st)["kinds"]
+                out(kinds, "\n".join(f"{n:<28} {k['status']:<9} {len(k['events']):>3}회"
+                                     + (f"  {k['ticket']}" if k.get("ticket") else "") + (f"  ← {k['how']}" if k.get("how") else "")
+                                     for n, k in sorted(kinds.items())) or "(기록 없음)")
+            elif not args.kind:
+                raise StudioError("lesson add/resolve 는 <kind> 필요")
+            elif args.action == "add":
+                if not args.by:
+                    raise StudioError("lesson add 는 --by 필요")
+                r = h.add_lesson(st, args.by, args.kind, args.note, args.ref)
+                session = st.notify_session(DIRECTOR) if r["ticket"] else None
+                out(dict(r, notifySession=session),
+                    f"{r['kind']}: {r['sinceResolve']}회째 ({r['status']})"
+                    + (f" → 디렉터 하네스 개선 티켓 {r['ticket']}" if r["ticket"] else ""))
+            else:
+                r = h.resolve_lesson(st, args.kind, args.how, args.by or DIRECTOR)
+                out(r, f"{args.kind}: 구조로 막음 — {r['how']}")
+        elif args.cmd == "metrics":
+            m = _harness().metrics(st)
+            out(m, _harness().format_metrics(m))
+        elif args.cmd == "guard":
+            h = _harness()
+            if args.hook:
+                try:
+                    payload = json.loads(sys.stdin.read() or "{}")
+                except ValueError:
+                    return 0  # 훅 입력을 못 읽으면 막지 않는다 — 가드 고장이 작업을 멈추게 하지 않게
+                ok, why = h.guard_hook(st, payload)
+            else:
+                ok, why = h.guard(st, args.file, args.role or h.resolve_role(st))
+            if not ok:
+                print(why, file=sys.stderr)
+                return 2
+            out({"allowed": True, "reason": why}, why)
         elif args.cmd == "handoff":
             path = _maint().write_handoff(st, args.reason)
             out({"handoff": path}, f"인계 기록: {path}")

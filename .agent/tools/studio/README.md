@@ -208,6 +208,17 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 
 다른 역할의 영역을 고쳐야 하면 **그 역할에 티켓을 보낸다.** 정의 정본은 `studio.config.json` 이다 (`roles.*.owns` · `directorOwns` · `shared` · `allowedOverlaps`).
 
+## 하네스 — 실수를 구조로 막는다
+
+"에이전트 = 모델 + 하네스". 같은 실수를 말로 다시 부탁하지 않고, 기계가 막게 만든다.
+
+| 장치 | 명령 · 위치 | 하는 일 |
+|---|---|---|
+| **래칫** | `studio.py lesson add <종류> --by <역할> --note "…" [--ref T-…]` · `lesson list` · `lesson resolve <종류> --how "…"` (디렉터) | 검수 반려 · 리뷰 지적 · 반복 탈락의 원인 종류를 `production/studio/lessons.json` 에 쌓는다. 같은 종류가 `harness.ratchetAfter`(기본 2)번이면 디렉터에게 "하네스 개선" 티켓이 자동 발행된다. 막은 뒤 재발하면 한 번 만에 다시 발행 |
+| **지표** | `studio.py metrics` · 현황판 [하네스] | 검수 반려율 · 다시 열림 · 차단 발생 · 스토리 소요 중앙값 · 래칫 현황(종류 · 막음 · 재발). 장치를 바꾼 전후를 비교하는 근거 |
+| **쓰기 시점 가드** | `.claude/hooks/studio-write-guard.sh` (PreToolUse Write · Edit) → `studio.py guard --hook` | 역할 세션이 자기 영역 밖의 추적 대상 파일을 쓰려는 순간 막고 주인 역할을 알려 준다. 역할은 launch 의 세션 ID(`locks/launch.json`) 또는 `STUDIO_ROLE`. git 무시 파일 · 역할 미상 세션은 막지 않는다. **Claude Code 세션만** — 다른 도구(dispatch)는 커밋 시점 검사(`commit` · `audit`)에 맡긴다 |
+| **정적 검사** | `.agent/tools/lint/unity_lint.py` (UL001~008) · Unity 공식 분석기(`prereq.py install unity-analyzers`, UNT 규칙) | `gameplay-code.md` 규칙(핫 패스 할당 · 탐색 · 문자열 · Animator 문자열 · Rigidbody 위치 · public 튜닝 필드)을 기계로 본다. `studio.py commit` · `validate-commit` 훅이 커밋할 .cs 를 검사 — `lint.config.json` 의 `blocking` 규칙만 막고 나머지는 경고 |
+
 ## 유지보수 — 감사 · 프로토콜 변경 · 업그레이드
 
 리허설에서 쓰기 영역 문제가 반복된 원인은 세 가지였다: 주인 없는 프로토콜 파일, 커밋 시점에야 드러나는 영역 밖 쓰기, 기록 없는 템플릿 덮어쓰기. 그래서 다음을 둔다.
@@ -216,7 +227,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 |---|---|---|
 | **감사** | `studio.py audit` | 미커밋 변경 중 **어느 영역에도 없는 파일**(주인 없음)과 **여러 역할에 겹치는 파일**을 보여 준다. 의도된 겹침(`allowedOverlaps`, 기본 `production/epics`)은 제외. 현황판에 건수가 뜬다 |
 | **프로토콜 변경 기록** | `studio.py protocol` · `protocol ack --by director --note "…"` | 설정 · 도구 · 헌장 · 프롬프트 · `CLAUDE.md` · `AGENTS.md` 의 지문을 `production/studio/protocol.json` 에 기록한다. 바뀌면 inbox · 현황판에 "미승인 변경" 이 표시되고, 디렉터가 확인(ack)하면 누가 · 언제 · 왜가 남는다 |
-| **템플릿 업그레이드** | `studio.py upgrade --from <템플릿 저장소> [--dry-run]` | 스튜디오 · artgen 도구와 스튜디오 스킬을 갱신한다. 설정 파일은 **깊은 병합**(템플릿 기반 + 프로젝트 값 우선) — 디렉터 결정은 보존되고 새 키만 추가된다. `*.local.json` 은 건드리지 않는다. 끝나면 지문을 승인하고 역할마다 `info` 공지 티켓을 낸다 |
+| **템플릿 업그레이드** | `studio.py upgrade --from <템플릿 저장소> [--dry-run]` | 스튜디오 · artgen · 사전 설치 · 검사 도구와 스튜디오 스킬을 갱신한다. 설정 파일은 **깊은 병합**(템플릿 기반 + 프로젝트 값 우선) — 디렉터 결정은 보존되고 새 키만 추가된다. `*.local.json` 은 건드리지 않는다. `.claude/settings.json` 에는 빠진 스튜디오 훅 등록만 더하고, 프로젝트마다 치환된 `AGENTS.md` 는 템플릿에 새로 생긴 절(§3-1 등)만 끼워 넣는다. 끝나면 지문을 승인하고 역할마다 `info` 공지 티켓을 낸다 |
 
 **세션의 반응 규칙**
 - inbox 에 "프로토콜 미승인 변경" 이 보이면 **헌장 · README · 업무 루프를 다시 읽고 그대로 진행**한다. 수상한 변경으로 반복 보고하지 않는다 (디렉터가 현황판에서 확인한다).
@@ -256,7 +267,10 @@ $S changes <role>                # 내 영역 미커밋 변경 + 진행 중 티�
 $S audit                         # 주인 없는 변경 · 역할 겹침
 $S protocol [ack --by director --note "…"]   # 프로토콜 변경 확인 · 승인
 $S upgrade --from <템플릿> [--dry-run]         # 도구 갱신 (설정 보존 · 공지 티켓)
-$S commit <role|director> -m "…" [--dry-run] [--only <경로…>]
+$S commit <role|director> -m "…" [--dry-run] [--only <경로…>]   # 커밋할 .cs 는 unity_lint 검사
+$S lesson add <종류> --by R --note "…" [--ref T-…] | list | resolve <종류> --how "…"   # 하네스 래칫
+$S metrics                       # 하네스 지표
+$S guard --role R --file <경로> | --hook   # 쓰기 영역 판정 (훅용, 밖이면 종료 코드 2)
 ```
 모든 명령은 `--json` 을 지원한다. `new` 와 `update` 의 JSON 출력에는 알림을 보낼 세션 이름(`notifySession`)이 들어 있다.
 

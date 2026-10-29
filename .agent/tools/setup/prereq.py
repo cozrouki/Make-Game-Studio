@@ -254,6 +254,89 @@ def _unity_servers(servers):
     return [k for k in (servers or {}) if "unity" in k.lower()]
 
 
+# Microsoft.Unity.Analyzers — Unity 공식 Roslyn 분석기 (MIT). 2026-10-29 Unity 6000.3.24f1 에서 UNT 경고 출력 확인
+UNITY_ANALYZERS = {"version": "1.28.0", "size": 168715,
+                   "sha256": "8b5fcfc94090a5d925a84c78b0091962a8accd682ef978c4753cffbc01cefb21",
+                   "dll": "analyzers/dotnet/cs/Microsoft.Unity.Analyzers.dll",
+                   "dest": "Assets/Analyzers/Microsoft.Unity.Analyzers.dll",
+                   "guid": "b9fbeda283c554d29f25b4ebf23983c8"}  # 고정 GUID — 프로젝트마다 같아 병합 충돌이 없다
+ANALYZER_META = """fileFormatVersion: 2
+guid: {guid}
+labels:
+- RoslynAnalyzer
+PluginImporter:
+  externalObjects: {{}}
+  serializedVersion: 2
+  iconMap: {{}}
+  executionOrder: {{}}
+  defineConstraints: []
+  isPreloaded: 0
+  isOverridable: 0
+  isExplicitlyReferenced: 0
+  validateReferences: 1
+  platformData:
+  - first:
+      Any:
+    second:
+      enabled: 0
+      settings: {{}}
+  - first:
+      Editor: Editor
+    second:
+      enabled: 0
+      settings:
+        DefaultValueInitialized: true
+  userData:
+  assetBundleName:
+  assetBundleVariant:
+"""
+
+
+def c_unity_analyzers(ctx):
+    dll = os.path.join(ctx.root, *UNITY_ANALYZERS["dest"].split("/"))
+    if not os.path.isdir(os.path.join(ctx.root, "Assets")):
+        return "skip", "Unity 프로젝트가 아님"
+    if not os.path.isfile(dll):
+        return "missing", "Unity 공식 분석기 없음 — 컴파일 때 UNT 경고(빈 메시지 · tag 비교 · GetComponent 할당 등)를 못 본다"
+    try:
+        with open(dll + ".meta", encoding="utf-8") as f:
+            labeled = "RoslynAnalyzer" in f.read()
+    except OSError:
+        labeled = False
+    if not labeled:
+        return "missing", f"{UNITY_ANALYZERS['dest']}.meta 에 RoslynAnalyzer 라벨 없음 — 컴파일러가 분석기로 쓰지 않는다"
+    if not os.path.isfile(os.path.join(ctx.root, "Assets", "Default.ruleset")):
+        return "warn", "Assets/Default.ruleset 없음 — 기본 Info 규칙은 컴파일 출력에 안 보인다"
+    return "ok", f"Microsoft.Unity.Analyzers ({UNITY_ANALYZERS['dest']}) · Default.ruleset"
+
+
+def i_unity_analyzers(ctx, dry):
+    a = UNITY_ANALYZERS
+    url = f"https://api.nuget.org/v3-flatcontainer/microsoft.unity.analyzers/{a['version']}/microsoft.unity.analyzers.{a['version']}.nupkg"
+    dest = os.path.join(ctx.root, *a["dest"].split("/"))
+    ruleset = os.path.join(ctx.root, "Assets", "Default.ruleset")
+    if dry:
+        return f"{url} → {a['dest']} (+ .meta RoslynAnalyzer" + (", Default.ruleset)" if not os.path.isfile(ruleset) else ")")
+    import tempfile
+    import zipfile
+    tmp = tempfile.mkdtemp(prefix="unity-analyzers-")
+    try:
+        pkg = os.path.join(tmp, "pkg.nupkg")
+        download(url, pkg, a["size"], a["sha256"])
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with zipfile.ZipFile(pkg) as z, open(dest, "wb") as out:
+            out.write(z.read(a["dll"]))
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    with open(dest + ".meta", "w", encoding="utf-8", newline="\n") as f:
+        f.write(ANALYZER_META.format(guid=a["guid"]))
+    added = ""
+    if not os.path.isfile(ruleset):
+        shutil.copyfile(os.path.join(os.path.dirname(TOOL_DIR), "lint", "Default.ruleset"), ruleset)
+        added = " · Assets/Default.ruleset"
+    return f"Microsoft.Unity.Analyzers {a['version']} → {a['dest']}{added} — Unity 가 다시 컴파일하면 UNT 경고가 나온다 (dev 영역 커밋)"
+
+
 def c_mcp_json(ctx):
     """프로젝트 .mcp.json · Claude Code 사용자 설정 · 프로젝트 로컬 설정(~/.claude.json projects) 어디든 있으면 된다."""
     found = _unity_servers((_read_json(os.path.join(ctx.root, ".mcp.json"), {}) or {}).get("mcpServers"))
@@ -560,6 +643,8 @@ ITEMS = [
     Item("unity-editor", "Unity", {"dev"}, "프로젝트 버전과 같은 Unity 에디터", c_unity_editor, None, m_unity_editor),
     Item("unity-mcp-pkg", "Unity", {"dev"}, "MCPForUnity 패키지 (Packages/manifest.json)", c_unity_mcp_pkg,
          i_unity_mcp_pkg, "scripts/install.ps1 를 다시 실행"),
+    Item("unity-analyzers", "Unity", {"dev"}, "Unity 공식 C# 분석기 (Microsoft.Unity.Analyzers · Default.ruleset)",
+         c_unity_analyzers, i_unity_analyzers, "prereq.py install unity-analyzers", UNITY_ANALYZERS["size"], "MIT"),
     Item("mcp-json", "Unity", {"dev"}, ".mcp.json unity-mcp 서버", c_mcp_json, None,
          "템플릿의 scripts/install.ps1 -Target <프로젝트> (또는 claude mcp add)"),
     Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈", android_only(c_android_module), None,

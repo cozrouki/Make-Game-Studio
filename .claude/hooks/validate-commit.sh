@@ -93,6 +93,28 @@ if [ -n "$SRC_FILES" ]; then
     done <<< "$SRC_FILES"
 fi
 
+# Unity C# 규칙 검사 (.agent/tools/lint/unity_lint.py) — gameplay-code.md 규칙을 기계로 확인.
+# lint.config.json 의 blocking 규칙만 커밋을 막고 나머지는 경고다 (studio.py commit 도 같은 검사를 한다)
+CS_FILES=$(echo "$STAGED" | grep -E '\.cs$')
+LINT=".agent/tools/lint/unity_lint.py"
+if [ -n "$CS_FILES" ] && [ -f "$LINT" ]; then
+    for cmd in python python3 py; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            LINT_OUT=$("$cmd" "$LINT" --staged 2>&1)
+            LINT_CODE=$?
+            if [ $LINT_CODE -eq 1 ]; then
+                echo "BLOCKED: unity-lint 차단 규칙 위반 (오탐이면 그 줄에 // unity-lint: ignore ULxxx)" >&2
+                echo "$LINT_OUT" >&2
+                exit 2
+            fi
+            if echo "$LINT_OUT" | grep -q ': UL'; then
+                WARNINGS="$WARNINGS\nLINT:\n$(echo "$LINT_OUT" | grep -E ': UL' | head -20)"
+            fi
+            break
+        fi
+    done
+fi
+
 # Print warnings (non-blocking) and allow commit
 if [ -n "$WARNINGS" ]; then
     echo -e "=== Commit Validation Warnings ===$WARNINGS\n================================" >&2

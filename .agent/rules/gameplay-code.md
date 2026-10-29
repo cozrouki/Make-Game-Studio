@@ -18,6 +18,7 @@ Unity C# 스크립트에 적용되는 코딩 기준.
 - **물리는 FixedUpdate**: Rigidbody 조작은 `FixedUpdate()`에서만
 - **GetComponent 캐싱**: `Awake()`에서 1회 캐싱, Hot Path에서 호출 금지
 - **Zero GC in Hot Paths**: `Update()` / `FixedUpdate()`에서 GC 할당 금지 (LINQ, string 연산, new 호출 금지)
+- **기계 검사**: 위 규칙과 Animator 문자열 · public 튜닝 필드는 `python .agent/tools/lint/unity_lint.py` (UL001~008)와 Unity 공식 분석기(UNT, `prereq.py install unity-analyzers`)가 확인한다. 오탐은 그 줄에 `// unity-lint: ignore ULxxx` 와 이유
 
 ## Animator 파라미터
 

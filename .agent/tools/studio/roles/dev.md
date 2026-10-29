@@ -65,6 +65,7 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 | 계층 | 필수 | 조건 |
 |---|---|---|
 | L1 | `/ko-setup-engine`(또는 `/setup-engine`) · `/test-setup` · `/create-architecture` · `/architecture-decision` · `/create-control-manifest` | CI 가 필요하면 `.github/workflows` 까지 (`/test-setup`) |
+| 정적 검사 | `python .agent/tools/setup/prereq.py install unity-analyzers` — Unity 공식 분석기(`Assets/Analyzers/`) + `Assets/Default.ruleset` 으로 컴파일 때 UNT 경고를 켠다. 설치 뒤 dev 영역으로 커밋 | — |
 | L2 | `/sf-info unified-style-guide` · `csharp12-features-guide` · `di-container-manager` · `event-bus-system` · `automated-unit-testing` · `version-control-git` | 신규 프로젝트 `project-scaffolder` · `advanced-game-bootstrapper` · 빌드 `build-pipeline-manager` · `unity-build-commander` |
 | L3 | `.claude/docs/mcp-unity-guide.md` 를 읽고 MCP(`mcp__UnityMCP__*`) 연결 · 에디터 상태 확인 | — |
 | 에이전트 | `technical-director` (아키텍처 검토) · `unity-specialist` | 렌더 `unity-shader-specialist` · 에셋 로딩 `unity-addressables-specialist` · DOTS `unity-dots-specialist` |
@@ -109,7 +110,9 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 | (Android 대상) ANR · 메인 스레드 블로킹 보고 | android `anr-audit-and-fix` |
 
 ### S3. 품질 게이트 (매 스토리 done 전, 필수)
+0. **결정적 검사 먼저**: `python .agent/tools/lint/unity_lint.py <바뀐 .cs>` (UL001~008 — 핫 패스 할당 · 탐색 · 문자열 · Animator 문자열 등) 와 Unity 콘솔의 UNT 경고(분석기 설치 시)를 0 으로 만든다. 오탐이면 그 줄에 `// unity-lint: ignore ULxxx` 와 이유. `studio.py commit` 도 같은 검사를 돌리고, `lint.config.json` 의 blocking 규칙이면 커밋을 막는다.
 1. `/ko-code-review <바뀐 파일>` — 필요하면 L2 `ai-code-reviewer` 관점을 더한다. 변경 범위 · 단순성(§3-1) 항목에서 걸린 것은 먼저 되돌린다 (스토리와 무관한 변경 · 요청 없는 확장 · 구현 하나짜리 추상화).
+   리뷰 지적 · 검수 반려(bug)를 고칠 때마다 원인 종류를 기록한다: `studio.py lesson add <종류> --by dev --note "…" --ref <티켓>` (planning 헌장의 종류 목록 재사용).
 2. `/simplify` — 중복 · 과잉 구현 정리 (동작 변경 없음, 테스트 재실행). Claude Code 내장 스킬이라 다른 AI 도구가 dev 를 맡으면 L2 `ai-code-reviewer` 로 대신한다.
 3. 증거를 planning 에 넘기기 전에 `/test-evidence-review` 로 자체 점검한다.
 4. `/story-done` (`/ko-story-cycle` 의 마지막 단계) — 수용 기준 · GDD · ADR 편차 확인.

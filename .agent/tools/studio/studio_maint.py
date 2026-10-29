@@ -32,14 +32,20 @@ DEFAULT_PROTOCOL_FILES = [
 # 외부 카탈로그 미러(.agent/marketing · .agent/gamedev)는 크기가 커서 넣지 않는다 — 필요하면 sync-catalog.py --root.
 # 비상업 번들(.agent/gamedesign)은 절대 넣지 않는다 (사용자가 직접 받음).
 # .agent/android 는 작아서(약 0.5MB) 넣는다 — prereq 의 Android 점검과 dev 스킬 맵이 이 미러를 본다
-UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup", ".agent/android",
+UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup", ".agent/tools/lint", ".agent/android",
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
                  ".claude/skills/studio-director",
-                 ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq",
+                 ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq", ".claude/skills/ko-code-review",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".agent/workflows/ko-prereq.md",
-                 ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh"]
+                 ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh", ".claude/hooks/studio-write-guard.sh",
+                 ".claude/hooks/validate-commit.sh"]
+# 스튜디오 훅 등록 — settings.json 은 프로젝트 것을 덮지 않고, 빠진 등록만 더한다 (이벤트, matcher, command)
+STUDIO_HOOKS = [("PreToolUse", "Write|Edit|MultiEdit|NotebookEdit", "bash .claude/hooks/studio-write-guard.sh"),
+                ("PostToolUse", "", "bash .claude/hooks/studio-pause-notice.sh")]
+# 프로젝트마다 치환된 정본 문서는 통째로 바꾸지 않고, 템플릿에 새로 생긴 절만 끼워 넣는다 (파일, 절 머리, 앞에 둘 절 머리)
+SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4.")]
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)
 MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json"]
@@ -134,6 +140,60 @@ def _template_files(template):
     return sorted(files)
 
 
+def _missing_hooks(st):
+    settings = read_json(os.path.join(st.root, ".claude", "settings.json"), {}) or {}
+    hooks = settings.get("hooks") or {}
+    have = {(ev, h.get("command")) for ev, entries in hooks.items() for e in entries for h in e.get("hooks", [])}
+    return [(ev, m, cmd) for ev, m, cmd in STUDIO_HOOKS if (ev, cmd) not in have]
+
+
+def _add_hooks(st, missing):
+    path = os.path.join(st.root, ".claude", "settings.json")
+    settings = read_json(path, {}) or {}
+    hooks = settings.setdefault("hooks", {})
+    for ev, matcher, cmd in missing:
+        hooks.setdefault(ev, []).append({"matcher": matcher, "hooks": [{"type": "command", "command": cmd, "timeout": 15}]})
+    write_json(path, settings)
+
+
+def _section(text, head):
+    """'## §3-1.' 로 시작하는 절 — 다음 '## ' 머리 직전까지 (끝의 구분선 포함)."""
+    start = text.find("\n" + head)
+    if start < 0:
+        return None
+    end = text.find("\n## ", start + 1)
+    return text[start + 1:end + 1 if end >= 0 else len(text)]
+
+
+def _missing_sections(st, template):
+    out = []
+    for rel, head, before in SECTION_INSERTS:
+        try:
+            with open(os.path.join(template, rel), encoding="utf-8") as f:
+                tpl = f.read()
+            with open(os.path.join(st.root, rel), encoding="utf-8") as f:
+                mine = f.read()
+        except OSError:
+            continue
+        block = _section(tpl, head)
+        if block and ("\n" + head) not in mine and ("\n" + before) in mine:
+            out.append((rel, block, head))
+    return out
+
+
+def _insert_section(st, rel, block):
+    path = os.path.join(st.root, rel)
+    with open(path, encoding="utf-8") as f:
+        mine = f.read()
+    for _rel, head, before in SECTION_INSERTS:
+        if _rel == rel and ("\n" + before) in mine:
+            i = mine.find("\n" + before) + 1
+            mine = mine[:i] + block + mine[i:]
+            break
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(mine)
+
+
 def upgrade(st, template, by=DIRECTOR, dry_run=False):
     template = os.path.abspath(template)
     if not os.path.isfile(os.path.join(template, ".agent", "tools", "studio", "studio.py")):
@@ -164,6 +224,13 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
             plan["replace"].append(rel)
         else:
             plan["unchanged"] += 1
+    hooks_patch = _missing_hooks(st)
+    if hooks_patch:
+        plan["merge"].append({"file": ".claude/settings.json", "newTopLevelKeys": [],
+                              "hooks": [f"{ev} {cmd}" for ev, _m, cmd in hooks_patch]})
+    sections = _missing_sections(st, template)
+    for rel, _text, head_line in sections:
+        plan["merge"].append({"file": rel, "newTopLevelKeys": [], "section": head_line})
     head = subprocess.run(["git", "-C", template, "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
     plan["templateRev"] = head.stdout.strip() or "unknown"
     dirty = subprocess.run(["git", "-C", template, "status", "--porcelain", "--", *UPGRADE_TREES, *UPGRADE_FILES],
@@ -181,6 +248,10 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
         shutil.copyfile(os.path.join(template, rel), dst)
     for rel, data in merged.items():
         write_json(os.path.join(st.root, rel), data)
+    if hooks_patch:
+        _add_hooks(st, hooks_patch)
+    for rel, text, _head in sections:
+        _insert_section(st, rel, text)
 
     note = f"템플릿 업그레이드 {plan['templateRev']} — 교체 {len(plan['replace'])} · 추가 {len(plan['add'])} · 병합 {len(plan['merge'])}"
     protocol_ack(st, by, note)

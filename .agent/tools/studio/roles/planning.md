@@ -80,6 +80,7 @@ T2. dev 의 `review` 티켓 "검수: <스토리>" 를 받으면, 스토리의 �
    - 태스크 파일(`production/dev/tasks/<T-id>.md`)의 `적용 스킬:` 줄과 코드 리뷰 기록도 본다. 비어 있으면 dev 에 `task` "스킬 확인 기록 보완" 을 낸다 (dev 헌장 스킬 사용 맵 S1 · S3).
    - 통과 → 티켓 done, note 에 "검수 통과".
    - 미달 → dev `bug` 티켓 (재현 절차 · 기대 결과 · 근거 증거 경로). 수용 기준 자체가 틀렸으면 스토리를 먼저 고치고 dev 에 `task` 로 알린다.
+   - **반려마다 실수 종류를 기록한다** (하네스 래칫): `studio.py lesson add <종류> --by planning --note "<무엇이 · 어디서>" --ref <티켓>`. 같은 종류가 두 번 쌓이면 디렉터에게 "하네스 개선" 티켓이 자동으로 나간다 — 같은 반려를 말로 반복하지 않고 구조로 막기 위해서다. 종류는 짧은 영문 슬러그를 재사용한다: `acceptance-mismatch`(수용 기준 미달) · `missing-evidence`(증거 누락) · `scope-creep`(스토리 밖 변경) · `update-alloc` · `update-lookup` · `string-param`(UL 규칙 계열) · `spec-ambiguity`(문서가 모호) · `asset-spec-mismatch` · `import-setting` · `test-flaky`. 기존 종류는 `studio.py lesson list`.
 T3. 스프린트를 마칠 때 dev 에 `task` "스모크 체크" (`/smoke-check`)를 낸다. 결과가 PASS 면 사용자 플레이테스트를 디렉터 티켓으로 요청한다 (빌드 · 씬 실행 방법, 확인할 질문 3~5개).
 T4. 사용자 · 디렉터의 플레이 소감이 오면 `/playtest-report` → `production/qa/playtests/`. 발견 사항은 필러로 판정해 버그(dev) · 튜닝(GDD 수정 후 dev) · 비전 문제(director)로 나눠 티켓을 낸다.
 
