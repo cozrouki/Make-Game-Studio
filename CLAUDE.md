@@ -55,7 +55,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
 | **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악(로컬 ComfyUI) · 효과음(CC0 라이브러리) → Unity 에셋 (백엔드 중립 artgen CLI + 어댑터) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
 | **사전 설치** | 자동화 실행 전 도구 · 모델 · 라이브러리 · 설정 점검 · 자동 설치 | `/ko-prereq`, `.agent/tools/setup/prereq.py` |
-| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 (포함) + 게임 디자인 렌즈 62 (PolyForm NC — 선택 설치, 재배포 금지). 필요할 때 한 스킬만 로드 | `/ext`, `.agent/catalogs/*.ko.json`, `scripts/sync-catalog.py` |
+| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 · Android 기기/스토어 4 (포함) + 게임 디자인 렌즈 62 (PolyForm NC — 선택 설치, 재배포 금지). 필요할 때 한 스킬만 로드 | `/ext`, `.agent/catalogs/*.ko.json`, `scripts/sync-catalog.py` |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션 자율 협업 (티켓 · 게이트 · 세션 간 알림, 아트는 AI 또는 사람 아티스트 — `artMode`) | `/studio-join`, `/studio-director`, `/studio-ticket`, `/studio-status` — §9 |
 
 ### 자동 적용 자산 (호출 불필요)

@@ -5,6 +5,8 @@
   marketing   coreyhaines31/marketingskills        MIT — 템플릿에 포함 (git 추적)
   gamedev     gamedev-skills/awesome-gamedev-agent-skills  Apache-2.0 — 템플릿에 포함 (Unity · 분야 · 장르 · 워크플로만,
               Godot · Unreal · Roblox · 웹 엔진 전용은 제외 — 이 템플릿은 Unity 전용)
+  android     android/skills                       Apache-2.0 — 템플릿에 포함 (기기 프로파일링 · Play 정책 · ANR · R8 4개만,
+              Compose · Wear · TV 등 네이티브 앱 전용은 제외)
   gamedesign  Stanestane/game-design-skills-bundle PolyForm Noncommercial 1.0.0 — 템플릿에 포함하지 않음 (git 무시).
               사용자가 라이선스를 확인하고 직접 받는다. 상업적 사용(게임 회사 안에서의 사용 포함)은 작성자의 상업 라이선스가 필요하다.
 
@@ -54,6 +56,17 @@ CATALOGS = {
         "include": ["skills/disciplines/*/**", "skills/genres/*/**", "skills/unity/*/**", "skills/workflows/*/**",
                     "LICENSE", "NOTICE"],
         "exclude": ["*/agents/openai.yaml"],
+    },
+    "android": {
+        "repo": "https://github.com/android/skills.git",
+        "dst": ".agent/android",
+        "skillsDir": "",
+        "license": "Apache-2.0",
+        "vendored": True,
+        # 네이티브 Android(Compose · Wear · TV …) 스킬은 제외 — Unity Android 빌드에도 통하는 기기 · 스토어 단 스킬만
+        "include": ["profilers/android-profiler/**", "play/play-policy-insights/**",
+                    "performance/anr-audit-and-fix/**", "performance/r8-analyzer/**", "LICENSE.txt"],
+        "exclude": [],
     },
     "gamedesign": {
         "repo": "https://github.com/Stanestane/game-design-skills-bundle.git",
@@ -261,7 +274,8 @@ def main(argv=None):
     tmp = tempfile.mkdtemp(prefix=f"catalog-{args.catalog}-")
     try:
         clone = os.path.join(tmp, "repo")
-        p = subprocess.run(["git", "clone", "-q", "--depth", "1", cat["repo"], clone],
+        # core.autocrlf=false — 시스템 설정(true)이면 CRLF 로 풀려 미러에 섞인다 (shebang 스크립트가 bash 에서 깨짐)
+        p = subprocess.run(["git", "-c", "core.autocrlf=false", "clone", "-q", "--depth", "1", cat["repo"], clone],
                            env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
         if p.returncode != 0:
             print("오류: git clone 실패", file=sys.stderr)

@@ -40,6 +40,9 @@
 .PARAMETER GamedevClone
     awesome-gamedev-agent-skills 로컬 clone 경로 (없으면 임시 clone)
 
+.PARAMETER AndroidClone
+    android/skills 로컬 clone 경로 (없으면 임시 clone)
+
 .PARAMETER DryRun
     변경 시도 표시만, 파일 쓰기 안 함
 
@@ -60,6 +63,7 @@ param(
     [string]$SkillForgeClone  = (Join-Path $PSScriptRoot "..\..\Unity3D-AntiGravitySkills"),
     [string]$MarketingClone   = (Join-Path $PSScriptRoot "..\..\marketingskills"),
     [string]$GamedevClone     = (Join-Path $PSScriptRoot "..\..\awesome-gamedev-agent-skills"),
+    [string]$AndroidClone     = (Join-Path $PSScriptRoot "..\..\android-skills"),
     [switch]$DryRun,
     [switch]$SkipPull
 )
@@ -290,11 +294,12 @@ if (Test-Path $gsHooksSrc) {
     Write-Host "  hooks: $n GS hooks 미러 (session-*.sh 보존)" -ForegroundColor Green
 }
 
-# === [5/6] 외부 카탈로그 (marketing · gamedev) ===
+# === [5/6] 외부 카탈로그 (marketing · gamedev · android) ===
 Write-Host ""
-Write-Host "[5/6] 외부 카탈로그 → .agent/marketing · .agent/gamedev (scripts/sync-catalog.py)" -ForegroundColor Yellow
+Write-Host "[5/6] 외부 카탈로그 → .agent/marketing · .agent/gamedev · .agent/android (scripts/sync-catalog.py)" -ForegroundColor Yellow
 $catScript = Join-Path $PSScriptRoot "sync-catalog.py"
-foreach ($cat in @(@{ Name = "marketing"; Clone = $MarketingClone }, @{ Name = "gamedev"; Clone = $GamedevClone })) {
+foreach ($cat in @(@{ Name = "marketing"; Clone = $MarketingClone }, @{ Name = "gamedev"; Clone = $GamedevClone },
+                   @{ Name = "android"; Clone = $AndroidClone })) {
     $catArgs = @($catScript, $cat.Name)
     if (Test-Path $cat.Clone) { $catArgs += @("--src", $cat.Clone) } else { $catArgs += "--fetch" }
     if ($DryRun) { $catArgs += "--dry-run" }

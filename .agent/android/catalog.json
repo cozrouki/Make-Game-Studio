@@ -1,0 +1,55 @@
+{
+  "catalog": "android",
+  "upstream": {
+    "repo": "https://github.com/android/skills.git",
+    "commit": "45fd173",
+    "syncedAt": "2026-10-29T15:30:55+09:00",
+    "license": "Apache-2.0",
+    "vendored": true
+  },
+  "builtAt": "2026-10-29T15:31:13+09:00",
+  "count": 4,
+  "groups": {
+    "profilers": "기기 단 성능 기록 · 분석 (Perfetto)",
+    "play": "Google Play 정책 · 스토어",
+    "performance": "응답성(ANR) · 코드 축소(R8)"
+  },
+  "skills": {
+    "anr-audit-and-fix": {
+      "description": "Audits Android codebases for ANR risks and diagnoses ANR stack dumps.",
+      "version": "",
+      "path": ".agent/android/performance/anr-audit-and-fix/SKILL.md",
+      "ko": "ANR(앱 응답 없음) 위험 정적 감사 · ANR 스택 덤프 진단. Unity 게임도 메인 스레드 블로킹(동기 I/O · 플러그인 호출)으로 ANR 이 나고 Play 지표에 잡힌다. Java/Kotlin 쪽 분석이 중심이라 C# 코드는 원리만 참고",
+      "group": "performance",
+      "fit": "useful",
+      "overlap": "/bug-report · /hotfix — Play Console 의 ANR 보고를 받았을 때"
+    },
+    "r8-analyzer": {
+      "description": "Analyzes Android build files and R8 keep rules to identify redundancies,",
+      "version": "",
+      "path": ".agent/android/performance/r8-analyzer/SKILL.md",
+      "ko": "R8 keep 규칙 · 축소 설정 분석. Gradle 프로젝트(build.gradle)가 전제라 Unity 에서는 Export Project 로 내보낸 Android 프로젝트에서만 쓴다. 변환 스크립트에 Python protobuf 패키지 필요",
+      "group": "performance",
+      "fit": "low",
+      "overlap": "L2 build-pipeline-manager · /sf-info unity-build-commander — Minify(R8) 로 크래시 · 크기 문제가 날 때만"
+    },
+    "play-policy-insights": {
+      "description": "Automated auditor designed to verify Android applications against Google Play Policy domains. It cross-references static code analysis with Play Store declarations to generate deterministic compliance reports, identifying undeclared data collection, architectural risks, and missing disclosures across Permissions and APIs Hygiene, User Account and Identity, and Data Safety and Privacy domains.",
+      "version": "",
+      "path": ".agent/android/play/play-policy-insights/SKILL.md",
+      "ko": "Google Play 정책 준수 감사 — 권한 · API 위생, 계정 · 신원, 데이터 안전(데이터 수집 신고) 을 코드 · 매니페스트와 대조해 보고서. Unity 는 빌드된 AndroidManifest · 플러그인(광고 · 분석 SDK)이 주 대상",
+      "group": "play",
+      "fit": "core",
+      "overlap": "/launch-checklist · /release-checklist · security-engineer — 출시 직전 Play 제출 전용 점검"
+    },
+    "android-profiler": {
+      "description": "Records and analyzes Android performance data and diagnoses performance",
+      "version": "",
+      "path": ".agent/android/profilers/android-profiler/SKILL.md",
+      "ko": "Perfetto 로 기기 트레이스 기록 · 분석 — 프레임 끊김 · 시작 지연 · CPU · Vulkan GPU 메모리 · 네이티브 힙 · LMK/OOM · 배터리 · 회귀 비교. 엔진과 무관해 Unity(IL2CPP) 빌드에도 그대로 쓴다. 기록에는 adb 와 연결된 기기가 필요, 분석기(trace_processor)는 스킬에 들어 있고 첫 실행 때 내려받는다",
+      "group": "profilers",
+      "fit": "core",
+      "overlap": "/ko-perf-profile · /perf-profile (Unity Profiler 중심) · performance-analyst 에이전트 — Unity Profiler 로 안 보이는 기기 · OS 단 원인일 때 이 스킬"
+    }
+  }
+}

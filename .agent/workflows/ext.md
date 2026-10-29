@@ -1,13 +1,13 @@
 ---
-description: 외부 스킬 카탈로그 (한국어) — 마케팅 · 게임 개발 실무 · 게임 디자인 렌즈 스킬을 찾아 하나만 불러 실행
+description: 외부 스킬 카탈로그 (한국어) — 마케팅 · 게임 개발 실무 · Android 기기/스토어 · 게임 디자인 렌즈 스킬을 찾아 하나만 불러 실행
 ---
 
 # /ext — 외부 스킬 카탈로그
 
 > 도구 중립 워크플로. 정본 절차는 `.claude/skills/ext/SKILL.md` — 먼저 읽고 그대로 따른다.
-> 인수: `[list <marketing|gamedev|gamedesign> [그룹|core|all] | info <스킬> | <스킬> [작업 설명]]`
+> 인수: `[list <marketing|gamedev|android|gamedesign> [그룹|core|all] | info <스킬> | <스킬> [작업 설명]]`
 
-카탈로그 메타: `.agent/<marketing|gamedev|gamedesign>/catalog.json` (한국어 요약 `ko` · 그룹 · 게임 적합도 `fit` · 기존 자산과 겹침 `overlap`).
+카탈로그 메타: `.agent/<marketing|gamedev|android|gamedesign>/catalog.json` (한국어 요약 `ko` · 그룹 · 게임 적합도 `fit` · 기존 자산과 겹침 `overlap`).
 
 ## 절차
 

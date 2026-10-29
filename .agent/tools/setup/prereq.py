@@ -1,6 +1,6 @@
 """사전 설치 점검 · 설치 — 자동화(스튜디오 모드 · artgen 그래픽/사운드 · Unity MCP)를 돌리기 전에 필요한 것.
 
-    python .agent/tools/setup/prereq.py check   [--roles dev,art] [--json]
+    python .agent/tools/setup/prereq.py check   [--roles dev,art] [--platforms android] [--json]
     python .agent/tools/setup/prereq.py install [항목 ...] [--yes] [--dry-run] [--comfyui-home DIR] [--library-dir DIR]
 
 check   항목마다 ok · missing · warn · decide(사용자 결정) 를 보여 준다. 필수 항목이 missing 이면 종료 코드 1.
@@ -94,9 +94,10 @@ def _human(n):
 class Ctx:
     """점검 대상 프로젝트와 설정."""
 
-    def __init__(self, root, roles=ROLES, comfyui_home=None, library_dir=None):
+    def __init__(self, root, roles=ROLES, comfyui_home=None, library_dir=None, platforms=None):
         self.root = os.path.abspath(root)
         self.roles = set(roles)
+        self.platforms = {p.lower() for p in platforms} if platforms is not None else None  # None = 문서에서 판단
         self.local_path = os.path.join(self.root, ".agent", "tools", "artgen", "artgen.config.local.json")
         self.local = _read_json(self.local_path, {}) or {}
         self.cfg = load_config(os.path.join(self.root, ".agent", "tools", "artgen")) \
@@ -145,7 +146,8 @@ class Item:
     def check(self, ctx):
         status, detail = self._check(ctx)
         return {"id": self.id, "group": self.group, "title": self.title, "status": status, "detail": detail,
-                "auto": self._install is not None and status == "missing", "manual": self.manual,
+                "auto": self._install is not None and status == "missing",
+                "manual": self.manual(ctx) if callable(self.manual) else self.manual,
                 "size": self.size, "license": self.license}
 
 
@@ -266,6 +268,82 @@ def c_mcp_json(ctx):
         if path.replace("\\", "/").lower() == key and _unity_servers(proj.get("mcpServers")):
             return "ok", f"Claude Code 프로젝트 로컬 설정 {_unity_servers(proj['mcpServers'])[0]}"
     return "missing", "Unity MCP 서버 등록 없음 (.mcp.json · ~/.claude.json)"
+
+
+# ---------------------------------------------------------------- Android (대상 플랫폼일 때만)
+def android_target(ctx):
+    """--platforms 로 지정했거나, technical-preferences.md 의 Target Platforms 줄에 Android 가 있으면 대상."""
+    if ctx.platforms is not None:
+        return "android" in ctx.platforms
+    try:
+        with open(os.path.join(ctx.root, ".claude", "docs", "technical-preferences.md"), encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return False
+    return any("target platform" in line.lower() and "android" in line.lower() for line in text.splitlines())
+
+
+def _android_player(ctx):
+    ver, _rev = _project_unity_version(ctx)
+    for d in unity_editor_dirs():
+        p = os.path.join(d, ver or "", "Editor", "Data", "PlaybackEngines", "AndroidPlayer")
+        if ver and os.path.isdir(p):
+            return p
+    return None
+
+
+def _adb(ctx):
+    found = shutil.which("adb")
+    if found:
+        return found
+    player = _android_player(ctx)
+    exe = os.path.join(player, "SDK", "platform-tools", "adb.exe" if os.name == "nt" else "adb") if player else None
+    return exe if exe and os.path.isfile(exe) else None
+
+
+def android_only(check):
+    def wrapped(ctx):
+        if not android_target(ctx):
+            return "skip", "대상 플랫폼에 Android 없음 (technical-preferences.md Target Platforms · --platforms android)"
+        return check(ctx)
+    return wrapped
+
+
+def c_android_module(ctx):
+    p = _android_player(ctx)
+    return ("ok", p) if p else ("missing", "프로젝트 버전 Unity 에 Android Build Support 모듈 없음")
+
+
+def m_android_module(ctx):
+    return f"{m_unity_editor(ctx)} → Add modules → Android Build Support (OpenJDK · Android SDK & NDK 포함)"
+
+
+def c_adb(ctx):
+    exe = _adb(ctx)
+    return ("ok", exe) if exe else ("missing", "adb 없음 — 기기 트레이스 기록(android-profiler) · 설치 확인에 필요")
+
+
+def c_adb_device(ctx):
+    exe = _adb(ctx)
+    if not exe:
+        return "warn", "adb 없음"
+    code, out = _run([exe, "devices"])
+    devices = [ln.split()[0] for ln in out.splitlines()[1:] if ln.strip().endswith("device")]
+    return ("ok", f"연결된 기기 {len(devices)}대") if devices else \
+        ("warn", "연결된 기기 없음 — 트레이스 기록 · 실기 테스트 때만 필요 (USB 디버깅 켜기)")
+
+
+def c_android_catalog(ctx):
+    cat = _read_json(os.path.join(ctx.root, ".agent", "android", "catalog.json"))
+    if cat and cat.get("count"):
+        return "ok", f"android 카탈로그 스킬 {cat['count']}개 (/ext list android)"
+    return "missing", ".agent/android 미러 없음"
+
+
+def c_protobuf(ctx):
+    if _run([sys.executable, "-c", "import google.protobuf"])[0] == 0:
+        return "ok", "protobuf"
+    return "warn", "Python protobuf 없음 — r8-analyzer(Export Project 한 Gradle 프로젝트)에만 필요"
 
 
 def c_gpu(ctx):
@@ -443,6 +521,28 @@ def c_pytest(ctx):
     return ("ok", "uvx pytest 로 실행 가능") if shutil.which("uvx") else ("warn", "pytest 없음 — 도구 테스트에만 필요")
 
 
+def c_graphify(ctx):
+    exe = shutil.which("graphify")
+    if not exe:
+        return "missing", "graphify 없음 — 기존 C# 코드 구조 파악 · 영향 범위 질의용 (선택)"
+    backend = os.environ.get("GRAPHIFY_BACKEND")
+    if backend != "none":
+        # 코드만 그래프로 만들 때도 문서 · 이미지가 섞이면 환경의 API 키나 claude -p 로 외부 모델을 부른다
+        return "warn", f"{exe} — GRAPHIFY_BACKEND={backend or '미설정'}: 실행할 때 GRAPHIFY_BACKEND=none 으로 (외부 모델 · 사용량 방지)"
+    return "ok", f"{exe} (GRAPHIFY_BACKEND=none)"
+
+
+def i_graphify(ctx, dry):
+    if not shutil.which("uv"):
+        raise RuntimeError("uv 없음 — 먼저 uv 설치")
+    if dry:
+        return "uv tool install graphifyy"
+    code, out = _run(["uv", "tool", "install", "graphifyy"], timeout=900)
+    if code != 0:
+        raise RuntimeError(out[-400:])
+    return "graphify 설치 (uv tool) — Claude 상시 훅 · git 훅은 설치하지 않는다"
+
+
 ITEMS = [
     Item("git", "기본", set(), "Git 2.25+ (+ core.autocrlf=input)", c_git, _winget("Git.Git"),
          "https://git-scm.com/download/win · 설치 후 git config --global core.autocrlf input"),
@@ -454,11 +554,25 @@ ITEMS = [
     Item("vscode", "기본", set(), "(선택) VS Code — studio launch 의 vscode 창", c_which("code", "code"),
          _winget("Microsoft.VisualStudioCode"), "https://code.visualstudio.com/"),
     Item("pytest", "기본", set(), "(선택) pytest — 도구 테스트", c_pytest, None, "pip install pytest"),
-    Item("unity-editor", "Unity", {"dev"}, "프로젝트 버전과 같은 Unity 에디터", c_unity_editor, None, ""),
+    Item("graphify", "기본", {"dev"}, "(선택) graphify — 코드 지식 그래프 (C# 의존 · 영향 범위 질의)", c_graphify,
+         i_graphify, "uv tool install graphifyy · 실행은 GRAPHIFY_BACKEND=none (코드만, 외부 모델 없음)",
+         license="Apache-2.0 / MIT"),
+    Item("unity-editor", "Unity", {"dev"}, "프로젝트 버전과 같은 Unity 에디터", c_unity_editor, None, m_unity_editor),
     Item("unity-mcp-pkg", "Unity", {"dev"}, "MCPForUnity 패키지 (Packages/manifest.json)", c_unity_mcp_pkg,
          i_unity_mcp_pkg, "scripts/install.ps1 를 다시 실행"),
     Item("mcp-json", "Unity", {"dev"}, ".mcp.json unity-mcp 서버", c_mcp_json, None,
          "템플릿의 scripts/install.ps1 -Target <프로젝트> (또는 claude mcp add)"),
+    Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈", android_only(c_android_module), None,
+         m_android_module),
+    Item("adb", "Android", {"dev"}, "adb (Android 플랫폼 도구)", android_only(c_adb), None,
+         "Unity Android 모듈의 SDK/platform-tools 에 함께 설치됨 — 모듈을 먼저 설치"),
+    Item("android-catalog", "Android", {"dev"}, "android 스킬 카탈로그 (/ext — 기기 프로파일링 · Play 정책 · ANR · R8)",
+         android_only(c_android_catalog), None,
+         "템플릿의 studio.py upgrade, 또는 python <템플릿>/scripts/sync-catalog.py android --fetch --root <프로젝트>"),
+    Item("adb-device", "Android", {"dev"}, "(선택) 연결된 Android 기기", android_only(c_adb_device), None,
+         "기기의 개발자 옵션 → USB 디버깅"),
+    Item("protobuf", "Android", {"dev"}, "(선택) Python protobuf — r8-analyzer", android_only(c_protobuf), None,
+         "pip install protobuf"),
     Item("gpu", "생성", {"art"}, "NVIDIA GPU · 드라이버 (VRAM 8GB+)", c_gpu, None, "https://www.nvidia.com/drivers"),
     Item("comfyui", "생성", {"art"}, "ComfyUI 포터블 0.42+", c_comfyui, None, COMFYUI_RELEASES),
     *[Item(f"model:{k}", "생성", {"art"}, f"모델 {MODELS[k]['file']}", c_model(k), i_model(k),
@@ -476,7 +590,9 @@ ITEMS = [
          c_decide("PolyForm Noncommercial — 회사 사용이면 상업 라이선스 필요. /ext 의 설치 돕기로 사용자가 조건 선택"),
          None, "python scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial>"),
 ]
-REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "pytest"}  # missing 이어도 실패로 보지 않음
+REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "pytest", "adb-device", "protobuf",
+                 "graphify"}
+# 선택 항목은 missing 이어도 실패로 보지 않고, install 을 항목 없이 실행할 때도 설치하지 않는다 (이름을 줘야 설치)  # missing 이어도 실패로 보지 않음
 
 
 # ---------------------------------------------------------------- 다운로드
@@ -545,11 +661,12 @@ def cmd_check(ctx, args):
         if r["group"] != group:
             group = r["group"]
             print(f"\n[{group}]")
-        flag = " (자동 설치 가능)" if r["auto"] else ""
+        flag = "" if not r["auto"] else (f" (선택 — 설치: prereq.py install {r['id']})" if r["id"] in REQUIRED_SKIP
+                                         else " (자동 설치 가능)")
         print(f"  {ICON[r['status']]} {r['title']}{flag}\n      {r['detail']}")
         if r["status"] in ("missing", "warn") and not r["auto"] and r["manual"]:
             print(f"      → {r['manual']}")
-    autos = [r for r in rows if r["auto"]]
+    autos = [r for r in rows if r["auto"] and r["id"] not in REQUIRED_SKIP]
     print(f"\n필수 누락 {len(fails)}개 · 자동 설치 가능 {len(autos)}개"
           + (f" ({_human(sum(r['size'] for r in autos))} 이상)" if any(r['size'] for r in autos) else ""))
     if autos:
@@ -560,7 +677,7 @@ def cmd_check(ctx, args):
 def cmd_install(ctx, args):
     rows = {r["id"]: r for r in run_checks(ctx)}
     by_id = {it.id: it for it in ITEMS}
-    wanted = args.items or [i for i, r in rows.items() if r["auto"]]
+    wanted = args.items or [i for i, r in rows.items() if r["auto"] and i not in REQUIRED_SKIP]
     order = [it.id for it in ITEMS]  # 설정 → 경로가 필요한 항목 순서를 ITEMS 순서로 보장
     plan = []
     for i in sorted(wanted, key=lambda x: order.index(x) if x in order else 999):
@@ -610,6 +727,7 @@ def main(argv=None):
     ap.add_argument("--roles", default=",".join(ROLES), help="이 PC 에서 맡을 역할 (기본 planning,art,dev)")
     ap.add_argument("--comfyui-home", help="ComfyUI 포터블 폴더")
     ap.add_argument("--library-dir", help="효과음 라이브러리 폴더 (여러 프로젝트가 공유하려면 절대경로)")
+    ap.add_argument("--platforms", help="대상 플랫폼 (예: android,ios). 생략하면 technical-preferences.md 의 Target Platforms")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("check")
     p.add_argument("--json", action="store_true")
@@ -622,7 +740,8 @@ def main(argv=None):
     bad = [r for r in roles if r not in ROLES]
     if bad:
         ap.error(f"알 수 없는 역할: {bad}")
-    ctx = Ctx(args.root, roles, args.comfyui_home, args.library_dir)
+    platforms = [x.strip() for x in args.platforms.split(",") if x.strip()] if args.platforms is not None else None
+    ctx = Ctx(args.root, roles, args.comfyui_home, args.library_dir, platforms)
     return cmd_check(ctx, args) if args.cmd == "check" else cmd_install(ctx, args)
 
 
