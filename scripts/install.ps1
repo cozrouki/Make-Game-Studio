@@ -171,15 +171,19 @@ if ($conflicts) {
     if (-not $DryRun) {
         New-Item -ItemType Directory -Force -Path $backup | Out-Null
         foreach ($c in $conflicts) { Copy-Item -Path (Join-Path $Target $c) -Destination $backup -Recurse -Force }
-        # 디렉터리는 비워서 템플릿과 정확히 같게 만든다 (settings.local.json 은 보존)
+        # 디렉터리는 비워서 템플릿과 정확히 같게 만든다.
+        # 단 머신별 설정 *.local.json (.claude/settings.local.json · artgen/studio config.local.json 등)은 보존한다
         foreach ($c in $conflicts) {
             $p = Join-Path $Target $c
             if (Test-Path $p -PathType Container) {
-                $keep = Join-Path $p "settings.local.json"
-                $keepText = $null
-                if (Test-Path $keep) { $keepText = Read-TextFile $keep }
+                $keeps = @(Get-ChildItem -Path $p -Recurse -File -Filter "*.local.json" -ErrorAction SilentlyContinue |
+                           ForEach-Object { @{ Path = $_.FullName; Text = (Read-TextFile $_.FullName) } })
                 Remove-Item $p -Recurse -Force
-                if ($keepText) { New-Item -ItemType Directory -Force -Path $p | Out-Null; Write-TextFile $keep $keepText }
+                foreach ($k in $keeps) {
+                    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $k.Path) | Out-Null
+                    Write-TextFile $k.Path $k.Text
+                }
+                if ($keeps.Count) { Write-Info "보존: $($keeps.Count)개 *.local.json ($c)" }
             }
         }
     }
