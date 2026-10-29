@@ -1,0 +1,36 @@
+{
+  "schema": "artgen-request/1",
+  "assetId": "ASSET-201",
+  "name": "Stage 1 Exploration Loop",
+  "category": "music",
+  "source": {
+    "spec": "design/assets/specs/audio-assets.md",
+    "artBible": "design/art/art-bible.md"
+  },
+  "prompt": {
+    "subject": "calm exploration music for a cozy puzzle game, warm and curious",
+    "style": ["lo-fi", "soft electric piano", "light brushed drums", "warm bass", "instrumental"],
+    "tempo": 90,
+    "key": "D major",
+    "timeSignature": 4,
+    "negative": ["vocals", "harsh distortion"]
+  },
+  "output": {
+    "durationSec": 60,
+    "loop": true,
+    "channels": 2,
+    "sampleRate": 44100,
+    "variants": 2,
+    "seed": null
+  },
+  "unity": {
+    "dest": "Assets/MyGame/Audio/Music/bgm_stage1_explore.wav",
+    "import": {
+      "loadType": "Streaming",
+      "compressionFormat": "Vorbis",
+      "quality": 0.7
+    }
+  },
+  "providerOptions": {},
+  "history": []
+}

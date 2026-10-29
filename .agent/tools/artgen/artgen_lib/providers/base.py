@@ -23,6 +23,12 @@ class Job:
     job_file: str              # 이 Job 을 JSON 으로 직렬화한 파일 (외부 프로세스 전달용)
     options: dict = field(default_factory=dict)  # config.providers[이름] ← request.providerOptions[이름]
     project_root: str = ""     # Unity 프로젝트 루트 (설정의 상대경로 해석용)
+    # 오디오 요청(category sfx · music · ambience)일 때만 의미가 있다. 이미지면 width/height 를 쓴다
+    kind: str = "image"        # image | audio
+    duration: float = 0.0      # 초
+    loop: bool = False
+    channels: int = 0
+    sample_rate: int = 0
 
 
 class Provider:
@@ -36,6 +42,13 @@ class Provider:
     placeholder = False
     # False 면 결과 수가 요청 variants 와 달라도 경고하지 않는다 (사람 납품처럼 개수가 정해지지 않는 경우)
     honors_variants = True
+    # 지원하는 요청 종류. 오디오를 받는 어댑터는 ("image", "audio")
+    kinds = ("image",)
+    # True 면 오디오 결과가 모델 원본(FLAC 등)이라 저장소가 audio_post 로 WAV 후처리를 한다.
+    # False 면 어댑터가 최종 16bit WAV 를 낸다 (mock · 사람 납품 · command 계약)
+    raw_audio = False
+    # True 면 오디오 요청의 durationSec 를 상한으로만 쓴다 (기성 소리 — 짧으면 무음으로 늘리지 않음)
+    duration_is_max = False
 
     def __init__(self, options):
         self.options = options or {}
@@ -45,5 +58,6 @@ class Provider:
         return True, "ok"
 
     def generate(self, job):
-        """job.out_dir 에 PNG 를 쓰고 그 절대경로 목록을 돌려준다 (순서 = 변형 순서)."""
+        """job.out_dir 에 PNG(오디오면 WAV · raw_audio 어댑터는 원본 형식)를 쓰고
+        그 절대경로 목록을 돌려준다 (순서 = 변형 순서)."""
         raise NotImplementedError

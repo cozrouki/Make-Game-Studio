@@ -24,6 +24,18 @@
                      코어 노드 체인 구성 (ComfyUI 0.42+). 비우면 투명 배경 미지원 (capabilities.transparent=false)
     workflow         사용자 워크플로 JSON 경로 (프로젝트 루트 기준). 지정하면 기본 그래프 대신 사용
     timeoutSec       이미지 1장 대기 한도 (기본 600)
+
+오디오 (category sfx · music · ambience) — 내장 오디오 그래프. 결과는 FLAC 원본이고, 저장소가 audio_post 로
+Unity 용 WAV 를 만든다 (raw_audio). 그래프 구성은 ComfyUI 공식 템플릿을 따른다.
+    audioGraphByCategory  카테고리 → 그래프 (기본 sfx=stable-audio, music · ambience=ace-step-1.5)
+    audioGraph            모든 카테고리에 이 그래프를 쓴다 (요청별 providerOptions.comfyui.audioGraph 로 덮어쓰기)
+    audioGraphs.<이름>    프리셋별 값
+       ace-step-1.5   음악 (ACE-Step 1.5 Turbo AIO, MIT) — checkpoint · shift · steps · cfg · sampler · scheduler ·
+                      language · generateAudioCodes · lmCfg · temperature · topP · topK · minP · tailSec
+       stable-audio   효과음 (Stable Audio 3 small sfx 기본 — Stability 라이선스) — checkpoint · clip · steps · cfg ·
+                      sampler · scheduler · tailSec. Stable Audio Open 1.0 은 checkpoint/clip/steps 50/cfg 4.98/
+                      dpmpp_3m_sde_gpu/exponential 으로 바꿔 쓴다
+    tailSec 은 요청 길이보다 더 생성하는 여유 — 루프 크로스페이드와 끝 다듬기에 쓴다
 """
 import json
 import math
@@ -37,7 +49,7 @@ import uuid
 from .. import ArtgenError
 from .base import Provider
 
-TOKENS = ("positive", "negative", "seed", "width", "height", "gen_width", "gen_height")
+TOKENS = ("positive", "negative", "seed", "width", "height", "gen_width", "gen_height", "duration")
 SAVE_NODE_TYPES = ("SaveImage", "Image Save")
 
 
@@ -154,14 +166,89 @@ def build_default_graph(o, positive, negative, seed, width, height, transparent)
     return g
 
 
+# ---- 오디오 그래프 ----
+AUDIO_GRAPH_DEFAULTS = {
+    # 템플릿 audio_ace_step_1_5_checkpoint 와 같은 구성. 증류(turbo) 모델이라 8 스텝 · cfg 1, 부정은 ConditioningZeroOut
+    "ace-step-1.5": {"checkpoint": "ace_step_1.5_turbo_aio.safetensors", "shift": 3, "steps": 8, "cfg": 1,
+                     "sampler": "euler", "scheduler": "simple", "language": "en", "generateAudioCodes": True,
+                     "lmCfg": 2.0, "temperature": 0.85, "topP": 0.9, "topK": 0, "minP": 0.0, "tailSec": 1.0,
+                     "loopGenRatio": 1.5},
+    # 템플릿 audio_stable_audio_3_medium 의 생성부(재작성 LLM 제외)와 같은 구성
+    "stable-audio": {"checkpoint": "stable_audio_3_small_sfx.safetensors", "clip": "t5gemma_b_b_ul2.safetensors",
+                     "steps": 8, "cfg": 1, "sampler": "lcm", "scheduler": "simple", "tailSec": 0.5,
+                     "loopGenRatio": 1.25},
+}
+AUDIO_GRAPH_BY_CATEGORY = {"sfx": "stable-audio", "music": "ace-step-1.5", "ambience": "ace-step-1.5"}
+
+
+def audio_graph_options(o, category):
+    name = o.get("audioGraph") or {**AUDIO_GRAPH_BY_CATEGORY, **o.get("audioGraphByCategory", {})}[category]
+    if name not in AUDIO_GRAPH_DEFAULTS:
+        raise ArtgenError(f"오디오 그래프는 {', '.join(AUDIO_GRAPH_DEFAULTS)} 중 하나 (현재: {name})")
+    return name, {**AUDIO_GRAPH_DEFAULTS[name], **o.get("audioGraphs", {}).get(name, {})}
+
+
+def _ace15_audio(o, job, seed, seconds):
+    p = job.request["prompt"]
+    return {
+        "ckpt": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": o["checkpoint"]}},
+        "enc": {"class_type": "TextEncodeAceStepAudio1.5", "inputs": {
+            "clip": ["ckpt", 1], "tags": job.positive, "lyrics": p.get("lyrics", "[Instrumental]"), "seed": seed,
+            "bpm": p.get("tempo", 120), "duration": seconds, "timesignature": str(p.get("timeSignature", 4)),
+            "language": o["language"], "keyscale": p.get("key", "C major"),
+            "generate_audio_codes": o["generateAudioCodes"], "cfg_scale": o["lmCfg"], "temperature": o["temperature"],
+            "top_p": o["topP"], "top_k": o["topK"], "min_p": o["minP"]}},
+        "neg": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["enc", 0]}},
+        "shift": {"class_type": "ModelSamplingAuraFlow", "inputs": {"model": ["ckpt", 0], "shift": o["shift"]}},
+        "latent": {"class_type": "EmptyAceStep1.5LatentAudio", "inputs": {"seconds": seconds, "batch_size": 1}},
+        "sample": {"class_type": "KSampler", "inputs": {
+            "model": ["shift", 0], "positive": ["enc", 0], "negative": ["neg", 0], "latent_image": ["latent", 0],
+            "seed": seed, "steps": o["steps"], "cfg": o["cfg"],
+            "sampler_name": o["sampler"], "scheduler": o["scheduler"], "denoise": 1.0}},
+        "decode": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["sample", 0], "vae": ["ckpt", 2]}},
+    }
+
+
+def _stable_audio(o, job, seed, seconds):
+    return {
+        "ckpt": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": o["checkpoint"]}},
+        "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": o["clip"], "type": "stable_audio", "device": "default"}},
+        "pos": {"class_type": "CLIPTextEncode", "inputs": {"text": job.positive, "clip": ["clip", 0]}},
+        "neg": {"class_type": "CLIPTextEncode", "inputs": {"text": job.negative, "clip": ["clip", 0]}},
+        "latent": {"class_type": "EmptyLatentAudio", "inputs": {"seconds": seconds, "batch_size": 1}},
+        "sample": {"class_type": "KSampler", "inputs": {
+            "model": ["ckpt", 0], "positive": ["pos", 0], "negative": ["neg", 0], "latent_image": ["latent", 0],
+            "seed": seed, "steps": o["steps"], "cfg": o["cfg"],
+            "sampler_name": o["sampler"], "scheduler": o["scheduler"], "denoise": 1.0}},
+        "decode": {"class_type": "VAEDecodeAudio", "inputs": {"samples": ["sample", 0], "vae": ["ckpt", 2]}},
+    }
+
+
+AUDIO_GRAPH_BUILDERS = {"ace-step-1.5": _ace15_audio, "stable-audio": _stable_audio}
+
+
+def build_audio_graph(o, job, seed):
+    name, o = audio_graph_options(o, job.request["category"])
+    # 여유분은 후처리(audio_post)가 크로스페이드 · 자르기에 쓴다. 루프는 loopGenRatio 배로 길게 만들어
+    # 후처리가 도입 · 끝맺음을 피한 구간을 고르게 한다 (음악 모델은 생성 길이 안에 곡을 끝맺는다)
+    ratio = o.get("loopGenRatio", 1.0) if job.loop else 1.0
+    seconds = round(job.duration * ratio + o["tailSec"], 2)
+    g = AUDIO_GRAPH_BUILDERS[name](o, job, seed, seconds)
+    g["save"] = {"class_type": "SaveAudioAdvanced", "inputs": {"audio": ["decode", 0], "filename_prefix": "artgen/audio",
+                                                              "format": "flac"}}
+    return g
+
+
 def fill_workflow(graph, values):
     """사용자 워크플로의 토큰 치환. 값 전체가 토큰이면 원래 타입(숫자)으로, 부분이면 문자열로."""
+    tokens = [t for t in TOKENS if t in values]  # 호출 측이 주지 않은 토큰은 그대로 둔다
+
     def sub(v):
         if isinstance(v, str):
-            for t in TOKENS:
+            for t in tokens:
                 if v == "{{" + t + "}}":
                     return values[t]
-            for t in TOKENS:
+            for t in tokens:
                 v = v.replace("{{" + t + "}}", str(values[t]))
             return v
         if isinstance(v, list):
@@ -174,7 +261,9 @@ def fill_workflow(graph, values):
 
 class ComfyUIProvider(Provider):
     name = "comfyui"
-    description = "로컬 ComfyUI 서버 (HTTP API) — 기본 SDXL 그래프 또는 사용자 워크플로"
+    description = "로컬 ComfyUI 서버 (HTTP API) — 이미지(SDXL · Z-Image) · 오디오(ACE-Step · Stable Audio) 그래프 또는 사용자 워크플로"
+    kinds = ("image", "audio")
+    raw_audio = True
 
     def __init__(self, options):
         super().__init__(options)
@@ -207,7 +296,9 @@ class ComfyUIProvider(Provider):
                 body = f"{detail} {nodes}".strip()
             except ValueError:
                 pass
-            raise ArtgenError(f"ComfyUI 가 워크플로를 거부 (HTTP {e.code}): {body[:600]}")
+            if "Value not in list" in body:
+                body += " — 모델 파일이 ComfyUI models/ 에 없거나 설정의 파일명이 다름 (README 의 모델 표 참고)"
+            raise ArtgenError(f"ComfyUI 가 워크플로를 거부 (HTTP {e.code}): {body[:700]}")
         except urllib.error.URLError as e:
             raise ArtgenError(f"ComfyUI 연결 실패 ({self.url}): {e.reason}")
 
@@ -226,7 +317,9 @@ class ComfyUIProvider(Provider):
 
     def _graph(self, job, seed):
         o = self.options
-        gw, gh = gen_size(job.width, job.height, o.get("genArea", 1024 * 1024))
+        if job.kind == "audio" and not o.get("workflow"):
+            return build_audio_graph(o, job, seed)
+        gw, gh = gen_size(job.width, job.height, o.get("genArea", 1024 * 1024)) if job.kind == "image" else (0, 0)
         if o.get("workflow"):
             path = os.path.join(job.project_root or os.getcwd(), o["workflow"])
             try:
@@ -235,7 +328,8 @@ class ComfyUIProvider(Provider):
             except (OSError, ValueError) as e:
                 raise ArtgenError(f"사용자 워크플로 읽기 실패: {path} — {e}")
             return fill_workflow(graph, {"positive": job.positive, "negative": job.negative, "seed": seed,
-                                         "width": job.width, "height": job.height, "gen_width": gw, "gen_height": gh})
+                                         "width": job.width, "height": job.height, "gen_width": gw, "gen_height": gh,
+                                         "duration": job.duration})
         return build_default_graph(o, job.positive, job.negative, seed, job.width, job.height, job.transparent)
 
     def _wait(self, prompt_id):
@@ -264,14 +358,21 @@ class ComfyUIProvider(Provider):
         for i, seed in enumerate(job.seeds):
             res = self._post("/prompt", {"prompt": self._graph(job, seed), "client_id": client_id})
             outputs = self._wait(res["prompt_id"])
-            images = [img for out in outputs.values() for img in out.get("images", []) if img.get("type") == "output"]
-            if not images:
-                raise ArtgenError("ComfyUI 출력 이미지 없음 — 워크플로에 SaveImage 노드가 있는지 확인")
-            img = images[-1]  # 마지막 저장 노드 = 최종 결과 (중간 미리보기 제외)
-            q = urllib.parse.urlencode({"filename": img["filename"], "subfolder": img.get("subfolder", ""),
-                                        "type": img["type"]})
-            data = self._get(f"/view?{q}", timeout=60, raw=True)
-            path = os.path.join(job.out_dir, f"variant_{i + 1:02d}.png")
+            key = "audio" if job.kind == "audio" else "images"
+            items = [it for out in outputs.values() for it in out.get(key, []) if it.get("type") == "output"]
+            if not items:
+                node = "SaveAudioAdvanced" if job.kind == "audio" else "SaveImage"
+                raise ArtgenError(f"ComfyUI 출력 없음 — 워크플로에 {node} 노드가 있는지 확인")
+            item = items[-1]  # 마지막 저장 노드 = 최종 결과 (중간 미리보기 제외)
+            q = urllib.parse.urlencode({"filename": item["filename"], "subfolder": item.get("subfolder", ""),
+                                        "type": item["type"]})
+            data = self._get(f"/view?{q}", timeout=120, raw=True)
+            if job.kind == "audio":
+                # 원본 형식 그대로 받는다 — WAV 변환 · 다듬기는 저장소의 audio_post 가 한다
+                ext = os.path.splitext(item["filename"])[1].lower() or ".flac"
+                path = os.path.join(job.out_dir, f"variant_{i + 1:02d}.src{ext}")
+            else:
+                path = os.path.join(job.out_dir, f"variant_{i + 1:02d}.png")
             with open(path, "wb") as f:
                 f.write(data)
             paths.append(path)

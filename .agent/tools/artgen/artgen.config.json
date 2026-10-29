@@ -7,9 +7,20 @@
     "maxRounds": 3,
     "passScore": 4.0
   },
+  "audio": {
+    "python": "",
+    "providerByCategory": { "sfx": "library" },
+    "peakDbfs": -1.0,
+    "loopCrossfadeMs": 250,
+    "fadeInMs": 5,
+    "fadeOutMs": 30,
+    "trimLeadingSilence": true,
+    "timeoutSec": 300
+  },
   "providers": {
     "mock": {},
     "manual": { "inboxDir": "production/artgen/_inbox" },
+    "library": { "dir": "art-source/sound-library", "maxOverRatio": 1.5 },
     "comfyui": {
       "url": "http://127.0.0.1:8188",
       "graph": "sdxl",
@@ -33,7 +44,12 @@
       "sampler": "dpmpp_2m",
       "scheduler": "karras",
       "genArea": 1048576,
-      "timeoutSec": 600
+      "timeoutSec": 600,
+      "audioGraphByCategory": { "sfx": "stable-audio", "music": "ace-step-1.5", "ambience": "ace-step-1.5" },
+      "audioGraphs": {
+        "ace-step-1.5": { "checkpoint": "ace_step_1.5_turbo_aio.safetensors", "steps": 8, "cfg": 1 },
+        "stable-audio": { "checkpoint": "stable_audio_3_small_sfx.safetensors", "clip": "t5gemma_b_b_ul2.safetensors", "steps": 8, "cfg": 1 }
+      }
     },
     "command": {
       "argv": [],

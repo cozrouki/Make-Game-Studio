@@ -1,6 +1,7 @@
 """생성 요청(artgen-request/1) 로드 · 검증 · 정규화 · 프롬프트 컴파일.
 
 외부 의존성(jsonschema) 없이 검증한다. 스키마 문서: schema/request.schema.json
+category 로 종류가 갈린다 — 이미지(sprite · icon · …)와 오디오(sfx · music · ambience).
 """
 import hashlib
 import json
@@ -10,8 +11,16 @@ from . import SCHEMA_ID, ArtgenError
 
 ASSET_ID_RE = re.compile(r"^ASSET-\d{3,}$")
 HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
-CATEGORIES = {"sprite", "icon", "ui", "vfx", "environment", "texture", "concept"}
+IMAGE_CATEGORIES = {"sprite", "icon", "ui", "vfx", "environment", "texture", "concept"}
+AUDIO_CATEGORIES = {"sfx", "music", "ambience"}
+CATEGORIES = IMAGE_CATEGORIES | AUDIO_CATEGORIES
 FORMATS = {"png"}
+AUDIO_FORMATS = {"wav"}
+SAMPLE_RATES = {44100, 48000}
+MAX_AUDIO_SEC = 600
+KEY_RE = re.compile(r"^[A-G](#|b)? (major|minor)$")
+TIME_SIGNATURES = {2, 3, 4, 6}
+INSTRUMENTAL = "[Instrumental]"
 
 # Unity TextureImporter 설정 기본값 — 승격 시 import-map 에 빠짐없이 기록한다
 IMPORT_DEFAULTS = {
@@ -34,6 +43,38 @@ ENUMS = {
     "wrapMode": {"Repeat", "Clamp", "Mirror"},
 }
 MAX_SIZES = {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384}
+
+# Unity AudioImporter 설정 기본값 — 카테고리마다 다르다 (짧은 효과음은 메모리에 풀어 두고, 음악은 스트리밍)
+AUDIO_IMPORT_DEFAULTS = {
+    "sfx": {"loadType": "DecompressOnLoad", "compressionFormat": "ADPCM", "quality": 1.0,
+            "forceToMono": True, "loadInBackground": False, "preloadAudioData": True},
+    "music": {"loadType": "Streaming", "compressionFormat": "Vorbis", "quality": 0.7,
+              "forceToMono": False, "loadInBackground": True, "preloadAudioData": False},
+    "ambience": {"loadType": "CompressedInMemory", "compressionFormat": "Vorbis", "quality": 0.6,
+                 "forceToMono": False, "loadInBackground": True, "preloadAudioData": True},
+}
+AUDIO_ENUMS = {
+    "loadType": {"DecompressOnLoad", "CompressedInMemory", "Streaming"},
+    "compressionFormat": {"PCM", "Vorbis", "ADPCM"},
+}
+# 카테고리별 출력 기본값 — 효과음은 모노 · 한 번 재생, 음악 · 환경음은 스테레오 · 루프
+AUDIO_OUTPUT_DEFAULTS = {
+    "sfx": {"loop": False, "channels": 1},
+    "music": {"loop": True, "channels": 2},
+    "ambience": {"loop": True, "channels": 2},
+}
+
+
+def kind_of(req):
+    """'audio' | 'image' — category 로 정한다."""
+    return "audio" if req.get("category") in AUDIO_CATEGORIES else "image"
+
+
+def import_defaults(req):
+    """요청 종류에 맞는 Unity 임포트 기본값."""
+    if kind_of(req) == "audio":
+        return dict(AUDIO_IMPORT_DEFAULTS[req["category"]])
+    return dict(IMPORT_DEFAULTS)
 
 
 def load_request(path):
@@ -79,10 +120,14 @@ def validate_request(req):
         for key in ("composition", "lighting"):
             if key in p and not isinstance(p[key], str):
                 e.append(f"prompt.{key} 는 문자열")
+        if kind_of(req) == "audio":
+            e += _validate_audio_prompt(p)
 
     o = req.get("output")
     if not isinstance(o, dict):
         e.append("output 객체 필수")
+    elif kind_of(req) == "audio":
+        e += _validate_audio_output(o)
     else:
         for key in ("width", "height"):
             v = o.get(key)
@@ -106,11 +151,15 @@ def validate_request(req):
             if dest is not None:
                 if not isinstance(dest, str) or not dest.startswith("Assets/") or ".." in dest.split("/"):
                     e.append("unity.dest 는 'Assets/' 로 시작하는 상대경로 ('..' 금지)")
-                elif not dest.lower().endswith(".png"):
+                elif kind_of(req) == "audio" and not dest.lower().endswith(".wav"):
+                    e.append("unity.dest 는 .wav 로 끝나야 함 (오디오)")
+                elif kind_of(req) == "image" and not dest.lower().endswith(".png"):
                     e.append("unity.dest 는 .png 로 끝나야 함")
             imp = u.get("import", {})
             if not isinstance(imp, dict):
                 e.append("unity.import 는 객체")
+            elif kind_of(req) == "audio":
+                e += _validate_audio_import(imp)
             else:
                 for k, v in imp.items():
                     if k not in IMPORT_DEFAULTS:
@@ -133,6 +182,59 @@ def validate_request(req):
     return e
 
 
+def _validate_audio_prompt(p):
+    e = []
+    if p.get("palette"):
+        e.append("prompt.palette 는 이미지 전용 (오디오 요청에서 빼기)")
+    if "tempo" in p and (not isinstance(p["tempo"], int) or isinstance(p["tempo"], bool) or not (30 <= p["tempo"] <= 300)):
+        e.append("prompt.tempo 는 30~300 정수 (BPM)")
+    if "key" in p and (not isinstance(p["key"], str) or not KEY_RE.match(p["key"])):
+        e.append("prompt.key 는 'E minor' · 'F# major' 형식")
+    if "timeSignature" in p and p["timeSignature"] not in TIME_SIGNATURES:
+        e.append(f"prompt.timeSignature 는 {sorted(TIME_SIGNATURES)} 중 하나")
+    if "lyrics" in p and not isinstance(p["lyrics"], str):
+        e.append(f"prompt.lyrics 는 문자열 (생략하면 {INSTRUMENTAL})")
+    return e
+
+
+def _validate_audio_output(o):
+    e = []
+    d = o.get("durationSec")
+    if not isinstance(d, (int, float)) or isinstance(d, bool) or not (0.1 <= d <= MAX_AUDIO_SEC):
+        e.append(f"output.durationSec 는 0.1~{MAX_AUDIO_SEC} 숫자 (오디오 필수)")
+    if o.get("format", "wav") not in AUDIO_FORMATS:
+        e.append(f"output.format 은 {sorted(AUDIO_FORMATS)} 중 하나 (오디오)")
+    if "channels" in o and o["channels"] not in (1, 2):
+        e.append("output.channels 는 1 또는 2")
+    if "sampleRate" in o and o["sampleRate"] not in SAMPLE_RATES:
+        e.append(f"output.sampleRate 는 {sorted(SAMPLE_RATES)} 중 하나")
+    if "loop" in o and not isinstance(o["loop"], bool):
+        e.append("output.loop 는 bool")
+    if "variants" in o and (not isinstance(o["variants"], int) or not (1 <= o["variants"] <= 16)):
+        e.append("output.variants 는 1~16 정수")
+    if "seed" in o and o["seed"] is not None and (not isinstance(o["seed"], int) or o["seed"] < 0):
+        e.append("output.seed 는 0 이상 정수 또는 null")
+    for key in ("width", "height", "transparent"):
+        if key in o:
+            e.append(f"output.{key} 는 이미지 전용 (오디오 요청에서 빼기)")
+    return e
+
+
+def _validate_audio_import(imp):
+    e = []
+    known = AUDIO_IMPORT_DEFAULTS["sfx"]
+    for k, v in imp.items():
+        if k not in known:
+            e.append(f"unity.import.{k} 는 알 수 없는 키 (오디오 허용: {sorted(known)})")
+        elif k in AUDIO_ENUMS and v not in AUDIO_ENUMS[k]:
+            e.append(f"unity.import.{k} 는 {sorted(AUDIO_ENUMS[k])} 중 하나")
+        elif k == "quality" and (not isinstance(v, (int, float)) or isinstance(v, bool) or not (0.01 <= v <= 1.0)):
+            e.append("unity.import.quality 는 0.01~1.0")
+        elif isinstance(known[k], bool) and not isinstance(v, bool):
+            e.append(f"unity.import.{k} 는 bool")
+    return e
+
+
 def normalize_request(req):
     req = json.loads(json.dumps(req))  # 깊은 복사
     p = req["prompt"]
@@ -141,9 +243,17 @@ def normalize_request(req):
     p.setdefault("composition", "")
     p.setdefault("lighting", "")
     o = req["output"]
-    o.setdefault("format", "png")
-    o.setdefault("transparent", False)
     o.setdefault("seed", None)
+    if kind_of(req) == "audio":
+        for k, v in AUDIO_OUTPUT_DEFAULTS[req["category"]].items():
+            o.setdefault(k, v)
+        o.setdefault("format", "wav")
+        o.setdefault("sampleRate", 44100)
+        o["durationSec"] = float(o["durationSec"])
+        p.setdefault("lyrics", INSTRUMENTAL)
+    else:
+        o.setdefault("format", "png")
+        o.setdefault("transparent", False)
     req.setdefault("references", [])
     req.setdefault("providerOptions", {})
     req.setdefault("history", [])
@@ -159,6 +269,8 @@ def request_hash(req):
 
 def compile_prompt(req):
     """백엔드 중립 텍스트 프롬프트. 구조화 필드를 직접 쓰는 어댑터는 무시해도 된다."""
+    if kind_of(req) == "audio":
+        return _compile_audio_prompt(req)
     p = req["prompt"]
     o = req["output"]
     parts = [p["subject"].strip()]
@@ -174,3 +286,22 @@ def compile_prompt(req):
         parts.append("isolated on transparent background")
     negative = list(p["negative"])
     return {"positive": ", ".join(parts), "negative": ", ".join(negative)}
+
+
+def _compile_audio_prompt(req):
+    """오디오 — 묘사 · 스타일 태그 · 템포/조성 · 루프 여부를 한 줄로. 모델별 구조화 입력(BPM · 조성 · 가사)은
+    어댑터가 request.prompt 에서 직접 읽는다."""
+    p = req["prompt"]
+    o = req["output"]
+    parts = [p["subject"].strip()]
+    if p["style"]:
+        parts.append(", ".join(p["style"]))
+    if p.get("tempo"):
+        parts.append(f"{p['tempo']} BPM")
+    if p.get("key"):
+        parts.append(p["key"])
+    if p["composition"]:
+        parts.append(p["composition"].strip())
+    if o["loop"]:
+        parts.append("seamless loop")
+    return {"positive": ", ".join(parts), "negative": ", ".join(p["negative"])}

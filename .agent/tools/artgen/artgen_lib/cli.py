@@ -64,8 +64,10 @@ def cmd_generate(args, cfg):
                 f" · seeds {run['seeds']}\n→ {run['outDir']}\n[positive] {run['prompt']['positive']}"
                 f"\n[negative] {run['prompt']['negative']}")
     else:
-        files = "\n".join(f"  {run['outDir']}/{o['file']}  {o['width']}x{o['height']} alpha={o['alpha']} seed={o['seed']}"
-                          for o in run["outputs"])
+        files = "\n".join(f"  {run['outDir']}/{o['file']}  " + (
+            f"{o['durationSec']}s {o['sampleRate']}Hz ch={o['channels']} peak={o.get('peakDbfs')}dBFS"
+            if run.get("kind") == "audio" else f"{o['width']}x{o['height']} alpha={o['alpha']}") + f" seed={o['seed']}"
+            for o in run["outputs"])
         warn = "".join(f"\n  ⚠ {w}" for w in run["warnings"])
         note = "\n  (placeholder 결과 — 시각 검수 생략, 기술 검사만)" if run["placeholder"] else ""
         text = f"{run['assetId']} {run['version']} · provider={run['provider']}\n{files}{warn}{note}"
@@ -102,6 +104,39 @@ def cmd_status(args, cfg):
              + (f"  → {s['promoted']['dest']}" if s.get("promoted") else "") for s in states]
     _print(args, {"assets": states}, "\n".join(lines) or "(생성 기록 없음)")
     return 0
+
+
+def cmd_library(args, cfg):
+    from . import library as lib
+    from .providers.library import library_dir
+
+    root = library_dir(cfg.get("providers", {}).get("library", {}), args.root)
+    store = Store(args.root, cfg)
+    if args.action == "add":
+        if not args.target or not args.name:
+            raise ArtgenError("library add <zip|폴더> --name <팩> --license <SPDX> [--url ..] [--attribution ..]")
+        meta = lib.add_pack(root, args.target, args.name, args.license, args.url or "", args.attribution or "")
+        index = lib.build_index(root, _optional_audio_python(store))
+        n = sum(1 for e in index["entries"] if e["pack"] == args.name)
+        _print(args, {"pack": meta, "files": n}, f"{args.name} 등록 ({meta['license']}) — 오디오 {n}개 · 색인 갱신")
+    elif args.action == "index":
+        index = lib.build_index(root, _optional_audio_python(store))
+        missing = sum(1 for e in index["entries"] if "durationSec" not in e)
+        note = f"\n  ⚠ 길이 미측정 {missing}개 — audio.python(PyAV) 설정 후 다시 index" if missing else ""
+        _print(args, {"packs": index["packs"], "files": len(index["entries"]), "missingDuration": missing},
+               f"팩 {len(index['packs'])}개 · 오디오 {len(index['entries'])}개 색인{note}")
+    elif args.action == "search":
+        hits = lib.search(lib.load_index(root), args.target or "", args.max_duration, args.limit)
+        text = "\n".join(f"{h['score']:>4} {h.get('durationSec', '?'):>6}s  {h['file']}" for h in hits)
+        _print(args, {"query": args.target, "hits": hits}, text or "(결과 없음 — 다른 단어로)")
+    return 0
+
+
+def _optional_audio_python(store):
+    try:
+        return store._audio_python()
+    except ArtgenError:
+        return None  # WAV 만 길이를 잰다 — 색인 결과에 미측정 수를 알린다
 
 
 def build_parser():
@@ -141,11 +176,22 @@ def build_parser():
 
     p = sub.add_parser("status", help="저장소 상태")
     p.add_argument("asset_id", nargs="?")
+
+    p = sub.add_parser("library", help="사운드 라이브러리 — add <zip|폴더> · index · search <질의>")
+    p.add_argument("action", choices=("add", "index", "search"))
+    p.add_argument("target", nargs="?", help="add: zip · 폴더 / search: 질의")
+    p.add_argument("--name", help="add: 팩 이름 (소문자 · 숫자 · - )")
+    p.add_argument("--license", help="add: 라이선스 SPDX (예: CC0-1.0) — 필수")
+    p.add_argument("--url", help="add: 출처 URL")
+    p.add_argument("--attribution", help="add: 표기 문구 (필요한 라이선스만)")
+    p.add_argument("--max-duration", type=float, help="search: 길이 상한(초)")
+    p.add_argument("--limit", type=int, default=20)
     return ap
 
 
 COMMANDS = {"providers": cmd_providers, "validate": cmd_validate, "prompt": cmd_prompt, "generate": cmd_generate,
-            "select": cmd_select, "reject": cmd_reject, "promote": cmd_promote, "status": cmd_status}
+            "select": cmd_select, "reject": cmd_reject, "promote": cmd_promote, "status": cmd_status,
+            "library": cmd_library}
 
 
 def main(argv=None):

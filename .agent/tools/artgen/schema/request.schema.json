@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "artgen-request/1",
   "title": "artgen 생성 요청",
-  "description": "에셋 1개의 생성 요청. 백엔드 중립 — 어떤 백엔드든 이 구조를 받는다. 검증 정본은 artgen_lib/request.py (이 파일은 문서·에디터 자동완성용).",
+  "description": "에셋 1개의 생성 요청. 백엔드 중립 — 어떤 백엔드든 이 구조를 받는다. 검증 정본은 artgen_lib/request.py (이 파일은 문서·에디터 자동완성용). category 가 sfx · music · ambience 면 오디오 요청이다 — output 은 durationSec · loop · channels · sampleRate, prompt 는 tempo · key · timeSignature · lyrics 를 쓰고, unity.dest 는 .wav, unity.import 는 AudioImporter 키(loadType · compressionFormat · quality · forceToMono · loadInBackground · preloadAudioData)를 쓴다. 예: example-audio-request.json",
   "type": "object",
   "required": ["schema", "assetId", "name", "category", "prompt", "output"],
   "properties": {
     "schema": { "const": "artgen-request/1" },
     "assetId": { "type": "string", "pattern": "^ASSET-\\d{3,}$", "description": "design/assets/asset-manifest.md 의 ID" },
     "name": { "type": "string", "minLength": 1 },
-    "category": { "enum": ["sprite", "icon", "ui", "vfx", "environment", "texture", "concept"] },
+    "category": { "enum": ["sprite", "icon", "ui", "vfx", "environment", "texture", "concept", "sfx", "music", "ambience"] },
     "game": { "type": "string", "description": "게임 태그 (AGENTS.md §6). 단일 게임이면 생략" },
     "source": {
       "type": "object",
@@ -29,17 +29,25 @@
         "palette": { "type": "array", "items": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }, "description": "아트 바이블 Color System 에서 이 에셋의 의미 색" },
         "composition": { "type": "string" },
         "lighting": { "type": "string" },
-        "negative": { "type": "array", "items": { "type": "string" } }
+        "negative": { "type": "array", "items": { "type": "string" } },
+        "tempo": { "type": "integer", "minimum": 30, "maximum": 300, "description": "오디오: BPM" },
+        "key": { "type": "string", "pattern": "^[A-G](#|b)? (major|minor)$", "description": "오디오: 조성 (예: 'E minor')" },
+        "timeSignature": { "enum": [2, 3, 4, 6], "description": "오디오: 박자" },
+        "lyrics": { "type": "string", "description": "오디오: 가사. 생략 = [Instrumental]" }
       }
     },
     "output": {
       "type": "object",
-      "required": ["width", "height"],
+      "description": "이미지는 width · height 필수, 오디오는 durationSec 필수",
       "properties": {
         "width": { "type": "integer", "minimum": 16, "maximum": 8192 },
         "height": { "type": "integer", "minimum": 16, "maximum": 8192 },
-        "format": { "enum": ["png"], "default": "png" },
+        "format": { "enum": ["png", "wav"], "description": "이미지 png · 오디오 wav (기본값이 맞으니 보통 생략)" },
         "transparent": { "type": "boolean", "default": false },
+        "durationSec": { "type": "number", "minimum": 0.1, "maximum": 600, "description": "오디오: 길이(초)" },
+        "loop": { "type": "boolean", "description": "오디오: 이음매 없는 루프로 다듬기 (기본 sfx false · music · ambience true)" },
+        "channels": { "enum": [1, 2], "description": "오디오: 기본 sfx 1 · 그 외 2" },
+        "sampleRate": { "enum": [44100, 48000], "default": 44100 },
         "variants": { "type": "integer", "minimum": 1, "maximum": 16, "description": "생략 시 config.defaults.variants" },
         "seed": { "type": ["integer", "null"], "minimum": 0, "description": "null = 무작위 (run.json 에 기록되어 재현 가능)" }
       }
@@ -48,7 +56,7 @@
     "unity": {
       "type": "object",
       "properties": {
-        "dest": { "type": "string", "pattern": "^Assets/.+\\.png$", "description": "승격 위치 — technical-preferences.md 네이밍 규칙 준수" },
+        "dest": { "type": "string", "pattern": "^Assets/.+\\.(png|wav)$", "description": "승격 위치 — technical-preferences.md 네이밍 규칙 준수 (이미지 .png · 오디오 .wav)" },
         "import": {
           "type": "object",
           "additionalProperties": false,
@@ -62,7 +70,13 @@
             "mipmaps": { "type": "boolean" },
             "wrapMode": { "enum": ["Repeat", "Clamp", "Mirror"] },
             "alphaIsTransparency": { "type": "boolean" },
-            "sRGB": { "type": "boolean" }
+            "sRGB": { "type": "boolean" },
+            "loadType": { "enum": ["DecompressOnLoad", "CompressedInMemory", "Streaming"], "description": "오디오" },
+            "compressionFormat": { "enum": ["PCM", "Vorbis", "ADPCM"], "description": "오디오" },
+            "quality": { "type": "number", "minimum": 0.01, "maximum": 1.0, "description": "오디오 (Vorbis 품질)" },
+            "forceToMono": { "type": "boolean", "description": "오디오" },
+            "loadInBackground": { "type": "boolean", "description": "오디오" },
+            "preloadAudioData": { "type": "boolean", "description": "오디오" }
           }
         }
       }
