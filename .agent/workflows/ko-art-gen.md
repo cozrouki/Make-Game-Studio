@@ -13,13 +13,13 @@ CLI: `python .agent/tools/artgen/artgen.py --json <명령>` (Unity 프로젝트 
 
 **0. 사전 점검** — `design/art/art-bible.md`, `design/assets/asset-manifest.md`, 스펙 파일 중 하나라도 없으면 중단하고 `/art-bible`·`/asset-spec` 을 안내한다. `artgen providers` 결과를 보여 준다. 활성 provider 가 `mock` 이면 "백엔드 미정 — 자리표시 이미지로 흐름만 검증" 이라고 알린다.
 
-**1. 대상 · 컨텍스트** — 인수로 에셋을 정한다 (Audio·3D 는 범위 밖). 아트 바이블(Visual Identity·Shape Language·Color System·금지 사항·§8), `technical-preferences.md`(네이밍·예산), `AGENTS.md` §6(게임 폴더)을 읽는다.
+**1. 대상 · 컨텍스트** — 인수로 에셋을 정한다 (3D 는 범위 밖. Audio 는 category sfx · music · ambience 로 만들고 기준 문서는 `design/audio/audio-direction.md` — README §오디오). 아트 바이블(Visual Identity·Shape Language·Color System·금지 사항·§8), `technical-preferences.md`(네이밍·예산), `AGENTS.md` §6(게임 폴더)을 읽는다.
 
 **2. 생성 요청** — `design/assets/requests/ASSET-NNN.json` 을 `artgen-request/1` 형식으로 작성한다 (예시 `.agent/tools/artgen/schema/example-request.json`). 스타일 토큰은 `design/assets/requests/_style-tokens.json` 에 한 번 정하고 모든 에셋이 공유한다. `artgen validate` → `artgen prompt` 로 미리 보고 사용자 확인을 받는다.
 
 **3. 생성** — `artgen generate <요청>`. 오류는 원문 그대로 보고하고 해당 에셋을 중단한다. 매니페스트 상태를 `In Progress` 로 바꾼다.
 
-**4. 검수** — 각 PNG 를 직접 보고 README §검수 루브릭 5축(스타일·형태·색·판독성·기술)으로 1~5점을 매긴다. 점수마다 아트 바이블 근거를 붙이고 `production/artgen/ASSET-NNN/review.md` 에 기록한다. 미달이면 subject·composition·negative 만 고친다 (style 토큰은 고정). 수정 내역을 요청 `history` 에 남기고 3으로 돌아간다 (최대 maxRounds). mock 결과는 기술 항목만 본다.
+**4. 검수** — 각 PNG 를 직접 보고 README §검수 루브릭 5축(스타일·형태·색·판독성·기술)으로 1~5점을 매긴다. 점수마다 아트 바이블 근거를 붙이고 `production/artgen/ASSET-NNN/review.md` 에 기록한다. 미달이면 subject·composition·negative 만 고친다 (style 토큰은 고정). 수정 내역을 요청 `history` 에 남기고 3으로 돌아간다 (최대 maxRounds). mock 결과는 기술 항목만 본다. 오디오는 들을 수 없으므로 `run.json` 의 기술 지표 · 경고로만 채점하고 청취 판정은 사람에게 넘긴다 (review.md 에 "청취 대기").
 
 **5. 선택** — 추천 변형과 점수를 보여 주고 사용자에게 고르게 한다 (승격 / 다른 변형 / 재생성 / 반려). 결과에 따라 `artgen select` 또는 `artgen reject --reason` 을 실행한다.
 

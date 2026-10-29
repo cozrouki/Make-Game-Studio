@@ -14,7 +14,7 @@ ComfyUI API 호출 스크립트, 사내 생성 서버 CLI, 상용 API 래퍼 등
     }
 
 치환 토큰: {job_file} {out_dir} {prompt} {negative} {width} {height} {variants} {seed} {asset_id}
-외부 프로그램 계약: {out_dir} 에 PNG 를 쓴다. 파일명 정렬 순서 = 변형 순서. 종료 코드 0 = 성공.
+외부 프로그램 계약: {out_dir} 에 PNG (오디오 요청이면 16bit WAV)를 쓴다. 파일명 정렬 순서 = 변형 순서. 종료 코드 0 = 성공.
 job_file 은 base.Job 의 JSON 직렬화 (seeds 배열 포함) — 변형별 시드가 필요하면 그것을 읽는다.
 """
 import glob
@@ -24,12 +24,13 @@ import subprocess
 from .. import ArtgenError
 from .base import Provider
 
-TOKENS = ("job_file", "out_dir", "prompt", "negative", "width", "height", "variants", "seed", "asset_id")
+TOKENS = ("job_file", "out_dir", "prompt", "negative", "width", "height", "variants", "seed", "asset_id", "duration")
 
 
 class CommandProvider(Provider):
     name = "command"
     description = "외부 프로그램 실행 (argv 템플릿) — 스크립트/CLI 형태의 어떤 백엔드든 연결"
+    kinds = ("image", "audio")
 
     def __init__(self, options):
         super().__init__(options)
@@ -52,7 +53,7 @@ class CommandProvider(Provider):
         values = {
             "job_file": job.job_file, "out_dir": job.out_dir, "prompt": job.positive, "negative": job.negative,
             "width": str(job.width), "height": str(job.height), "variants": str(job.variants),
-            "seed": str(job.seeds[0]), "asset_id": job.asset_id,
+            "seed": str(job.seeds[0]), "asset_id": job.asset_id, "duration": str(job.duration),
         }
         argv = [_substitute(a, values) for a in self.options["argv"]]
         env = dict(os.environ)
@@ -69,9 +70,10 @@ class CommandProvider(Provider):
         if proc.returncode != 0:
             tail = (proc.stderr or proc.stdout).strip()[-800:]
             raise ArtgenError(f"외부 백엔드 실패 (exit {proc.returncode}) — command.log 참고\n{tail}")
-        paths = sorted(glob.glob(os.path.join(job.out_dir, "*.png")))
+        ext = "wav" if job.kind == "audio" else "png"
+        paths = sorted(glob.glob(os.path.join(job.out_dir, f"*.{ext}")))
         if not paths:
-            raise ArtgenError("외부 백엔드가 PNG 를 하나도 쓰지 않음 — {out_dir} 계약 확인")
+            raise ArtgenError(f"외부 백엔드가 {ext.upper()} 를 하나도 쓰지 않음 — {{out_dir}} 계약 확인")
         return paths
 
 

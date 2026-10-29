@@ -1,4 +1,4 @@
-// artgen 파이프라인 — 승격된 생성 이미지에 TextureImporter 설정을 자동 적용한다.
+// artgen 파이프라인 — 승격된 생성 이미지에 TextureImporter, 생성 오디오에 AudioImporter 설정을 자동 적용한다.
 // 설정 출처: <프로젝트 루트>/production/artgen/import-map.json (artgen.py promote 가 기록)
 // 설계 문서: .agent/tools/artgen/README.md §Unity 임포트
 //
@@ -28,6 +28,7 @@ namespace ArtGen.Editor
         {
             public string path;
             public string assetId;
+            public string kind;          // "image" | "audio" — 비어 있으면 image (구버전 맵)
             public string sourceSha256;
             public string textureType;
             public string spriteMode;
@@ -39,6 +40,16 @@ namespace ArtGen.Editor
             public string wrapMode;
             public bool alphaIsTransparency;
             public bool sRGB;
+
+            // 오디오 — artgen_lib/request.py AUDIO_IMPORT_DEFAULTS 와 이름을 맞출 것
+            public string loadType;
+            public string compressionFormat;
+            public float quality;
+            public bool forceToMono;
+            public bool loadInBackground;
+            public bool preloadAudioData;
+
+            public bool IsAudio => string.Equals(kind, "audio", StringComparison.OrdinalIgnoreCase);
         }
 
         private static Dictionary<string, Entry> s_entries;
@@ -47,7 +58,7 @@ namespace ArtGen.Editor
         private void OnPreprocessTexture()
         {
             Entry entry = Find(assetPath);
-            if (entry == null)
+            if (entry == null || entry.IsAudio)
             {
                 return;
             }
@@ -71,6 +82,30 @@ namespace ArtGen.Editor
             }
 
             importer.textureCompression = ParseCompression(entry.compression, entry);
+        }
+
+        private void OnPreprocessAudio()
+        {
+            Entry entry = Find(assetPath);
+            if (entry == null || !entry.IsAudio)
+            {
+                return;
+            }
+
+            var importer = (AudioImporter)assetImporter;
+            importer.forceToMono = entry.forceToMono;
+            importer.loadInBackground = entry.loadInBackground;
+
+            AudioImporterSampleSettings settings = importer.defaultSampleSettings;
+            settings.loadType = ParseEnum(entry.loadType, AudioClipLoadType.DecompressOnLoad, entry);
+            settings.compressionFormat = ParseEnum(entry.compressionFormat, AudioCompressionFormat.Vorbis, entry);
+            settings.quality = entry.quality > 0f ? Mathf.Clamp01(entry.quality) : 0.7f;
+#if UNITY_2022_2_OR_NEWER
+            settings.preloadAudioData = entry.preloadAudioData;
+#else
+            importer.preloadAudioData = entry.preloadAudioData;
+#endif
+            importer.defaultSampleSettings = settings;
         }
 
         private static Entry Find(string path)

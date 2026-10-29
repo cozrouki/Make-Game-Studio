@@ -119,6 +119,68 @@ python .agent/tools/artgen/artgen.py status   [ASSET-001]
 - 단일 이펙트 · 아이콘은 바로 쓸 만한 품질. 긴 프롬프트(CLIP 77 토큰 초과) · 격자 시트 · 엄격한 시점 · 정확한 팔레트는 기본 SDXL 로 맞추기 어렵다 → 요청을 단일 이미지로 쪼개고 사용자 워크플로로 보강한다.
 - Flux dev 는 비상업 라이선스라 출시용으로 쓰지 않는다.
 
+## 오디오 — 효과음 · 음악 · 환경음
+
+`category` 가 `sfx` · `music` · `ambience` 면 오디오 요청이다. 같은 CLI(`generate` → `select` → `promote`)와 같은 저장소를 쓰고, 결과는 **16bit WAV** 다. 예시: `schema/example-audio-request.json`
+
+| 필드 | 뜻 | 기본값 |
+|---|---|---|
+| `output.durationSec` | 길이(초, 필수) | — |
+| `output.loop` | 이음매 없는 루프로 다듬기 | sfx `false` · music · ambience `true` |
+| `output.channels` · `sampleRate` | 1/2 · 44100/48000 | sfx 1 · 그 외 2 · 44100 |
+| `prompt.subject` · `style` · `negative` | 소리 묘사 · 장르 · 악기 태그 · 피할 것 | — |
+| `prompt.tempo` · `key` · `timeSignature` · `lyrics` | BPM · 조성(`E minor`) · 박자 · 가사 (음악) | 120 · C major · 4 · `[Instrumental]` |
+| `unity.dest` | `.wav` 경로 | — |
+| `unity.import` | `loadType` · `compressionFormat` · `quality` · `forceToMono` · `loadInBackground` · `preloadAudioData` | 아래 표 |
+
+| 카테고리 | Unity 임포트 기본값 | 이유 |
+|---|---|---|
+| `sfx` | DecompressOnLoad · ADPCM · 모노 · 미리 로드 | 짧고 자주 재생 — 지연 없이 |
+| `music` | Streaming · Vorbis 0.7 · 백그라운드 로드 | 길다 — 메모리에 다 올리지 않는다 |
+| `ambience` | CompressedInMemory · Vorbis 0.6 | 중간 길이 루프 |
+
+**출처** — 음악 · 환경음은 로컬 ComfyUI 로 **생성**하고, 효과음은 기본으로 **CC0 라이브러리에서 고른다** (`audio.providerByCategory`: `{"sfx": "library"}` · `--provider` 가 우선). 효과음 생성 모델(Stable Audio)은 상업 이용 조건이 있어 기본에서 뺐다.
+
+**생성 흐름** (`comfyui`): 오디오 그래프 → FLAC 원본(`variant_01.src.flac`) → **후처리 `audio_post.py`** → `variant_01.wav` → 기술 검사.
+- ComfyUI 는 FLAC · MP3 · Opus 로만 저장하는데 Unity 는 FLAC · Opus 를 임포트하지 못한다. 그래서 후처리가 WAV 로 바꾼다.
+- 후처리 순서: 디코드 → 리샘플 · 채널 변환 → (효과음) 앞 무음 제거 → 길이 맞춤 → **루프면 꼬리를 머리에 크로스페이드**(`loopCrossfadeMs`), 아니면 페이드 인 · 아웃 → 피크 정규화(`peakDbfs`, 기본 -1 dBFS).
+- 후처리는 PyAV + numpy 가 필요하다. `artgen.config.local.json` 의 `audio.python` 에 그 둘이 있는 인터프리터를 지정한다. ComfyUI 포터블이면 `python_embeded/python.exe` 가 이미 갖추고 있다. 미설정이면 **GPU 를 쓰기 전에** 멈춘다.
+
+```json
+{ "provider": "comfyui", "audio": { "python": "D:/AI/ComfyUI_windows_portable/python_embeded/python.exe" } }
+```
+
+**기술 검사** (`run.json` 의 `outputs[]` · `warnings`, 16bit PCM): 길이 ±5% · 샘플레이트 · 채널 · 클리핑 0.1% 초과 · 피크 -20 dBFS 미만(너무 작음) · 효과음 앞 무음 0.2초 초과 · 루프 이음매 점프 0.1 초과. 경고는 차단하지 않고 검수(`/ko-art-gen`)에 넘긴다.
+
+**오디오 그래프** (`providers.comfyui`, ComfyUI 공식 템플릿 구성)
+
+| 그래프 | 용도 (기본 매핑) | 모델 · 위치 | 라이선스 |
+|---|---|---|---|
+| `ace-step-1.5` | music · ambience | `ace_step_1.5_turbo_aio.safetensors` (10.0GB, [Comfy-Org/ACE-Step-1.5](https://huggingface.co/Comfy-Org/ACE-Step-1.5)) → `models/checkpoints/` | Apache-2.0 리패키지 (원본 MIT) — 상업 가능 |
+| `stable-audio` | (선택) sfx — 기본은 라이브러리 | `stable_audio_3_small_sfx.safetensors` (2.3GB) + `t5gemma_b_b_ul2.safetensors` ([Comfy-Org/stable-audio-3](https://huggingface.co/Comfy-Org/stable-audio-3)) | **Stability AI 라이선스 — 받기 전에 사용자가 조건 확인** (원본 저장소 게이트). Stable Audio Open 1.0 도 같은 그래프로 쓸 수 있다 (`audioGraphs.stable-audio` 의 checkpoint · clip · steps 50 · cfg 4.98 · dpmpp_3m_sde_gpu · exponential) |
+
+- 매핑 바꾸기: `audioGraphByCategory`, 요청별로는 `providerOptions.comfyui.audioGraph`. Stable Audio 를 쓰기로 했다면 `audio.providerByCategory` 에서 `sfx` 를 빼고 모델을 받는다.
+- 그래프는 요청 길이보다 `tailSec`(ACE 1초 · Stable Audio 0.5초) 더 생성한다 — 후처리의 크로스페이드 · 자르기 여유분.
+- **루프는 `loopGenRatio` 배(ACE 1.5 · Stable Audio 1.25)로 길게 생성**하고, 후처리가 음량이 가장 고르게 유지되는 구간을 골라 자른다(`post.loopStartSec`). 음악 모델은 생성 길이 안에 도입 · 끝맺음을 넣기 때문이다 — 실측: 30초를 그대로 만들면 20초부터 페이드아웃, 끝 2초 무음. 검사는 루프의 앞 · 뒤 무음 0.5초 초과를 "반복 시 공백" 으로 경고한다 (무음끼리 이어지면 이음매 점프는 0 이라 따로 본다).
+- 사용자 워크플로(`workflow`)로 오디오를 만들 때는 `{{duration}}` 토큰을 쓸 수 있고, 저장 노드는 `SaveAudioAdvanced`(FLAC) 를 둔다.
+
+**효과음 라이브러리 — `library` 어댑터** (생성 없음)
+
+라이선스가 확인된 기성 효과음 팩을 등록해 두고 고른다. 기본 팩은 [Kenney](https://kenney.nl/assets/category:Audio) 오디오 8종(CC0, 611개, 약 60MB — interface · ui · impact · digital · rpg · casino · sci-fi · music-jingles)이고, `python .agent/tools/setup/prereq.py install sound-library` 가 받아 등록 · 색인한다.
+
+```bash
+artgen library search "button click" --max-duration 1      # 후보 (점수 · 길이 · 파일)
+artgen library add <zip|폴더> --name <팩> --license CC0-1.0 --url <출처>   # 다른 팩 추가 — 라이선스 필수
+artgen library index                                          # 색인 다시 만들기 (길이 측정에 audio.python 사용)
+```
+
+- 요청의 `providerOptions.library.files` 에 검색 결과의 `file` 값을 적으면 그 파일들이 변형이 된다 (art 세션이 이름을 보고 고르는 방식 — 권장). 비우면 `subject` + `style` 로 검색한 상위 `variants` 개를 쓴다.
+- 후처리는 생성물과 같다 (WAV · 모노 · 앞 무음 제거 · -1 dBFS). 단 **요청 길이는 상한**이다 — 기성 소리는 원래 길이를 유지한다(`duration_is_max`).
+- 출처 · 라이선스는 변형마다 `run.json` 의 `outputs[].source` 에, 승격하면 **`production/artgen/credits.json`** 에 남는다. 출시 전 라이선스 점검 근거다.
+- 라이브러리 폴더(`providers.library.dir`, 기본 `art-source/sound-library`)는 git 에 넣지 않는다 — 원본은 다시 받을 수 있고, 쓰는 소리는 승격된 WAV 로 남는다. 여러 프로젝트가 공유하려면 절대경로로 둔다(`prereq.py --library-dir`).
+
+**다른 어댑터**: `mock` 은 시드 기반 사인파 WAV(루프는 이음매 없음) · `manual` 은 받은함의 `*.wav` · `command` 는 외부 프로그램이 `{out_dir}` 에 16bit WAV 를 쓰는 계약이다 (`{duration}` 토큰). 이 셋은 후처리를 거치지 않는다.
+
 ## 사람 아티스트 납품 — `manual` 어댑터
 
 이미지를 생성하지 않고 **사람이 그린 PNG 를 받는다.** 검수 · 선택 · 승격 · Unity 임포트는 AI 생성물과 똑같이 처리된다. 그래서 AI 와 사람의 에셋을 한 프로젝트에서 섞어 쓸 수 있다.
@@ -199,9 +261,10 @@ python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.j
 
 - `unity/ArtGenImportPostprocessor.cs` 와 `unity/ArtGen.Editor.asmdef` 를 `Assets/ArtGen/Editor/` 에 설치한다 (Editor 전용 어셈블리, 런타임 빌드에 포함되지 않음).
 - `OnPreprocessTexture` 에서 `production/artgen/import-map.json` 의 경로가 일치하는 항목의 설정을 적용한다. 대상: textureType · spriteMode · PPU · filter · wrap · mipmaps · alphaIsTransparency · sRGB · maxSize · compression.
+- 오디오 항목(`kind: "audio"`)은 `OnPreprocessAudio` 가 적용한다. 대상: forceToMono · loadInBackground · 기본 샘플 설정(loadType · compressionFormat · quality · preloadAudioData). 루프 재생 여부는 임포트 설정이 아니라 `AudioSource.loop` 다 — dev 가 연결할 때 정한다.
 - `promote` 는 임포트 맵을 **먼저** 쓰고 그다음 파일을 복사한다. 그래서 첫 임포트부터 설정이 적용된다.
 - 설정만 바꾸고 파일이 그대로면 Unity 가 다시 임포트하지 않는다. 이때는 `promote --force` 로 다시 승격하거나 에디터에서 Reimport 한다. MCP 를 쓸 수 있으면 `manage_asset` 으로 처리한다.
-- 아직 범위 밖: 스프라이트 시트 자동 슬라이싱(`spriteMode: Multiple` 은 모드만 설정), 3D 메시·머티리얼, 오디오.
+- 아직 범위 밖: 스프라이트 시트 자동 슬라이싱(`spriteMode: Multiple` 은 모드만 설정), 3D 메시·머티리얼, 음성(TTS).
 
 ## 테스트
 
@@ -209,4 +272,4 @@ python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.j
 python -m pytest .agent/tools/artgen/tests -q
 ```
 
-외부 의존성은 없다. 표준 라이브러리만 쓰고, 테스트에만 pytest 가 필요하다.
+외부 의존성은 없다. 표준 라이브러리만 쓰고, 테스트에만 pytest 가 필요하다. 오디오 후처리 테스트 2개는 PyAV + numpy 인터프리터(`ARTGEN_TEST_AUDIO_PYTHON` 또는 ComfyUI 포터블 기본 경로)가 있을 때만 돈다.
