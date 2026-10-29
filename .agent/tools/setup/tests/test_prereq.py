@@ -169,3 +169,71 @@ def test_prereq_download_rejects_sha_mismatch(tmp_path):
         prereq.download(srv.url, str(dest), len(data), "0" * 64)
     srv.server.shutdown()
     assert not dest.exists()                                         # 손상 파일을 최종 이름으로 두지 않는다
+
+
+# ---- Android ----
+def _prefs(root, platforms_line):
+    docs = root / ".claude" / "docs"
+    docs.mkdir(parents=True, exist_ok=True)
+    (docs / "technical-preferences.md").write_text(f"## Input & Platform\n\n- **Target Platforms**: {platforms_line}\n",
+                                                   encoding="utf-8")
+
+
+def test_prereq_android_items_skip_when_not_targeted(project):
+    _prefs(project, "PC (Windows)")
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(project, roles=["dev"]))}
+    assert {rows[i]["status"] for i in ("android-module", "adb", "android-catalog")} == {"skip"}
+
+
+def test_prereq_android_target_detected_from_technical_preferences(project, tmp_path, monkeypatch):
+    # Arrange — Android 모듈 · adb 가 있는 Unity 설치, 카탈로그 미러 없음
+    _prefs(project, "iOS, Android (세로 고정)")
+    editors = tmp_path / "Unity"
+    tools = editors / "6000.3.24f1" / "Editor" / "Data" / "PlaybackEngines" / "AndroidPlayer" / "SDK" / "platform-tools"
+    tools.mkdir(parents=True)
+    (tools / ("adb.exe" if os.name == "nt" else "adb")).write_bytes(b"")
+    monkeypatch.setattr(prereq, "unity_editor_dirs", lambda: [str(editors)])
+    monkeypatch.setattr(prereq.shutil, "which", lambda name: None)
+    # Act
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(project, roles=["dev"]))}
+    # Assert
+    assert rows["android-module"]["status"] == "ok" and rows["adb"]["status"] == "ok"
+    assert rows["android-catalog"]["status"] == "missing" and "sync-catalog.py android" in rows["android-catalog"]["manual"]
+
+
+def test_prereq_platforms_flag_overrides_document(project):
+    _prefs(project, "iOS, Android")
+    ctx = _ctx(project, roles=["dev"], platforms=["ios"])
+    assert not prereq.android_target(ctx)
+    assert prereq.android_target(_ctx(project, roles=["dev"], platforms=["android"]))
+
+
+def test_prereq_missing_editor_shows_hub_link_in_manual(project, monkeypatch):
+    # 회귀: unity-editor 항목의 안내가 빈 문자열이라 unityhub:// 링크가 출력되지 않았다
+    monkeypatch.setattr(prereq, "unity_editor_dirs", lambda: [])
+    row = next(r for r in prereq.run_checks(_ctx(project, roles=["dev"])) if r["id"] == "unity-editor")
+    assert row["manual"] == "Unity Hub 로 설치: unityhub://6000.3.24f1/4e7b9b5b6244"
+
+
+# ---- 선택 항목 (graphify) ----
+def test_prereq_optional_items_not_installed_by_default(project, monkeypatch, capsys):
+    # Arrange — graphify 가 없어 자동 설치 후보가 되지만 선택 항목이다
+    monkeypatch.setattr(prereq.shutil, "which", lambda name: "uv" if name == "uv" else None)
+    ctx = _ctx(project, roles=["dev"])
+    args = type("A", (), {"items": [], "yes": True, "dry_run": True})()
+    # Act
+    prereq.cmd_install(ctx, args)
+    out = capsys.readouterr().out
+    # Assert
+    assert "graphify" not in out
+    args.items = ["graphify"]
+    prereq.cmd_install(ctx, args)
+    assert "uv tool install graphifyy" in capsys.readouterr().out   # 이름을 주면 설치 대상
+
+
+def test_prereq_graphify_warns_without_backend_none(project, monkeypatch):
+    monkeypatch.setattr(prereq.shutil, "which", lambda name: "/bin/graphify" if name == "graphify" else None)
+    monkeypatch.delenv("GRAPHIFY_BACKEND", raising=False)
+    assert prereq.c_graphify(_ctx(project))[0] == "warn"
+    monkeypatch.setenv("GRAPHIFY_BACKEND", "none")
+    assert prereq.c_graphify(_ctx(project))[0] == "ok"

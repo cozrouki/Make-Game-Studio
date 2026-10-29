@@ -137,6 +137,16 @@ their respective owners and are used for identification and descriptive purposes
 only. Their use does not imply any affiliation with or endorsement by those owners.
 ```
 
+### 8. android/skills — `android` external catalog
+
+- Source: https://github.com/android/skills (Google LLC)
+- License: **Apache-2.0** — full text in `.agent/android/LICENSE.txt` (the upstream has no NOTICE file)
+- Bundled here: 4 skills — `profilers/android-profiler`, `play/play-policy-insights`,
+  `performance/anr-audit-and-fix`, `performance/r8-analyzer` (native-app skills for Compose,
+  Wear, TV, Cars, CameraX etc. are not included). Files are unmodified, including the
+  bundled Perfetto `trace_processor` wrapper (Apache-2.0, The Android Open Source Project);
+  Korean summaries are a separate local file (`.agent/catalogs/android.ko.json`).
+
 ---
 
 ## Referenced / separately installed (NOT bundled — no redistribution)

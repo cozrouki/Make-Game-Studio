@@ -104,6 +104,8 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 | 비동기 · 구조 결정 | L2 `asynchronous-programming` · `interface-driven-development` · `advanced-design-patterns` · `command-pattern-undo` · `di-container-manager` → 아키텍처에 영향이 있으면 `/architecture-decision` |
 | GC · 메모리 · 프레임 문제 | `/ko-perf-profile` · L2 `memory-profiler-expert` · `coreclr-gc-watchdog` · `mobile-optimization` · `lod-occlusion-culling` |
 | 버그 분석 | `/bug-report` (원인 분석) · 긴급이면 `/hotfix` (디렉터 승인 필요) |
+| (Android 대상) 기기에서만 나는 끊김 · 시작 지연 · 메모리 · 발열 — Unity Profiler 로 원인이 안 보일 때 | android `android-profiler` (Perfetto 기록 · 분석, 기록은 adb + 기기) |
+| (Android 대상) ANR · 메인 스레드 블로킹 보고 | android `anr-audit-and-fix` |
 
 ### S3. 품질 게이트 (매 스토리 done 전, 필수)
 1. `/ko-code-review <바뀐 파일>` — 필요하면 L2 `ai-code-reviewer` 관점을 더한다.
@@ -116,8 +118,9 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 |---|---|
 | 스프린트 끝 (planning 의 스모크 체크 task) | `/smoke-check` · `/regression-suite` · `/tech-debt` |
 | 에셋이 많이 들어온 뒤 | `/asset-audit` · L2 `metadata-validator` |
-| 성능 예산 점검 (마일스톤) | `/perf-profile` · `/ko-perf-profile` · 에이전트 `performance-analyst` |
-| 출시 · 외부 배포 전 | `/security-audit` · `/localize` (문자열 하드코딩 점검) · L2 `build-pipeline-manager` |
+| 성능 예산 점검 (마일스톤) | `/perf-profile` · `/ko-perf-profile` · 에이전트 `performance-analyst` · (Android 대상) android `android-profiler` 로 저사양 기기 트레이스 1회 |
+| 출시 · 외부 배포 전 | `/security-audit` · `/localize` (문자열 하드코딩 점검) · L2 `build-pipeline-manager` · (Android 대상) android `play-policy-insights` (빌드된 매니페스트 · 광고/분석 SDK 대상 Play 정책 감사) |
+| (Android 대상) Minify(R8) 로 크래시 · 크기 문제 | android `r8-analyzer` — Export Project 한 Gradle 프로젝트에서만, protobuf 필요 |
 
 ### 쓰지 않는 것 (스튜디오 모드)
 - `/team-*` (team-combat · team-ui · team-polish 등): 기획 · 아트 영역까지 쓰는 오케스트레이션이다. 필요한 전문 에이전트만 직접 부른다.
@@ -126,6 +129,7 @@ dev 는 개발할 때 이 저장소의 **모든 계층**을 쓴다: L1 워크플
 ### 우선순위가 충돌할 때
 이 프로젝트 규칙(`.claude/rules/gameplay-code.md`, `AGENTS.md` §3) · ADR · 컨트롤 매니페스트 · `technical-preferences.md` → L2 SkillForge → gamedev 카탈로그 순이다. 스킬 예시가 규칙과 다르면(매직 넘버 · 싱글톤 · Update 할당 등) 규칙을 따르고, 스킬은 설계 아이디어와 함정 목록으로만 쓴다. gamedev 의 Unity 스킬은 Unity 6.3 LTS 기준이다 — 프로젝트 버전과 API 가 다르면 `docs/engine-reference/` 를 따른다.
 gamedev 카탈로그가 없으면 `python <템플릿>/scripts/sync-catalog.py gamedev --fetch --root <이 프로젝트>` 로 받는다 (Apache-2.0, 라이선스 확인 절차 없음).
+android 카탈로그(Google 공식, Apache-2.0)는 **`technical-preferences.md` 의 Target Platforms 에 Android 가 있을 때만** 쓴다. 네이티브 앱(Kotlin · Compose) 전제 부분은 Unity 에 맞게 옮겨 적용한다 — 대상은 C# 코드가 아니라 빌드 결과(APK/AAB · 매니페스트 · 플러그인)와 기기다. 준비 상태는 `python .agent/tools/setup/prereq.py check` 의 [Android] 묶음.
 
 스토리 완료 note 에 한 줄 남긴다: `스킬: L2 state-machine-architect · gamedev puzzle · 에이전트 gameplay-programmer · 리뷰 OK`.
 

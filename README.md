@@ -69,7 +69,7 @@ git checkout -- .claude/hooks
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → Unity 임포트 (백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
 | **사전 설치** | 도구 · 모델 · 효과음 라이브러리 · 설정 점검과 자동 설치 (SHA256 검증 · 이어받기) | `.agent/tools/setup/` | `/ko-prereq` |
-| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
+| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 · Android 기기/스토어 4 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · `.agent/android/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 그래픽 생성 — `/ko-art-gen`
@@ -208,7 +208,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 88개 (Game-Studios 72 + 한국어 wrapper 7 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
+- **Skills (L1)**: 89개 (Game-Studios 72 + 한국어 wrapper 8 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
 - **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
 - **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
 - **Hooks**: 13개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent, 스튜디오 정지 알림 등)
@@ -216,7 +216,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
 - **Tools**: 3개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿), `setup` (사전 설치 점검 · 설치). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests -q`
-- **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
+- **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) · android 4 (Apache-2.0, Google) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
 
@@ -231,6 +231,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
 | uv (`uvx`) | Unity MCP 서버 실행 (`.mcp.json`) |
 | (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다 |
+| (Android 대상일 때) Unity Android Build Support 모듈 · adb | 기기 프로파일링 · Play 정책 점검 (`/ext` android 카탈로그). `technical-preferences.md` 의 Target Platforms 에 Android 가 있으면 `/ko-prereq` 가 점검 |
 | (선택) 효과음 라이브러리 | Kenney 오디오 팩 8종(CC0, 약 60MB) — `prereq.py install sound-library` 가 받아 색인 |
 | Unity + MCPForUnity (선택) | L3 에디터 자동화 · 승격 에셋 임포트 확인 |
 
@@ -461,6 +462,7 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 5. **CoplayDev/unity-mcp (MCPForUnity)** — L3 Editor 실행 백엔드
 6. **coreyhaines31/marketingskills** — 외부 카탈로그 `marketing` (MIT, 포함)
 7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
+7-1. **android/skills** (Google) — 외부 카탈로그 `android` (Apache-2.0, 포함 — 기기 · 스토어 단 4개만, LICENSE 동봉)
 8. **Stanestane/game-design-skills-bundle** — 외부 카탈로그 `gamedesign` (PolyForm Noncommercial 1.0.0, **미포함** — 사용자가 직접 받음)
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.

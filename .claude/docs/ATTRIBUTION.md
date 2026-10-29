@@ -77,6 +77,14 @@
 - **미러 범위**: `skills/{disciplines,genres,unity,workflows}/*` 36개. **제외**: Godot · Unreal · Roblox · 웹 엔진 전용 39개, `router/`, 저장소 스크립트 · 테스트 (템플릿이 Unity 전용 — Game-Studios Godot/UE 에이전트 제외와 같은 정책)
 - **로컬 추가**: `.agent/catalogs/gamedev.ko.json`. 원문 수정 없음 (Apache-2.0 §4 — 변경 고지 대상 아님)
 
+## 7-1. android/skills / Google (외부 카탈로그 `android`)
+
+- **저장소**: https://github.com/android/skills
+- **라이선스**: Apache-2.0 (Google LLC) — `.agent/android/LICENSE.txt` 동봉 (업스트림에 NOTICE 없음)
+- **사용 유형**: **카탈로그 미러** (`.agent/android/`, 약 0.5MB — `studio upgrade` 범위에 포함)
+- **미러 범위**: `profilers/android-profiler` · `play/play-policy-insights` · `performance/anr-audit-and-fix` · `performance/r8-analyzer` 4개. **제외**: Compose · Navigation · Wear · TV · Cars · CameraX · Media3 · device-ai · xr 등 네이티브 앱 전용 (Unity Android 빌드에 통하는 기기 · 스토어 단만)
+- **로컬 추가**: `.agent/catalogs/android.ko.json`. 원문 수정 없음. 대상 플랫폼에 Android 가 있을 때만 쓴다 (`prereq.py` [Android] 묶음 · dev 헌장 스킬 사용 맵)
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle
