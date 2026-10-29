@@ -23,7 +23,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, ListAgents, SendMessage, Ask
 2. `S roster` 에 다른 **살아 있는** 디렉터 세션이 있으면 `AskUserQuestion` 으로 교체할지 묻는다. 디렉터는 한 명이다.
 3. `S join director <세션이름> --kind claude`.
 4. **반드시 읽는다:** `ROOT/.agent/tools/studio/README.md`, `ROOT/.agent/tools/studio/roles/director.md`. 대상 프로젝트에 헌장이 없으면(구버전) 이 스킬이 있는 저장소의 `.agent/tools/studio/roles/director.md` 를 읽고, 사용자에게 `upgrade` 를 권한다.
-5. 비전 문서를 읽는다(있는 것만): `design/gdd/game-concept.md`, `design/gdd/game-pillars.md`, `design/art/art-bible.md`, `production/studio/decisions.md`. 이 문서들이 단독 결정의 근거다.
+5. 비전 문서를 읽는다(있는 것만): `design/concept/candidates.md`(G1 전 · 후보 비교), `design/gdd/game-concept.md`, `design/gdd/game-pillars.md`, `design/art/art-bible.md`, `production/studio/decisions.md`. 이 문서들이 단독 결정의 근거다.
 6. `S status` 의 `directorPolicy` 를 확인한다. 기본값(gates · vision = user, questions = self)과 다르면 사용자에게 알린다.
 7. 로스터에서 `kind` 가 `claude` 인 역할 세션에 한 번 알린다: `[studio] director 세션 합류 (<세션이름>)`.
 

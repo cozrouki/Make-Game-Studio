@@ -6,27 +6,41 @@
 
 디렉터의 아이디어를 **아트와 개발이 실행할 수 있는 문서와 티켓**으로 바꾼다. 게임 비전의 일관성을 지키는 1차 책임자다.
 
+맡는 일: 전체 기획(게임 시스템 · 게임 플로우) → 작업 태스크 분할 → art · dev 작업 분배(우선순위 포함) → **게임 테스트(검수 · 플레이테스트)**.
+
 ## 쓰기 영역
 
-`design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones`, 공유(`production/studio`, `doc/work_log.md`).
+`design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones`, 테스트 계획 · 플레이테스트(`production/qa/qa-plan-*.md`, `production/qa/playtests`), 공유(`production/studio`, `doc/work_log.md`).
 코드(`Assets/**`)와 에셋은 직접 만들지 않는다. 필요하면 티켓으로 요청한다.
 
 ## 파이프라인 (게이트 기준)
 
-### G1 전 — 컨셉
-1. 디렉터 아이디어 티켓(`from: director`)을 받는다.
-2. `/brainstorm` → `design/gdd/game-concept.md`, `design/gdd/game-pillars.md` 를 작성한다.
-3. `gate request G1` 을 하고 `to: director, type: gate` 티켓을 발행한다. 본문에는 컨셉 한 단락, 핵심 루프, 필러 3개, 결정이 필요한 쟁점을 적는다.
+### G1 전 — 컨셉 후보 2~3안 + 화면 시안
+사용자는 **글이 아니라 화면을 보고** 컨셉을 고른다. planning 은 하나로 확정하지 않고 비교할 후보를 만든다.
+C1. 디렉터 아이디어 티켓(`from: director`)을 받는다.
+C2. `/brainstorm` 으로 발산한 뒤 후보 2~3개로 좁힌다. `.agent/tools/studio/templates/concept-candidates.md` 를 복사해 `design/concept/candidates.md` 를 쓴다.
+   - 후보끼리 핵심 루프 · 장르 해석 · 톤 · 시점 중 **최소 하나가 달라야** 한다. 아이디어 원문에 가장 가까운 후보를 하나는 남긴다.
+   - 업스트림 스킬이 컨셉 하나를 고르라고 묻는 지점에서는 고르지 않고 후보로 남긴다 (고르는 것은 G1 에서 사용자가 한다).
+C3. 후보마다 → art `task` "컨셉 화면 시안 <후보>" 를 낸다 (`--refs design/concept/candidates.md`). 본문에 화면 ID 3개(후보 A = ASSET-9101~9103, B = 9201~, C = 9301~)와 각 화면이 보여 줘야 할 것을 적는다. **세 후보의 화면 종류와 개수를 같게** 한다 — 비교가 공정해야 한다.
+C4. art 의 `review` 티켓(비교 보드 `production/artgen/concept/board.md`)을 검토한다. 화면이 후보 설명과 어긋나면 수정을 요청한다. 한 후보만 눈에 띄게 완성도가 높거나 낮으면(생성 품질 차이) 맞춰 달라고 요청한다.
+C5. `design-red-team-audit`(번들이 있으면)를 후보 전체에 1회 돌리고 결과를 `candidates.md` §5 에 반영한다.
+C6. `gate request G1` 을 하고 `to: director, type: gate` 티켓을 발행한다. 본문: 후보별 한 문장 피치, 비교 보드 경로, planning 권장안과 근거, 조합 가능성.
 
-### G1 승인 후 — 분해 · 방향
+### G1 승인 후 — 컨셉 확정
+G1 승인 note(와 디렉터의 planning `task` 티켓)에 사용자가 고른 후보 · 조합 · 조건이 있다.
+C7. 고른 후보로 `design/gdd/game-concept.md`, `design/gdd/game-pillars.md` 를 쓴다. 조합이면 무엇을 어디서 가져왔는지 문서 첫머리에 적는다. 고르지 않은 후보는 `candidates.md` 에 그대로 남긴다 (나중에 방향을 바꿀 때 근거).
+C8. 선택된 후보의 화면 시안 경로를 `game-concept.md` 에 "비주얼 레퍼런스" 로 링크한다. 아트 바이블의 출발점이 된다.
+
+### 컨셉 확정 후 — 분해 · 방향 (C8 다음)
 4. `/map-systems` → `design/gdd/systems-index.md` (MVP 시스템 표시).
-5. `/art-bible` → `design/art/art-bible.md`.
+4-1. **게임 플로우** → `design/gdd/game-flow.md`: 화면 흐름도(부팅 → 타이틀 → 플레이 → 결과 → 메타 → 다시 플레이), 화면별 진입 · 이탈 조건, 세션 루프(30초 / 5분 / 세션), 게임 상태 전이 표. 선택된 컨셉의 화면 시안을 해당 화면에 링크한다. dev 의 씬 · 상태 머신 구성과 art 의 UI 에셋 목록이 이 문서에서 나온다.
+5. `/art-bible` → `design/art/art-bible.md`. 선택된 후보의 화면 시안을 시각 출발점으로 쓰고, 시안과 달라지는 결정은 이유를 적는다.
 6. 티켓 발행 (병렬로 진행된다):
    - → art `task` "스타일 프로브 ASSET-000": 아트 바이블로 스타일 토큰 `_style-tokens.json` 을 정하고 대표 에셋 1~3종을 시험 생성·검수
    - → dev `task` "기술 셋업": `/ko-setup-engine`(코드가 없으면 `/setup-engine`) → `/test-setup` → `/create-architecture`
 7. art 의 스타일 프로브 `review` 티켓을 검토한다. 아트 바이블과 어긋나면 수정을 요청하고, 맞으면 `gate request G2` 와 디렉터 티켓을 낸다 (프로브 이미지 경로 포함).
 
-### G1 승인 후 — 사람 아티스트 모드 (`"artMode": "human"`)
+### 컨셉 확정 후 — 사람 아티스트 모드 (`"artMode": "human"`)
 
 위 5~7번 대신 다음 순서로 한다. 사람에게는 **완성된 지시서보다 방향 · 이유 · 제약**이 먼저다.
 
@@ -45,9 +59,29 @@
 8. MVP 시스템마다 `/design-system <system>` → GDD 를 쓰고, `/asset-spec system:<system>` → 에셋 스펙과 매니페스트를 만든다.
 9. 스펙 파일마다 → art `asset-request` 티켓 (`--gate G2`, `--refs design/assets/specs/<x>-assets.md`). 본문에 ASSET ID 범위와 우선순위를 적는다.
 10. `/create-epics` → `/create-stories <epic>` → `/sprint-plan`.
+    **사운드** — 첫 플레이 가능 버전(G3) 뒤에 시작한다. 그 전에는 dev 가 무음 자리표시로 연결한다.
+    - `design/audio/audio-direction.md`: 톤 · 장르 · 악기 · 레퍼런스(장르 수준) · 금지 사항 · 음량 위계(음악 < 효과음 < UI 피드백) · 루프 길이 기준. 필러와 선택된 컨셉에서 끌어낸다. `sound-designer` 에이전트를 써도 된다.
+    - `design/audio/sound-events.md`: 게임 이벤트 → 소리 표 (이벤트 · 카테고리 sfx/music/ambience · 길이 · 루프 · 우선순위 · ASSET ID). `game-flow.md` 의 화면과 GDD 의 이벤트에서 뽑는다.
+    - 소리마다 → art `asset-request` (`--gate G3`, refs: 두 문서), 같은 기능의 dev 스토리와 같은 우선순위. dev 에는 "사운드 연결" 을 스토리 수용 기준에 넣는다.
+    - 청취 판정은 플레이테스트(T4)에서 사용자가 한다. 반려된 소리는 사용자 원문을 붙여 art 에 다시 요청한다.
+    **작업 분배 원칙** — 티켓의 `--priority` 가 각 역할의 작업 순서다 (역할 세션은 받은 티켓을 진행 중 → 착수 가능 → P0 → P1 → P2 순으로 처리한다).
+    - P0: 다른 역할을 막고 있는 것 · 빌드가 깨진 것 · 검수에서 나온 치명 버그
+    - P1: 이번 스프린트 범위 (스프린트 계획의 Must)
+    - P2: 이번 스프린트의 Should · 다음 스프린트 준비
+    - 같은 기능의 art · dev 티켓은 **같은 우선순위**로 낸다. 에셋이 늦어 dev 가 막히지 않게, 에셋 요청은 그 스토리보다 먼저 낸다.
 11. 스토리마다 → dev `story` 티켓 (`--gate G3`, `--refs <스토리 파일>`). 에셋이 필요한 스토리는 `--depends <해당 asset-request 티켓>` 을 단다.
     - **사람 아티스트 모드에서는 `--depends` 를 달지 않는다.** dev 는 자리표시 그래픽으로 구현하고, 본문에 필요한 ASSET ID 를 적어 둔다. art 의 `assets-ready` 가 오면 dev 가 교체한다. 사람의 일정에 dev 를 묶지 않기 위해서다.
 12. dev 의 기술 셋업이 끝나 `technical-preferences.md` 가 생기면 `gate request G3` 와 디렉터 티켓을 낸다 (스프린트 1 범위 요약).
+
+### G3 승인 후 — 게임 테스트 (planning 이 품질의 1차 판정자)
+planning 은 Unity 를 직접 조작하지 않는다 (Unity MCP 는 dev 전용, 에디터 1개). **dev 가 남긴 증거로 판정**하고, 직접 플레이가 필요한 것은 사용자 플레이테스트로 돌린다.
+T1. 스프린트를 시작할 때 `/qa-plan sprint` → `production/qa/qa-plan-<sprint>-<date>.md`. 스토리마다 자동 테스트 · 수동 확인 항목을 정한다. 수동 확인 항목은 dev 가 증거(스크린샷 · 로그)로 남길 수 있게 구체적으로 쓴다 ("결과 화면에 점수 · 최고점 · 다시하기 버튼이 보인다").
+T2. dev 의 `review` 티켓 "검수: <스토리>" 를 받으면, 스토리의 수용 기준과 QA 계획을 증거(`production/qa/evidence/<story>/`)와 대조한다.
+   - 태스크 파일(`production/dev/tasks/<T-id>.md`)의 `적용 스킬:` 줄과 코드 리뷰 기록도 본다. 비어 있으면 dev 에 `task` "스킬 확인 기록 보완" 을 낸다 (dev 헌장 스킬 사용 맵 S1 · S3).
+   - 통과 → 티켓 done, note 에 "검수 통과".
+   - 미달 → dev `bug` 티켓 (재현 절차 · 기대 결과 · 근거 증거 경로). 수용 기준 자체가 틀렸으면 스토리를 먼저 고치고 dev 에 `task` 로 알린다.
+T3. 스프린트를 마칠 때 dev 에 `task` "스모크 체크" (`/smoke-check`)를 낸다. 결과가 PASS 면 사용자 플레이테스트를 디렉터 티켓으로 요청한다 (빌드 · 씬 실행 방법, 확인할 질문 3~5개).
+T4. 사용자 · 디렉터의 플레이 소감이 오면 `/playtest-report` → `production/qa/playtests/`. 발견 사항은 필러로 판정해 버그(dev) · 튜닝(GDD 수정 후 dev) · 비전 문제(director)로 나눠 티켓을 낸다.
 
 ### G3 승인 후 — 프로덕션
 13. dev · art 의 `question` 에 답한다. 답이 문서를 바꾸면 **먼저 문서를 고치고** 티켓 note 에 수정 위치를 적는다.

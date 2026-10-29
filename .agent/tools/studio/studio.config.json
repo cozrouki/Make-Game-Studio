@@ -10,7 +10,9 @@
         ":(exclude)design/assets/requests",
         "production/epics",
         "production/sprints",
-        "production/milestones"
+        "production/milestones",
+        ":(glob)production/qa/qa-plan-*.md",
+        "production/qa/playtests"
       ]
     },
     "art": {
@@ -20,6 +22,7 @@
         "production/artgen",
         "art-source",
         ":(glob)Assets/*/Art/**",
+        ":(glob)Assets/*/Audio/**",
         "Assets/ArtGen"
       ]
     },
@@ -28,10 +31,14 @@
       "owns": [
         "Assets",
         ":(exclude,glob)Assets/*/Art/**",
+        ":(exclude,glob)Assets/*/Audio/**",
         ":(exclude)Assets/ArtGen",
         "Packages",
         "ProjectSettings",
         "production/qa",
+        ":(exclude,glob)production/qa/qa-plan-*.md",
+        ":(exclude)production/qa/playtests",
+        "production/dev",
         "tests",
         "production/epics",
         ".claude/docs/technical-preferences.md",
@@ -107,18 +114,18 @@
   "gates": [
     {
       "id": "G1",
-      "name": "컨셉 승인",
+      "name": "컨셉 선택 (후보 2~3안 + 화면 시안 비교)",
       "owner": "planning",
-      "artifacts": ["design/gdd/game-concept.md", "design/gdd/game-pillars.md"],
-      "unlocks": "시스템 분해 · 아트 바이블 착수"
+      "artifacts": ["design/concept/candidates.md", "production/artgen/concept/board.md"],
+      "unlocks": "컨셉 확정 문서 · 시스템 분해 · 아트 바이블 착수"
     },
     {
       "id": "G2",
       "name": "아트 디렉션 승인",
       "owner": "planning",
-      "artifacts": ["design/art/art-bible.md", "design/assets/requests/_style-tokens.json", "production/artgen/ASSET-000/review.md"],
+      "artifacts": ["design/gdd/game-concept.md", "design/gdd/game-pillars.md", "design/art/art-bible.md", "design/assets/requests/_style-tokens.json", "production/artgen/ASSET-000/review.md"],
       "artifactsByArtMode": {
-        "human": ["design/art/art-direction-brief.md", "production/artgen/ASSET-000/review.md", "design/art/art-bible.md"]
+        "human": ["design/gdd/game-concept.md", "design/gdd/game-pillars.md", "design/art/art-direction-brief.md", "production/artgen/ASSET-000/review.md", "design/art/art-bible.md"]
       },
       "unlocks": "에셋 양산 (art)"
     },
@@ -126,7 +133,7 @@
       "id": "G3",
       "name": "프리프로덕션 완료",
       "owner": "planning",
-      "artifacts": ["design/gdd/systems-index.md", "design/assets/asset-manifest.md", "production/epics/index.md", "production/sprints/", ".claude/docs/technical-preferences.md"],
+      "artifacts": ["design/gdd/systems-index.md", "design/gdd/game-flow.md", "design/assets/asset-manifest.md", "production/epics/index.md", "production/sprints/", ".claude/docs/technical-preferences.md"],
       "unlocks": "기능 스토리 구현 (dev)"
     }
   ]

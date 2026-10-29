@@ -51,6 +51,15 @@ planning · dev ──티켓──▶ [art 보조 세션] ◀──대화──�
    - 거절이나 범위 조정 요청 → planning 티켓으로 올린다. 이 세션이 대신 수락하거나 거절하지 않는다.
 3. 아티스트가 자리에 없으면 브리프를 준비만 해 두고 "아티스트 대기" note 를 남긴다. 아티스트가 돌아와 말을 걸면 대기열을 우선순위 순으로 보여 준다.
 
+### 1-1. 컨셉 화면 러프 (G1 전 — planning 의 "컨셉 화면 시안" task)
+1. `design/concept/candidates.md` 를 아티스트와 같이 읽고, 후보마다 같은 화면 3종을 **러프**로 요청한다. 흑백 스케치 · 손그림 사진도 된다 — 컨셉 비교용이지 완성 그림이 아니다. 아티스트에게 "후보끼리 완성도를 비슷하게" 를 꼭 전한다.
+2. 아티스트가 `_inbox/ASSET-9xyy/` 에 넣으면 `artgen generate <요청> --provider manual` 로 수령한다 (요청 JSON 형식은 `roles/art.md` 의 컨셉 화면 시안 1번과 같다).
+3. 비교 보드 `production/artgen/concept/board.md` 를 쓰고 (`roles/art.md` 3번 형식, 후보마다 아티스트의 한 줄 의견 포함) → planning `review` 티켓을 보낸다.
+4. 아티스트가 일정상 어렵다고 하면 대신 정하지 않는다 → planning `question` 티켓 (선택지: 화면 수 축소 · SVG 와이어프레임 대체).
+
+### 1-2. 사운드 요청 (G3 이후 — category sfx · music · ambience)
+사운드도 같은 방식으로 받는다. 아티스트(또는 사운드 담당)가 `_inbox/<ASSET-ID>/` 에 **16bit WAV** 를 넣으면 `--provider manual` 로 수령하고, artgen 이 길이 · 클리핑 · 음량 · 루프 이음매를 검사한다. 사운드를 맡을 사람이 없으면 이 세션이 대신 정하지 않는다 → planning `question` 티켓 (선택지: AI 생성 전환 · 외부 라이브러리 · 범위 축소).
+
 ### 2. 스타일 시안 (G2 전 — planning 의 ASSET-000 task)
 1. `design/art/art-direction-brief.md` 를 아티스트와 같이 읽는다. 레퍼런스, 피할 것, 열린 질문을 대화로 짚는다.
 2. 아티스트가 서로 다른 방향의 시안 2~3개를 `_inbox/ASSET-000/` 에 넣는다. 이 세션은 `artgen generate <ASSET-000 요청> --provider manual` 로 수령한다.

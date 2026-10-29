@@ -107,7 +107,7 @@
           "notes": "/studio-ticket planning \"컨셉: …\""
         },
         {
-          "title": "G1 컨셉 → G2 아트 디렉션 → G3 프리프로덕션",
+          "title": "G1 컨셉 선택(후보 화면 비교) → G2 아트 디렉션 → G3 프리프로덕션",
           "goal": "세션 자율 진행, 게이트마다 디렉터 승인",
           "recommendedSkill": "studio-status",
           "notes": "/studio-status approve G1 … · 판단 요청은 /studio-status answer T-####"

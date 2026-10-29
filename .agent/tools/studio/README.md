@@ -166,10 +166,12 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 
 | 게이트 | 요청자 | 산출물 (요청 시 존재 검사) | 승인되면 열리는 일 |
 |---|---|---|---|
-| **G1 컨셉** | planning | `design/gdd/game-concept.md`, `game-pillars.md` | 시스템 분해 · 아트 바이블 · 기술 셋업 |
-| **G2 아트 디렉션** | planning | ai: `art-bible.md`, `_style-tokens.json`, 스타일 프로브 `ASSET-000/review.md` · human: `art-direction-brief.md`, 시안 `ASSET-000/review.md`, `art-bible.md` | 에셋 양산 (art) |
-| **G3 프리프로덕션** | planning | `systems-index.md`, `asset-manifest.md`, `production/epics/index.md`, `production/sprints/`, `technical-preferences.md` | 기능 스토리 구현 (dev) |
+| **G1 컨셉 선택** | planning | `design/concept/candidates.md`(후보 2~3안), 화면 시안 비교 보드 `production/artgen/concept/board.md` | 컨셉 확정 문서 · 시스템 분해 · 아트 바이블 · 기술 셋업 |
+| **G2 아트 디렉션** | planning | 공통: `game-concept.md`, `game-pillars.md` · ai: `art-bible.md`, `_style-tokens.json`, 스타일 프로브 `ASSET-000/review.md` · human: `art-direction-brief.md`, 시안 `ASSET-000/review.md`, `art-bible.md` | 에셋 양산 (art) |
+| **G3 프리프로덕션** | planning | `systems-index.md`, `game-flow.md`, `asset-manifest.md`, `production/epics/index.md`, `production/sprints/`, `technical-preferences.md` | 기능 스토리 구현 (dev) |
 | **M1, M2 …** | planning (`gate add`) | 마일스톤 리뷰 문서 | 다음 마일스톤 |
+
+- **G1 은 고르기다.** planning 이 컨셉 후보 2~3안(`templates/concept-candidates.md`)을 쓰고, art 가 후보마다 같은 화면 3종(핵심 플레이 · 결정적 순간 · 메타/UI, ID `ASSET-9xyy`)을 만들어 비교 보드로 묶는다. 사용자가 화면을 보고 하나를 고르거나 조합하면, planning 이 그때 `game-concept.md` · `game-pillars.md` 를 확정한다 (G2 에서 함께 검사).
 
 - 티켓에 `gate` 를 지정하면 그 게이트가 승인되기 전에는 **착수할 수 없다** (`update --status in-progress` 거부).
 - 승인과 반려는 `--by director` 로만 할 수 있다. 역할 세션이 스스로 승인하지 않는다. 디렉터 세션은 사용자와 합의한 뒤 `--decided user` 로 승인한다.
@@ -198,9 +200,9 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 
 | 역할 | 쓸 수 있는 곳 |
 |---|---|
-| planning | `design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones` |
-| art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/ArtGen`, `art-source` (아티스트 원본, human 모드) |
-| dev | `Assets/**` (Art 제외), `Packages`, `ProjectSettings`, `production/qa`, `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
+| planning | `design/**` (`design/assets/requests` 제외), `production/epics`, `production/sprints`, `production/milestones`, 테스트 계획 · 플레이테스트(`production/qa/qa-plan-*.md` · `production/qa/playtests`) |
+| art | `design/assets/requests`, `production/artgen`, `Assets/*/Art/**`, `Assets/*/Audio/**`, `Assets/ArtGen`, `art-source` (아티스트 원본, human 모드) |
+| dev | `Assets/**` (Art · Audio 제외), `Packages`, `ProjectSettings`, `production/qa` (planning 몫 제외 — 증거 · 스모크), `production/dev` (작업 태스크), `tests`, `production/epics` (스토리 상태 갱신만), 기술 셋업 산출물(`.claude/docs/technical-preferences.md` · `docs/architecture` · `docs/engine-reference` · `.github/workflows`) |
 | **director** (사람 · 디렉터 세션) | 프로토콜 · 지침 · 도구: `CLAUDE.md` · `AGENTS.md` · `.claude/**` · `.agent/tools` · `.agent/rules` · `.agent/workflows` · 도구별 미러(`.cursor` · `.github/instructions` 등). dev 가 `/setup-engine` 으로 `CLAUDE.md` Technology Stack 을 고치면 **디렉터가 확인 후 커밋**한다 |
 | 공유 | `production/studio` (티켓 · 게이트), `doc/work_log.md` (최상단에 한 줄 추가만) |
 
