@@ -33,9 +33,10 @@ cd unity-fullstack-claude-skills
    cd D:\Projects\MyGame
    claude
    ```
-5. **`/ko-setup-engine`** — 최초 1회. 엔진·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `CLAUDE.md` Technology Stack과 `technical-preferences.md`를 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
-6. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화·그래픽 생성).
-7. 진행 방식을 고릅니다.
+5. **`/ko-prereq`** — 최초 1회 (PC 마다). 자동화에 필요한 것(Git · Claude Code · uv · Unity 에디터 · MCP · GPU · ComfyUI · 생성 모델 · 효과음 라이브러리 · 로컬 설정)을 점검하고, 자동으로 고칠 수 있는 것은 확인 후 설치합니다. Claude Code 밖에서는 `python .agent/tools/setup/prereq.py check` → `install`.
+6. **`/ko-setup-engine`** — 최초 1회. 엔진·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `CLAUDE.md` Technology Stack과 `technical-preferences.md`를 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
+7. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화·그래픽 생성).
+8. 진행 방식을 고릅니다.
    - **한 세션**: 위 흐름의 스킬을 순서대로 직접 호출합니다.
    - **스튜디오 모드**: 기획·아트·개발 세션을 명령 하나(`/studio-status launch`)로 띄우고, 디렉터로서 게이트에서만 승인합니다 → [스튜디오 모드](#스튜디오-모드--3세션-자동-개발)
 
@@ -62,11 +63,12 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (87 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (88 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
-| **그래픽 생성** | 기획 → 이미지 생성 → 아트 바이블 검수 → Unity 임포트 (백엔드 중립, 어댑터로 나중에 연결) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → Unity 임포트 (백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **사전 설치** | 도구 · 모델 · 효과음 라이브러리 · 설정 점검과 자동 설치 (SHA256 검증 · 이어받기) | `.agent/tools/setup/` | `/ko-prereq` |
 | **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
@@ -185,7 +187,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 5. (선택) **디렉터 세션**: 터미널을 하나 더 열고 `/studio-director` 를 실행합니다. 다른 폴더에서 지휘하려면 `/studio-director --root <프로젝트 경로>` 입니다. 이 세션이 판단 요청과 게이트를 받아 브리핑하고, 사용자와 의견을 나눈 뒤 실행합니다. 게이트 · 비전(컨셉 · 범위 · 플랫폼 · 비용)은 사용자 합의가 필요하고, 승인된 문서로 답할 수 있는 질문은 디렉터 세션이 혼자 결정한 뒤 보고합니다(`studio.config.json` 의 `director` 로 조정). 결정은 `production/studio/decisions.md` 에 쌓입니다.
 
 **운영 규칙**
-- **단계 게이트:** G1 컨셉 → G2 아트 디렉션 → G3 프리프로덕션 → M1, M2 … 게이트에 묶인 티켓은 승인 전에는 시작할 수 없습니다. 승인은 디렉터만 합니다.
+- **단계 게이트:** G1 컨셉 선택(후보 2~3안을 화면 시안으로 비교) → G2 아트 디렉션 → G3 프리프로덕션 → M1, M2 … 게이트에 묶인 티켓은 승인 전에는 시작할 수 없습니다. 승인은 디렉터만 합니다.
 - **쓰기 영역 분리:** 기획은 `design/`, 아트는 `Assets/*/Art`·`production/artgen`, 개발은 그 외 `Assets/`·기술 문서를 씁니다. Unity MCP 는 개발 세션만 씁니다. 다른 영역이 필요하면 티켓을 보냅니다.
 - **커밋:** 게이트를 통과하거나 티켓을 완료할 때 각 세션이 자기 영역만 커밋합니다. 프로토콜 · 지침 파일(`CLAUDE.md` · `.claude/` · 도구 설정 등)은 **디렉터 영역**이라 디렉터가 커밋합니다(`/studio-status commit`). 푸시는 디렉터가 합니다.
 - **유지보수:** `studio.py audit` 이 주인 없는 변경과 역할 겹침을 찾고, 프로토콜 파일이 바뀌면 지문으로 감지해 현황판에 "미승인 변경" 으로 표시합니다(`/studio-status protocol ack`). 템플릿 갱신은 **`studio.py upgrade --from <템플릿>`** 으로만 합니다 — 설정은 프로젝트 값을 보존한 채 병합되고, 역할마다 공지 티켓이 발행됩니다.
@@ -213,10 +215,12 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 - **Docs**: 9개 (MCP 가이드, 결정 매트릭스, GS 원본 6개, 출처 1개)
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
-- **Tools**: 2개 — `artgen` (그래픽 생성 CLI · 어댑터 4종 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 템플릿). 둘 다 테스트 포함
+- **Tools**: 3개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿), `setup` (사전 설치 점검 · 설치). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests -q`
 - **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
+
+아래 표는 **`/ko-prereq` (`python .agent/tools/setup/prereq.py check`) 가 자동으로 점검**한다. 모델 · 효과음 라이브러리 · 로컬 설정 · MCPForUnity 의존성은 `install` 로 자동 설치되고(용량 · 라이선스를 먼저 보여 줌), 시스템 도구는 winget 이 있을 때만 자동이며 없으면 공식 설치 명령을 안내한다. 라이선스 동의가 필요한 것(Stable Audio · gamedesign 카탈로그)은 자동으로 받지 않는다.
 
 | 항목 | 용도 |
 |---|---|
@@ -225,7 +229,9 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | Git for Windows (bash 포함), git 2.25+ | 훅 스크립트 · 스튜디오 모드 역할별 커밋 |
 | Python 3.8+ (`python` 이 PATH 에 있을 것) | artgen · studio CLI (표준 라이브러리만 사용). 테스트는 `pytest` 필요 |
 | (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
-| (선택) ComfyUI + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 생성 (`comfyui` 어댑터). 모델 저장에 10GB 이상 필요 |
+| uv (`uvx`) | Unity MCP 서버 실행 (`.mcp.json`) |
+| (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다 |
+| (선택) 효과음 라이브러리 | Kenney 오디오 팩 8종(CC0, 약 60MB) — `prereq.py install sound-library` 가 받아 색인 |
 | Unity + MCPForUnity (선택) | L3 에디터 자동화 · 승격 에셋 임포트 확인 |
 
 ## 크로스툴 호환 (Claude Code · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)
@@ -244,7 +250,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | **artgen CLI** | `/ko-art-gen` | `/ko-art-gen` 스킬 | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` |
 | **스튜디오 모드 참여** | `/studio-join` (대화형) | `dispatch --agent codex` | `dispatch --agent copilot` | `dispatch --agent cursor` | `dispatch --agent gemini` | `dispatch --agent opencode` | `/studio-join` 워크플로 (IDE) | `/studio-join` 워크플로 (IDE) |
 
-**워크플로 9종** — `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/unity-fullstack` · `/studio-join`
+**워크플로 11종** — `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/ko-prereq` · `/unity-fullstack` · `/studio-join` · `/ext`
 
 > **핵심 구분** — **콘텐츠 층**(페르소나 · 룰 · C# 카탈로그 · 워크플로 절차 · artgen · 스튜디오 CLI)은 모든 도구에서 쓴다. Claude Code 외 도구의 슬래시 명령은 `.agent/workflows/<이름>.md` 정본을 가리키는 **얇은 포인터**이고, 절차가 Claude 스킬(`.claude/skills/<이름>/SKILL.md`)을 지시하면 그 파일을 읽어 따른다. **훅 · 서브에이전트 · 나머지 77개 스킬의 슬래시 호출은 Claude Code 전용**이다 (다른 도구에서도 `SKILL.md` 를 읽게 하면 절차는 따라 할 수 있다).
 
@@ -553,8 +559,9 @@ scripts/
 .opencode/commands/              9개 (OpenCode — 생성물)
 .windsurf/rules/ · workflows/    12개 룰 + 9개 워크플로 (Windsurf — 생성물)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
-.agent/workflows/                9개 (Antigravity 슬래시 — ko-* 7 + unity-fullstack + studio-join)
-.agent/tools/artgen/             그래픽 생성 CLI · 백엔드 어댑터 · Unity 임포터 템플릿 · 테스트
+.agent/workflows/                11개 (Antigravity 슬래시 — ko-* 8 + unity-fullstack + studio-join + ext)
+.agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · Unity 임포터 템플릿 · 테스트
+.agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 모델 · 라이브러리 · 설정) · 테스트
 .agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 도구 공통 업무 루프 프롬프트 · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋/감시/디스패치 CLI · 테스트
 
 .claude/

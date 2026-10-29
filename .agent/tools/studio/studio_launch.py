@@ -233,7 +233,31 @@ def preflight(st, team, roles, probe=True):
                 urllib.request.urlopen(url.rstrip("/") + "/system_stats", timeout=2).close()
             except OSError:
                 issues.append({"level": "warn", "msg": f"art: ComfyUI({url}) 응답 없음 — run_nvidia_gpu.bat 실행"})
+    if probe:
+        issues += prereq_issues(st, roles)
     return issues
+
+
+# 위에서 이미 보는 항목(실행 파일 · 서버 응답)은 prereq 결과에서 뺀다
+_PREREQ_DUP = {"claude", "comfyui-server"}
+
+
+def prereq_issues(st, roles):
+    """사전 설치 점검(.agent/tools/setup/prereq.py)의 필수 누락을 경고로. 도구가 없는 구버전 프로젝트면 건너뛴다."""
+    path = os.path.join(st.root, ".agent", "tools", "setup", "prereq.py")
+    if not os.path.isfile(path):
+        return []
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("prereq", path)
+    prereq = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(prereq)
+        rows = prereq.run_checks(prereq.Ctx(st.root, [r for r in roles if r in prereq.ROLES]))
+    except Exception as e:  # 점검 도구의 고장이 기동을 막지 않게
+        return [{"level": "warn", "msg": f"사전 설치 점검 실패: {e}"}]
+    return [{"level": "warn", "msg": f"사전 설치 누락: {r['title']} — {r['detail']} (prereq.py install"
+                                     f"{' 로 자동 설치' if r['auto'] else ' · 안내 참고'})"}
+            for r in rows if r["status"] == "missing" and r["id"] not in prereq.REQUIRED_SKIP | _PREREQ_DUP]
 
 
 # ---------------------------------------------------------------- backend

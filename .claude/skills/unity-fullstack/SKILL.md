@@ -28,7 +28,8 @@ Unity 풀스택 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 �
    - (b) 시스템 패턴 찾기 → code
    - (c) 에디터 조작 → editor
    - (d) 프로세스/계획 관리 → process
-   - (f) 기획 의도대로 그래픽 생성 → `/ko-art-gen`
+   - (f) 기획 의도대로 그래픽 · 사운드 생성 → `/ko-art-gen`
+   - (i) 처음 쓰는 PC · 자동화가 안 돌아감 → 사전 설치 점검 `/ko-prereq`
    - (h) 마케팅 · 출시 · 장르/분야 실무 · 디자인 렌즈 → `/ext` (외부 카탈로그 — marketing · gamedev · gamedesign)
    - (g) 3세션 자동 개발 (디렉터 모드) → `studio.py team init` → `/studio-status launch` (명령 하나로 역할 세션 기동) · 수동은 `/studio-join <역할>` 각 세션, 디렉터 세션 `/studio-director`
    - (e) 어디부터 시작할지 모르겠다 → 아래 "자주 쓰는 작업" 안내

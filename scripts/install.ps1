@@ -331,7 +331,7 @@ Write-Step "[5/6] .gitignore"
 $gi = Join-Path $Target ".gitignore"
 $need = @(".claude.backup-*/", ".claude/settings.local.json", ".claude/scheduled_tasks.lock", ".mcp.json",
           "production/session-logs/", "production/session-state/active.md", "production/stage.txt",
-          "production/artgen/*/v*/", "production/artgen/*/replaced/", "production/artgen/_inbox/", ".agent/tools/artgen/artgen.config.local.json",
+          "production/artgen/*/v*/", "production/artgen/*/replaced/", "production/artgen/_inbox/", ".agent/tools/artgen/artgen.config.local.json", "art-source/sound-library/",
           "production/studio/events.jsonl", "production/studio/PAUSED", "production/studio/logs/", "production/studio/locks/", ".agent/tools/studio/studio.config.local.json", ".agent/gamedesign/", "__pycache__/")
 $giText = ""
 if (Test-Path $gi) { $giText = Read-TextFile $gi }
@@ -349,6 +349,7 @@ if ($missing) {
 Write-Step "[6/6] 완료 — 다음 단계"
 Write-Host "  1. Unity 에디터를 열어 MCPForUnity 패키지 설치 확인 (Window > MCP for Unity, 포트 $McpPort)" -ForegroundColor Cyan
 Write-Host "  2. 프로젝트 루트에서 Claude Code 실행:  cd `"$Target`"; claude" -ForegroundColor Cyan
-Write-Host "  3. 엔진 설정 (최초 1회):  /ko-setup-engine" -ForegroundColor Cyan
-Write-Host "  4. 메뉴 안내:  /unity-fullstack" -ForegroundColor Cyan
+Write-Host "  3. 사전 설치 점검 · 설치 (PC 마다 최초 1회):  /ko-prereq   (또는 python .agent/tools/setup/prereq.py check)" -ForegroundColor Cyan
+Write-Host "  4. 엔진 설정 (최초 1회):  /ko-setup-engine" -ForegroundColor Cyan
+Write-Host "  5. 메뉴 안내:  /unity-fullstack" -ForegroundColor Cyan
 if ($pairs.Count -eq 0) { Write-Host "  (선택) 멀티 게임이면 AGENTS.md §6 게임 폴더 매핑 표를 채우세요." -ForegroundColor DarkCyan }
