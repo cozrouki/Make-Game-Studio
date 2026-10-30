@@ -49,7 +49,7 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (89 skills, GS 72 + ko-* 8 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (93 skills, GS 72 + ko-* 12 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |

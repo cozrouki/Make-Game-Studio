@@ -36,6 +36,8 @@ UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/set
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
                  ".claude/skills/studio-director",
                  ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq", ".claude/skills/ko-code-review",
+                 ".claude/skills/ko-diagnose", ".claude/skills/ko-tdd", ".claude/skills/ko-grill",
+                 ".claude/skills/ko-agent-retro",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".agent/workflows/ko-prereq.md",

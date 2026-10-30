@@ -97,6 +97,17 @@
 - **라이선스**: MIT
 - **사용 유형**: **재배포하지 않음.** `prereq.py install unity-analyzers` 가 NuGet 에서 고정 버전(1.28.0, SHA256 확인)을 받아 대상 프로젝트 `Assets/Analyzers/` 에 둔다. 템플릿에는 규칙 심각도 파일(`.agent/tools/lint/Default.ruleset`, 자체 작성)만 있다. 2026-10-29 Unity 6000.3.24f1 에서 UNT 경고 출력 확인
 
+## 7-4. mattpocock/skills (엔지니어링 스킬 차용)
+
+- **저장소**: https://github.com/mattpocock/skills
+- **라이선스**: MIT (`Copyright (c) 2026 Matt Pocock`). 고지는 `THIRD_PARTY_LICENSES.md` 에 보존
+- **사용 유형**: **번역 · Unity 맞춤 재작성** — 원문 구조를 따르되 한국어로 옮기고 Unity 테스트(EditMode/PlayMode, MCP `run_tests` · `read_console` · `manage_profiler`) · 이 템플릿 파일 구조에 맞췄다
+  - `diagnosing-bugs` → `.claude/skills/ko-diagnose/`
+  - `grilling` + `grill-me` → `.claude/skills/ko-grill/`
+  - `tdd` (+ `tests.md` · `mocking.md` 를 C# 예시로 합침) → `.claude/skills/ko-tdd/`
+  - `retro` + `writing-for-agents` → `.claude/skills/ko-agent-retro/` (`WRITING.md`)
+- **들이지 않은 것**: 이슈 트래커 전제 스킬(`to-spec` · `to-tickets` · `triage` · `wayfinder` · `implement*`)은 GS 파이프라인 · 스튜디오 티켓과 겹치고, `code-review` · `prototype` 은 기존 스킬과 이름이 겹쳐 제외. 플러그인 설치(`mattpocock-skills`)는 이름 충돌 때문에 권하지 않는다
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle
@@ -123,4 +134,5 @@
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
 | 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |
+| 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |
