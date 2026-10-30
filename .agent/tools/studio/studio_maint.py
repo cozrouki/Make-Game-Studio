@@ -81,8 +81,10 @@ SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4."),
                    ("CLAUDE.md", "## Engine Version Reference", "## §7."),
                    ("CLAUDE.md", "## 상류 GS 기준 문서", "## §7.")]
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
-# 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)
-MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json"]
+# 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존). standard.json · lint.config.json 은 스킬 · 헌장이
+# "프로젝트가 고쳐 쓴다" 고 안내하는 기준값 · 차단 규칙이라 교체하면 프로젝트 결정이 사라진다
+MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json",
+              ".agent/tools/design/standard.json", ".agent/tools/lint/lint.config.json"]
 SKIP_NAMES = ("__pycache__", ".pytest_cache")
 
 
