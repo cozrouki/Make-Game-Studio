@@ -1,5 +1,6 @@
 # 템플릿 자체 검사 — 이 저장소(템플릿)만의 CI. 게임 프로젝트로 설치되지 않는다 (install.ps1 은 .github/workflows 를 복사하지 않음).
-# 도구 테스트(pytest) · 훅 bash 문법 · 도구별 미러가 정본과 같은지.
+# 도구 테스트(pytest) · 훅 bash 문법 · 도구별 미러가 정본과 같은지 · 버전 절.
+# 러너는 영어 Windows(코드 페이지 cp1252)다 — 한국어 Windows(cp949) 개발 PC 에서 안 보이던 인코딩 문제가 여기서 드러난다.
 name: template-tests
 
 on:
@@ -11,18 +12,17 @@ on:
 
 jobs:
   test:
-    # 개발 환경이 Windows 이고 일부 테스트 · 도구가 Windows 경로를 전제한다
     runs-on: windows-latest
     timeout-minutes: 20
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -35,30 +35,46 @@ jobs:
       - name: pytest 설치
         run: python -m pip install --upgrade pip pytest
 
+      # 실패하면 실패 목록과 오류 줄을 주석(annotation)으로 남긴다 — 주석은 로그인 없이 API 로 읽힌다
       - name: 도구 테스트
-        run: >
-          python -m pytest -q
-          .agent/tools/studio/tests .agent/tools/lint/tests .agent/tools/setup/tests
-          .agent/tools/artgen/tests .agent/tools/design/tests
+        run: |
+          set +e
+          python -m pytest -q -rfE --tb=short \
+            .agent/tools/studio/tests .agent/tools/lint/tests .agent/tools/setup/tests \
+            .agent/tools/artgen/tests .agent/tools/design/tests > pytest.log 2>&1
+          code=$?
+          cat pytest.log
+          if [ $code -ne 0 ]; then
+            esc() { sed -e 's/%/%25/g' -e 's/\r//g' | awk 'BEGIN{ORS="%0A"} {print}'; }
+            failed=$(grep -E "^(FAILED|ERROR) " pytest.log | head -40 | esc)
+            detail=$(grep -E "^E +|Error:|Exception:" pytest.log | head -40 | esc)
+            summary=$(tail -n 3 pytest.log | esc)
+            echo "::error title=pytest 실패 목록::${failed:-실패 목록 없음 (수집 오류일 수 있다)}"
+            echo "::error title=pytest 오류 줄::${detail:-오류 줄 없음}"
+            echo "::error title=pytest 요약::${summary}"
+          fi
+          exit $code
 
       - name: 훅 bash 문법
+        if: success() || failure()
         run: |
           fail=0
           for f in .claude/hooks/*.sh .claude/skills/ko-setup-engine/*.sh; do
-            bash -n "$f" || { echo "문법 오류: $f"; fail=1; }
+            bash -n "$f" || { echo "::error file=$f::bash 문법 오류"; fail=1; }
           done
           exit $fail
 
       - name: 도구별 룰 · 워크플로 미러가 정본과 같은지
+        if: success() || failure()
         run: |
           python scripts/gen-rule-mirrors.py
           if ! git diff --quiet; then
-            echo "미러가 정본(.claude/rules · .agent/workflows)과 다르다 — python scripts/gen-rule-mirrors.py 를 돌리고 커밋한다"
-            git --no-pager diff --stat
+            echo "::error title=미러 불일치::미러가 정본(.claude/rules · .agent/workflows)과 다르다 — python scripts/gen-rule-mirrors.py 를 돌리고 커밋한다: $(git diff --name-only | tr '\n' ' ')"
             exit 1
           fi
 
       - name: 버전 · 변경 이력
+        if: success() || failure()
         run: |
           v=$(tr -d '\r\n' < .agent/VERSION)
-          grep -q "^## $v " CHANGELOG.md || { echo "CHANGELOG.md 에 '## $v' 절이 없다"; exit 1; }
+          grep -q "^## $v " CHANGELOG.md || { echo "::error file=CHANGELOG.md::'## $v' 절이 없다 (.agent/VERSION 과 맞춘다)"; exit 1; }

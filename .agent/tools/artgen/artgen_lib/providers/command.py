@@ -60,7 +60,8 @@ class CommandProvider(Provider):
         env.update({k: str(v) for k, v in self.options.get("env", {}).items()})
         timeout = self.options.get("timeoutSec", 600)
         try:
-            proc = subprocess.run(argv, env=env, timeout=timeout, capture_output=True, text=True)
+            proc = subprocess.run(argv, env=env, timeout=timeout, capture_output=True, text=True,
+                                  encoding="utf-8", errors="replace")  # OS 코드 페이지와 무관하게 — 영어 Windows(cp1252)에서도 한글이 깨져 죽지 않게
         except FileNotFoundError:
             raise ArtgenError(f"실행 파일을 찾을 수 없음: {argv[0]}")
         except subprocess.TimeoutExpired:

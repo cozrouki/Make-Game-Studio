@@ -77,7 +77,8 @@ def _ver(text):
 
 def _run(argv, timeout=20):
     try:
-        p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+        # 외부 도구 출력 — 코드 페이지가 달라도 죽지 않게 (영어 Windows cp1252 · 한국어 cp949)
+        p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace")
         return p.returncode, (p.stdout or "") + (p.stderr or "")
     except (OSError, subprocess.TimeoutExpired) as e:
         return -1, str(e)

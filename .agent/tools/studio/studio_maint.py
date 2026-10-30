@@ -372,10 +372,11 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
     sections = _missing_sections(st, template)
     for rel, _text, head_line in sections:
         plan["merge"].append({"file": rel, "newTopLevelKeys": [], "section": head_line})
-    head = subprocess.run(["git", "-C", template, "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
+    head = subprocess.run(["git", "-C", template, "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                          encoding="utf-8")
     plan["templateRev"] = head.stdout.strip() or "unknown"
     dirty = subprocess.run(["git", "-C", template, "status", "--porcelain", "--", *UPGRADE_TREES, *UPGRADE_FILES,
-                            *FRAMEWORK_TREES, *FRAMEWORK_FILES], capture_output=True, text=True)
+                            *FRAMEWORK_TREES, *FRAMEWORK_FILES], capture_output=True, text=True, encoding="utf-8")
     if dirty.stdout.strip():
         plan["templateRev"] += "+uncommitted"  # 커밋 전 템플릿에서 가져왔음을 기록 (출처 추적)
     plan["dryRun"] = dry_run

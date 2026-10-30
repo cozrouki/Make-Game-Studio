@@ -183,7 +183,8 @@ def _pid_alive(pid):
     if not pid:
         return False
     if os.name == "nt":
-        p = subprocess.run(["tasklist", "/FI", f"PID eq {int(pid)}", "/NH"], capture_output=True, text=True)
+        # tasklist 출력은 OS 언어 코드 페이지를 따른다 — PID 숫자만 보므로 깨진 글자는 바꿔 읽는다
+        p = subprocess.run(["tasklist", "/FI", f"PID eq {int(pid)}", "/NH"], capture_output=True, text=True, errors="replace")
         return str(int(pid)) in p.stdout
     try:
         os.kill(int(pid), 0)

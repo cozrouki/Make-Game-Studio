@@ -229,7 +229,7 @@ def test_commit_art_includes_only_art_and_shared_paths(repo):
     assert r["committed"]
     assert r["files"] == ["Assets/MyGame/Art/vfx.png", "Assets/MyGame/Art/vfx.png.meta",
                           "design/assets/requests/ASSET-001.json", "production/studio/roster.json"]
-    left = subprocess.run(["git", "-C", repo.root, "status", "--porcelain", "-uall"], capture_output=True, text=True).stdout
+    left = subprocess.run(["git", "-C", repo.root, "status", "--porcelain", "-uall"], capture_output=True, text=True, encoding="utf-8").stdout
     assert "Player.cs" in left and "game-concept.md" in left
 
 
@@ -303,7 +303,7 @@ def test_commit_only_really_commits_subset(repo):
     _touch(repo.root, "ProjectSettings/EditorSettings.asset")
     r = repo.commit("dev", "[studio:dev] 스크립트만", only=["Assets/MyGame/Scripts"])
     assert r["committed"]
-    left = subprocess.run(["git", "-C", repo.root, "status", "--porcelain", "-uall"], capture_output=True, text=True).stdout
+    left = subprocess.run(["git", "-C", repo.root, "status", "--porcelain", "-uall"], capture_output=True, text=True, encoding="utf-8").stdout
     assert "ProjectSettings/EditorSettings.asset" in left and "Player.cs" not in left
 
 

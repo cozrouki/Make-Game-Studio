@@ -149,6 +149,12 @@ def probe(paths):
 
 
 def main(argv=None):
+    # 부모(store · library)는 UTF-8 로 주고받는다 — OS 코드 페이지(cp949 · cp1252)와 무관하게 맞춘다 (한글 파일 이름)
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     argv = sys.argv[1:] if argv is None else argv
     if argv and argv[0] == "--probe":
         paths = json.loads(sys.stdin.read()) if argv[1:] == ["-"] else argv[1:]  # "-" = 표준 입력의 JSON 목록

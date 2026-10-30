@@ -118,8 +118,8 @@ def test_unity_lint_cli_exit_code_follows_blocking(tmp_path):
     f.parent.mkdir()
     f.write_text(_mb("        var rb = GetComponent<Rigidbody>();"), encoding="utf-8")
     script = os.path.join(TOOL_DIR, "unity_lint.py")
-    ok = subprocess.run([sys.executable, script, "--root", str(tmp_path), "Assets"], capture_output=True, text=True)
+    ok = subprocess.run([sys.executable, script, "--root", str(tmp_path), "Assets"], capture_output=True, text=True, encoding="utf-8")
     strict = subprocess.run([sys.executable, script, "--root", str(tmp_path), "--strict", "Assets"],
-                            capture_output=True, text=True)
+                            capture_output=True, text=True, encoding="utf-8")
     assert ok.returncode == 0 and "UL004" in ok.stdout          # 기본 설정은 경고만
     assert strict.returncode == 1

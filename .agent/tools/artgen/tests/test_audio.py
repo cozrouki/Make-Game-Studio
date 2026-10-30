@@ -328,7 +328,7 @@ def test_audio_post_loop_picks_window_before_fade_out(tmp_path):
     out = tmp_path / "loop.wav"
     # Act
     proc = subprocess.run([AUDIO_PY, AUDIO_POST, "--in", str(src), "--out", str(out), "--rate", "44100",
-                           "--channels", "1", "--duration", "3", "--loop", "1"], capture_output=True, text=True)
+                           "--channels", "1", "--duration", "3", "--loop", "1"], capture_output=True, text=True, encoding="utf-8")
     info = json.loads(proc.stdout.strip().splitlines()[-1])
     stats = analyze(str(out))
     # Assert
@@ -341,5 +341,5 @@ def test_audio_post_reports_decode_failure_as_json(tmp_path):
     bad = tmp_path / "bad.flac"
     bad.write_bytes(b"not audio")
     proc = subprocess.run([AUDIO_PY, AUDIO_POST, "--in", str(bad), "--out", str(tmp_path / "o.wav"), "--rate", "44100",
-                           "--channels", "1", "--duration", "1"], capture_output=True, text=True)
+                           "--channels", "1", "--duration", "1"], capture_output=True, text=True, encoding="utf-8")
     assert proc.returncode == 1 and json.loads(proc.stdout.strip().splitlines()[-1])["ok"] is False

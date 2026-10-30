@@ -30,6 +30,7 @@ import glob
 import os
 import re
 import shutil
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RULES_SRC = os.path.join(ROOT, ".claude", "rules")
@@ -204,6 +205,11 @@ def gen_pointers():
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):  # 영어 Windows(cp1252) 콘솔 · CI 에서 한글 출력이 죽지 않게
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     rows, n_rules = gen_rules()
     gen_agents_index(rows)
     n_wf = gen_workflows()
