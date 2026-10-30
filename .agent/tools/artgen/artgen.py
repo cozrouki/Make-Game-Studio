@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """artgen — 백엔드 중립 게임 그래픽 생성 파이프라인 CLI.
 
-Unity 프로젝트 루트에서 실행한다:
+게임 프로젝트 루트(Unity · Godot · Unreal)에서 실행한다:
     python .agent/tools/artgen/artgen.py providers
     python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-001.json
 

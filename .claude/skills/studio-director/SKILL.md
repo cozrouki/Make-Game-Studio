@@ -1,7 +1,7 @@
 ---
 name: studio-director
 description: 스튜디오 모드 — 이 세션을 디렉터로 등록하고, 사용자와 의견을 나누며 게임 전체 결정(게이트 · 비전 · 판단 요청)을 맡는 업무 루프 시작 (다른 프로젝트 폴더도 --root 로 지휘 가능)
-argument-hint: "[--root <Unity 프로젝트 경로>]"
+argument-hint: "[--root <게임 프로젝트 경로>]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, ListAgents, SendMessage, AskUserQuestion
 ---

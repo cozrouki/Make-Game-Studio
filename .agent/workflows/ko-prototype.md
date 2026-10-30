@@ -22,6 +22,6 @@ prototypes/$1-<slug>/
 ├── README.md       (한국어)
 └── PROBE.md        (옵션 — 가정 검증 계획)
 ```
-Unity 통합: `NEW`면 `Assets/<NewGame>/Scripts/Prototype/` 제안, 기존 게임이면 해당 게임 `Scripts/Prototype/`. `.agent/rules/prototype-code.md` 적용(느슨한 표준, README 필수). 컨셉별 관련 패턴은 `.agent/skills/02-gameplay/` 카탈로그 SKILL.md 참조(전투 `combat-system-pro`/`ability-skill-system`, 퍼즐 `grid-puzzle-mechanics`, AI `ai-behavior-trees`).
+엔진 통합: `NEW`면 엔진 코드 루트 아래(Unity `Assets/<NewGame>/Scripts/Prototype/` · Godot `src/<new_game>/prototype/` · Unreal `Source/<Module>/Private/Prototype/`) 제안, 기존 게임이면 해당 게임 코드 폴더의 `Prototype/`. `.agent/rules/prototype-code.md` 적용(느슨한 표준, README 필수). 컨셉별 관련 패턴은 `.agent/skills/02-gameplay/` 카탈로그 SKILL.md 참조(전투 `combat-system-pro`/`ability-skill-system`, 퍼즐 `grid-puzzle-mechanics`, AI `ai-behavior-trees`).
 
 **5. 후처리** — `active.md` "다음 할 것"에 검증 항목 추가 제안, `doc/work_log.md`에 `[<tag>] /ko-prototype: <slug>` 한 줄 기록.

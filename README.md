@@ -1,14 +1,14 @@
-# Unity 풀스택 통합 스킬 패키지
+# 게임 개발 풀스택 통합 스킬 패키지 (Unity · Godot · Unreal)
 
 > **English:** [jump to the English summary](#unity-full-stack-claude-skills)
 
-Unity 게임 개발용 Claude Code 통합 환경입니다. 목표는 **게임 아이디어를 기획으로 만들고, 기획 의도대로 그래픽을 만들고, Unity로 개발하는 과정을 자동화**하는 것입니다.
-4개 외부 저장소를 흡수해 만든 **4계층 스킬 셋** 위에, 자체 도구 두 가지(그래픽 생성 파이프라인 · 스튜디오 모드)를 얹었습니다.
+게임 개발용 Claude Code 통합 환경입니다. 목표는 **게임 아이디어를 기획으로 만들고, 기획 의도대로 그래픽을 만들고, 게임 엔진(Unity · Godot · Unreal)으로 개발하는 과정을 자동화**하는 것입니다.
+외부 저장소를 흡수해 만든 **엔진 중립 4계층 스킬 셋** 위에, 자체 도구 두 가지(그래픽 생성 파이프라인 · 스튜디오 모드)를 얹었습니다. 저장소 이름(`unity-fullstack`)은 처음 Unity 전용으로 시작한 흔적이고, 지금은 세 엔진을 지원합니다 — 엔진별로 무엇이 되는지는 [엔진 지원](#엔진-지원).
 
 ```
-아이디어 ─▶ 기획 ──────────────────▶ 그래픽 ─────────────────▶ Unity 개발
+아이디어 ─▶ 기획 ──────────────────▶ 그래픽 ─────────────────▶ 엔진 개발
           /brainstorm · /map-systems   /art-bible · /asset-spec      /ko-setup-engine
-          /design-system (GDD)         /ko-art-gen (artgen)          /ko-story-cycle · MCP
+          /design-system (GDD)         /ko-art-gen (artgen)          /ko-story-cycle · /ko-tdd
           ─────────── 한 세션에서 순서대로, 또는 스튜디오 모드(3세션 + 디렉터)로 병렬 ───────────
 ```
 
@@ -23,18 +23,18 @@ Unity 게임 개발용 Claude Code 통합 환경입니다. 목표는 **게임 �
 git clone https://github.com/cozrouki/unity-fullstack-claude-skills
 cd unity-fullstack-claude-skills
 
-# 2. 대상 Unity 프로젝트에 설치 (복사·자리표시자·권한·MCP·.gitignore)
+# 2. 대상 게임 프로젝트에 설치 (엔진 자동 판정 · 복사 · 자리표시자 · 권한 · MCP(Unity) · .gitignore)
 .\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
 ```
 
-3. **Unity 에디터**에서 프로젝트를 열고 `Window > MCP for Unity`에서 브리지 연결을 확인합니다 (패키지는 2에서 manifest에 추가됨).
+3. (Unity 만) **Unity 에디터**에서 프로젝트를 열고 `Window > MCP for Unity`에서 브리지 연결을 확인합니다 (패키지는 2에서 manifest에 추가됨). Godot · Unreal 은 이 단계가 없습니다.
 4. 프로젝트 루트에서 Claude Code를 실행합니다.
    ```powershell
    cd D:\Projects\MyGame
    claude
    ```
-5. **`/ko-prereq`** — 최초 1회 (PC 마다). 자동화에 필요한 것(Git · Claude Code · uv · Unity 에디터 · MCP · GPU · ComfyUI · 생성 모델 · 효과음 라이브러리 · 로컬 설정)을 점검하고, 자동으로 고칠 수 있는 것은 확인 후 설치합니다. Claude Code 밖에서는 `python .agent/tools/setup/prereq.py check` → `install`.
-6. **`/ko-setup-engine`** — 최초 1회. 엔진·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `CLAUDE.md` Technology Stack과 `technical-preferences.md`를 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
+5. **`/ko-prereq`** — 최초 1회 (PC 마다). 자동화에 필요한 것(Git · Claude Code · uv · 엔진 에디터(Unity · Godot · Unreal 중 프로젝트 엔진) · MCP(Unity) · gdUnit4(Godot) · GPU · ComfyUI · 생성 모델 · 효과음 라이브러리 · 로컬 설정)을 점검하고, 자동으로 고칠 수 있는 것은 확인 후 설치합니다. Claude Code 밖에서는 `python .agent/tools/setup/prereq.py check` → `install`.
+6. **`/ko-setup-engine`** — 최초 1회. 엔진(Unity · Godot · Unreal)·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `project.yaml`(정본) · `technical-preferences.md` · `CLAUDE.md` Technology Stack을 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
 7. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화·그래픽 생성).
 8. 진행 방식을 고릅니다.
    - **한 세션**: 위 흐름의 스킬을 순서대로 직접 호출합니다.
@@ -63,18 +63,36 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (93 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
-| **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
-| **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
+| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (95 skills — Game-Studios v1.2.0 74 포함) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
+| **L2 C# 코드 패턴** (Unity 전용) | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
+| **L3 Editor 자동화** (Unity 전용 — Godot · Unreal 은 명령줄 경로) | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
-| **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → Unity 임포트 (백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → 엔진 승격 (Unity 는 임포트 설정까지 · Godot · Unreal 은 파일까지, 백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
 | **사전 설치** | 도구 · 모델 · 효과음 라이브러리 · 설정 점검과 자동 설치 (SHA256 검증 · 이어받기) | `.agent/tools/setup/` | `/ko-prereq` |
 | **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 · Android 기기/스토어 4 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · `.agent/android/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
-| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
+| **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`). 역할 쓰기 영역은 엔진별 (`ownsByEngine`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
+
+## 엔진 지원
+
+엔진별 차이의 정본은 [`.claude/docs/engine-layers.md`](.claude/docs/engine-layers.md) 입니다. 엔진은 `project.yaml` `engine.name` → 표지 파일(`ProjectSettings/ProjectVersion.txt` · `project.godot` · `*.uproject`) 순으로 판정합니다.
+
+| 기능 | Unity | Godot | Unreal |
+|---|---|---|---|
+| L1 워크플로 (기획 · 스프린트 · 리뷰 · 게이트 · 릴리스) | ✅ | ✅ | ✅ |
+| 엔진 전문가 에이전트 (Game-Studios) | ✅ 5종 | ✅ 5종 | ✅ 5종 |
+| 엔진 레퍼런스 (`docs/engine-reference/`) | ✅ Unity 6.3 LTS | ✅ Godot 4.7 | ✅ UE 5.8 |
+| `/ko-setup-engine` 실측 | ✅ `measure.sh` | ✅ `measure-godot.sh` | ✅ `measure-unreal.sh` |
+| 테스트 실행 (`.claude/scripts/test-run.sh`) · `/ko-tdd` · `/ko-diagnose` | ✅ NUnit | ✅ gdUnit4 | ✅ Automation |
+| `/ko-prereq` 엔진 점검 | ✅ 에디터 · MCP · 분석기 | ✅ 실행 파일 · gdUnit4 | ✅ 에디터 |
+| 그래픽 · 사운드 승격 (`/ko-art-gen`) | ✅ 임포트 설정까지 | 파일까지 (임포트 수동) | 파일까지 (임포트 수동) |
+| 스튜디오 모드 쓰기 영역 | ✅ | ✅ | ✅ |
+| L2 코드 패턴 카탈로그 (SkillForge) | ✅ | — | — |
+| L3 에디터 자동화 (MCP) | ✅ | — (명령줄) | — (명령줄) |
+| 정적 검사 (커밋 훅) | ✅ unity_lint + UNT | — ("검사 안 함" 알림) | — ("검사 안 함" 알림) |
 
 ## 그래픽 생성 — `/ko-art-gen`
 
-`/art-bible` 과 `/asset-spec` 이 만든 기획 문서를 실제 이미지로 만들어 Unity 에셋으로 넣습니다. 상세: [`.agent/tools/artgen/README.md`](.agent/tools/artgen/README.md)
+`/art-bible` 과 `/asset-spec` 이 만든 기획 문서를 실제 이미지로 만들어 게임 엔진 에셋으로 넣습니다 (Unity 는 임포트 설정까지, Godot · Unreal 은 파일까지). 상세: [`.agent/tools/artgen/README.md`](.agent/tools/artgen/README.md)
 
 ```
 에셋 스펙 ─▶ 생성 요청(JSON) ─▶ 생성 ─▶ 아트 바이블 루브릭 검수 ─(미달)─▶ 프롬프트 수정 후 재생성
@@ -143,7 +161,7 @@ PolyForm Noncommercial 1.0.0 입니다. **개인 · 취미 · 학습 · 교육�
 python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 # 상업 라이선스를 보유한 경우
 python scripts/sync-catalog.py gamedesign --fetch --accept-license commercial
-# 설치된 Unity 프로젝트에 직접
+# 설치된 게임 프로젝트에 직접
 python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial --root D:\Projects\MyGame
 ```
 `--accept-license` 가 없으면 라이선스 요약만 보여 주고 멈춥니다. 동의 방식과 시각은 `.agent/gamedesign/UPSTREAM.json` 에 남습니다.
@@ -188,7 +206,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 
 **운영 규칙**
 - **단계 게이트:** G1 컨셉 선택(후보 2~3안을 화면 시안으로 비교) → G2 아트 디렉션 → G3 프리프로덕션 → M1, M2 … 게이트에 묶인 티켓은 승인 전에는 시작할 수 없습니다. 승인은 디렉터만 합니다.
-- **쓰기 영역 분리:** 기획은 `design/`, 아트는 `Assets/*/Art`·`production/artgen`, 개발은 그 외 `Assets/`·기술 문서를 씁니다. Unity MCP 는 개발 세션만 씁니다. 다른 영역이 필요하면 티켓을 보냅니다.
+- **쓰기 영역 분리:** 기획은 `design/`, 아트는 `Assets/*/Art`·`production/artgen`, 개발은 그 외 `Assets/`·기술 문서를 씁니다 (Unity 기준 — Godot · Unreal 은 `studio.config.json` `ownsByEngine` 의 경로). Unity MCP 는 개발 세션만 씁니다. 다른 영역이 필요하면 티켓을 보냅니다.
 - **커밋:** 게이트를 통과하거나 티켓을 완료할 때 각 세션이 자기 영역만 커밋합니다. 프로토콜 · 지침 파일(`CLAUDE.md` · `.claude/` · 도구 설정 등)은 **디렉터 영역**이라 디렉터가 커밋합니다(`/studio-status commit`). 푸시는 디렉터가 합니다.
 - **유지보수:** `studio.py audit` 이 주인 없는 변경과 역할 겹침을 찾고, 프로토콜 파일이 바뀌면 지문으로 감지해 현황판에 "미승인 변경" 으로 표시합니다(`/studio-status protocol ack`). 템플릿 갱신은 **`studio.py upgrade --from <템플릿>`** 으로만 합니다 — 설정은 프로젝트 값을 보존한 채 병합되고, 역할마다 공지 티켓이 발행됩니다.
 - **아트 모드:** `.agent/tools/studio/studio.config.json` 의 `"artMode"` 로 고릅니다.
@@ -208,14 +226,16 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 93개 (Game-Studios 72 + 한국어 wrapper · 스킬 12 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
-- **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
-- **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
-- **Hooks**: 13개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent, 스튜디오 정지 알림 등)
-- **Docs**: 9개 (MCP 가이드, 결정 매트릭스, GS 원본 6개, 출처 1개)
+- **Skills (L1)**: 95개 (Game-Studios v1.2.0 74 + 한국어 wrapper · 스킬 12 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
+- **Agents**: 49개 (Tier 1-3, 엔진 전문가 Unity 5 · Godot 5 · Unreal 5 포함)
+- **Rules**: 15개 (fork 2 — 엔진별 gameplay-code · doc-writing, GS 13)
+- **Hooks**: 21개 (등록 19 · 라이브러리 2 — 세션 시작/종료, validate-commit/push/lint/read/write/registry/assets, notify, log-agent, 스튜디오 가드 · 정지 알림 등)
+- **Docs**: `.claude/docs/` — 자체 4개(엔진 계층 표 · MCP 가이드 · 결정 매트릭스 · 출처) + GS 문서 · 템플릿 · 디렉터 게이트 (상류 이름 그대로) · `docs/engine-reference/` (Unity · Godot · Unreal)
+- **Scripts**: 35개 (`.claude/scripts/` — GS 도우미: 스토리 · ADR · 레지스트리 · 테스트 실행 · 설정 쓰기)
+- **설정**: `project.yaml` (엔진 · 전문가 · 명명 · 모드 · 단계 정본), `project.local.yaml` (개인 · git 무시) — `/settings`
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
-- **Tools**: 4개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿 · 하네스: 래칫 · 지표 · 쓰기 가드), `setup` (사전 설치 점검 · 설치 · Unity 공식 분석기), `lint` (Unity C# 규칙 검사 UL001~008 · 분석기 ruleset). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests .agent/tools/lint/tests -q`
+- **Tools**: 4개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · 엔진별 승격 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿 · 하네스: 래칫 · 지표 · 쓰기 가드), `setup` (사전 설치 점검 · 설치 — 엔진별 · Unity 공식 분석기), `lint` (Unity C# 규칙 검사 UL001~008 · 분석기 ruleset). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests .agent/tools/lint/tests -q`
 - **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) · android 4 (Apache-2.0, Google) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
@@ -229,11 +249,11 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | Git for Windows (bash 포함), git 2.25+ | 훅 스크립트 · 스튜디오 모드 역할별 커밋 |
 | Python 3.8+ (`python` 이 PATH 에 있을 것) | artgen · studio CLI (표준 라이브러리만 사용). 테스트는 `pytest` 필요 |
 | (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
-| uv (`uvx`) | Unity MCP 서버 실행 (`.mcp.json`) |
+| uv (`uvx`) | Unity MCP 서버 실행 (`.mcp.json`) · 도구 테스트 |
 | (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다 |
 | (Android 대상일 때) Unity Android Build Support 모듈 · adb | 기기 프로파일링 · Play 정책 점검 (`/ext` android 카탈로그). `technical-preferences.md` 의 Target Platforms 에 Android 가 있으면 `/ko-prereq` 가 점검 |
 | (선택) 효과음 라이브러리 | Kenney 오디오 팩 8종(CC0, 약 60MB) — `prereq.py install sound-library` 가 받아 색인 |
-| Unity + MCPForUnity (선택) | L3 에디터 자동화 · 승격 에셋 임포트 확인 |
+| 엔진 에디터 — Unity (+ MCPForUnity) · Godot (PATH, + gdUnit4) · Unreal (Epic Games Launcher) | 테스트 실행 · 에셋 임포트 확인 · (Unity) L3 에디터 자동화 |
 
 ## 크로스툴 호환 (Claude Code · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)
 
@@ -284,15 +304,18 @@ python scripts/gen-rule-mirrors.py
 
 `.agent/workflows/*.md` 는 Antigravity 에서 `/파일명` 슬래시로 바로 발동되는 **정본 절차**다. 다른 도구의 슬래시 명령이 모두 이 파일을 가리킨다. 각 워크플로는 Claude Code 의 `.claude/skills/<name>/` 절차를 참조하되 도구 중립으로 조정됨(`/sf-*` 슬래시 대신 `.agent/skills/` 카탈로그 직접 참조). 스튜디오 모드의 디렉터 콘솔(`/studio-status`, `/studio-ticket`)은 Claude Code 전용이지만, 다른 도구에서는 `studio.py status` · `gate approve --by director` 등 CLI 로 같은 일을 한다.
 
-## 다른 Unity 프로젝트에 적용하는 방법
+## 다른 프로젝트에 적용하는 방법
 
 ### 자동 설치 (권장) — `scripts/install.ps1`
 
 아래 1~4단계를 한 번에 수행합니다. Windows PowerShell 5.1 이상.
 
 ```powershell
-# 단일 게임
+# 단일 게임 (엔진은 표지 파일로 자동 판정 — Unity · Godot · Unreal)
 .\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
+
+# 엔진 지정 (표지 파일이 여럿이거나 아직 없을 때)
+.\scripts\install.ps1 -Target D:\Projects\MyGodotGame -Engine Godot
 
 # 멀티 게임 + 공유 모듈 + Cursor 병행
 .\scripts\install.ps1 -Target D:\Projects\Multi -Games "A=GameA,B=GameB" -SharedModule SharedCore -Tools Claude,Cursor
@@ -306,25 +329,26 @@ python scripts/gen-rule-mirrors.py
 
 | 단계 | 하는 일 |
 |---|---|
-| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 제외). `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/`. 대상에 이미 있는 `.github/` 는 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
-| 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지 |
-| 권한 | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
-| MCP | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |
+| 엔진 판정 | `ProjectSettings/ProjectVersion.txt` → Unity · `project.godot` → Godot · `*.uproject` → Unreal (`-Engine` 으로 지정 가능). Unity 전용 계층(SkillForge · unity_lint · MCP 가이드 · `sf-*`)은 Unity 일 때만, 엔진 레퍼런스는 그 엔진 것만, `src/CLAUDE.md` 는 Godot 일 때만 복사한다 |
+| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
+| 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지. `CLAUDE.md` 엔진 레퍼런스 import 줄을 대상 엔진으로 |
+| 권한 (Unity) | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
+| MCP (Unity) | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |
 | .gitignore | 백업 폴더 · 머신별 설정 · 런타임 파일 항목 추가 (artgen 생성 원본 · 받은함, 스튜디오 이벤트 로그 · 정지 표시 · 디스패치 로그 · 잠금 포함) |
 
-- `-Games`를 생략하면 `Assets/` 하위 후보(.cs 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
+- `-Games`를 생략하면 엔진 코드 루트(Unity `Assets/` · Godot 프로젝트 루트 · Unreal `Source/`) 하위 후보(소스 파일 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
 - 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다(`settings.local.json`은 보존).
-- 설치 후: Unity에서 MCPForUnity 확인 → `claude` 실행 → **`/ko-setup-engine`**(6단계) → `/unity-fullstack`.
+- 설치 후: (Unity) MCPForUnity 확인 → `claude` 실행 → **`/ko-setup-engine`**(6단계) → `/unity-fullstack`.
 
 스크립트를 쓸 수 없는 환경이면 아래 수동 절차를 따르세요.
 
 ### 1단계: 자산 복사 (수동)
 
-대상 Unity 프로젝트 루트에 자산을 복사. 쓰는 도구에 맞춰 선택 복사:
+대상 게임 프로젝트 루트에 자산을 복사 (Unity 가 아니면 `.agent/skills/` · `.agent/tools/lint/` · `sf-*` 는 빼도 된다). 쓰는 도구에 맞춰 선택 복사:
 
 ```powershell
 $src = "<이 저장소를 clone 한 경로>"      # 예: 이 저장소 루트
-$dst = "D:\path\to\YourUnityProject"
+$dst = "D:\path\to\YourGameProject"
 
 # 공통(모든 도구) — 페르소나 정본 + L2 코드 패턴 카탈로그 + 룰 소스
 Copy-Item "$src\AGENTS.md" $dst -Force
@@ -379,10 +403,10 @@ Copy-Item "$src\README.md" $dst -Force            # 선택
 }
 ```
 
-### 4단계: MCPForUnity 설치 (L3 사용시)
+### 4단계: MCPForUnity 설치 (Unity · L3 사용시)
 
 - 패키지에는 MCPForUnity 자체는 **없음** (Unity Package Manager로 별도 설치)
-- 대상 Unity 프로젝트의 `Packages/manifest.json` 에 추가:
+- 대상 Unity 프로젝트의 `Packages/manifest.json` 에 추가 (Unity 만):
   ```json
   "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main"
   ```
@@ -391,7 +415,7 @@ Copy-Item "$src\README.md" $dst -Force            # 선택
 ### 5단계: 새 Claude Code 세션 시작
 
 ```powershell
-cd D:\path\to\YourUnityProject
+cd D:\path\to\YourGameProject
 claude
 ```
 
@@ -399,26 +423,32 @@ claude
 
 `/unity-fullstack` 호출 → 4계층 메뉴 한국어 안내.
 
-### 6단계: 엔진 설정 (자동·수동 설치 공통) — Technology Stack + technical-preferences.md
+### 6단계: 엔진 설정 (자동·수동 설치 공통) — project.yaml + Technology Stack + technical-preferences.md
 
-L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`team-*` 등)가 `.claude/docs/technical-preferences.md`에서 엔진·성능 예산·명명 규칙·**Unity 전문가 에이전트 라우팅**을 읽고, `/gate-check`는 `CLAUDE.md`의 `## Technology Stack`이 `[CHOOSE]` 상태인지 검사합니다. 두 파일 모두 **비어 있는 상태로 배포**되므로 한 번 채워야 합니다. 비어 있으면 이 스킬들이 "엔진 미설정"으로 판단하고 전문가 에이전트(`unity-specialist`·`unity-shader-specialist`·`unity-ui-specialist` 등)로 넘기지 못합니다.
+L1 스킬 대부분(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`team-*` 등)이 루트 `project.yaml`(정본 — 없으면 `.claude/docs/technical-preferences.md`)에서 엔진·성능 예산·명명 규칙·**엔진 전문가 에이전트 라우팅**(`specialists`)을 읽고, `/gate-check`는 `CLAUDE.md`의 `## Technology Stack`이 `[CHOOSE]` 상태인지 검사합니다. 모두 **비어 있는 상태로 배포**되므로 한 번 채워야 합니다. 비어 있으면 이 스킬들이 "엔진 미설정"으로 판단하고 전문가 에이전트(Unity `unity-*` · Godot `godot-*` · Unreal `unreal-specialist` · `ue-*`)로 넘기지 못합니다.
 
 **`/ko-setup-engine` 한 번 실행하면 됩니다.**
 
 ```
-/ko-setup-engine                    # 코드 루트 후보를 보여 주고 고르게 함
-/ko-setup-engine Assets/YourGame    # 코드 루트 지정 (서드파티 에셋 제외용)
+/ko-setup-engine                    # 엔진 판정 → 코드 루트 후보를 보여 주고 고르게 함
+/ko-setup-engine Assets/YourGame    # Unity 코드 루트 지정 (서드파티 에셋 제외용)
+/ko-setup-engine src                # Godot
+/ko-setup-engine Source/MyGame      # Unreal 모듈
 ```
 
-| 자동 실측 (`measure.sh`) | 질문 (2개) |
-|---|---|
-| 엔진 버전 · 렌더 파이프라인 · 패키지 버전 · 물리/NavMesh · UI Toolkit/uGUI 비율 · 입력 바인딩(게임패드 지원) · **명명 규칙 다수결**(`[SerializeField]`/private/const/event 따로) · 테스트 asmdef(EditMode/PlayMode) | 대상 플랫폼(현재 + 확장 예정) · 목표 프레임 |
+| 엔진 | 자동 실측 | 질문 |
+|---|---|---|
+| Unity (`measure.sh`) | 엔진 버전 · 렌더 파이프라인 · 패키지 버전 · 물리/NavMesh · UI Toolkit/uGUI 비율 · 입력 바인딩(게임패드 지원) · **명명 규칙 다수결**(`[SerializeField]`/private/const/event 따로) · 테스트 asmdef(EditMode/PlayMode) | 대상 플랫폼 · 목표 프레임 |
+| Godot (`measure-godot.sh`) | 버전 · 렌더러 · 3D 물리 엔진 · 2D/3D 근거 · 애드온 · 오토로드 · 입력 액션(게임패드 · 터치) · GDScript 명명 다수결(class_name · func · signal · const · 정적 타입 비율) · gdUnit4 | 같음 (+ 2D/3D 가 모호할 때) |
+| Unreal (`measure-unreal.sh`) | EngineAssociation · 모듈 · 활성 플러그인 · `DefaultEngine.ini` 렌더 설정 · `Build.cs` 의존 · GAS/Enhanced Input/UMG/복제 사용 · 접두 규칙(U/A/F/E/I · bool `b`) 준수 · Automation 테스트 루트 | 같음 (+ C++/Blueprint 주력) |
+
+측정하지 못한 항목(Blueprint 내용 · 대상 플랫폼 등)은 리포트의 "측정 안 함" 절에 남고, 미리보기에 그대로 보입니다.
 
 - 결과는 미리보기로 보여 주고 **승인 후에만** 씁니다. 다시 실행해도 사람이 쓴 섹션(금지 패턴·허용 라이브러리·ADR 로그)은 보존하므로, 엔진·패키지를 업그레이드할 때마다 재실행하면 됩니다.
 - **코드가 없는 새 프로젝트**는 실측할 것이 없으므로 upstream `/setup-engine`으로 넘깁니다.
 - 왜 `/setup-engine`을 그대로 쓰지 않나: upstream은 명명 규칙을 기본값(private 필드 `_camelCase` 하나)으로 채웁니다. 기존 코드가 다른 규칙이면 `/code-review`가 수백 곳을 위반으로 지적합니다.
-- `.claude/`는 프로젝트(클론)당 하나이므로 `technical-preferences.md`도 하나입니다. 한 Unity 프로젝트에 여러 게임이 있으면 코드 루트를 여러 개 넘겨 함께 실측합니다.
-- 측정 스크립트만 따로 돌려 볼 수도 있습니다: `bash .claude/skills/ko-setup-engine/measure.sh Assets/YourGame` (파일을 쓰지 않음).
+- `.claude/`는 프로젝트(클론)당 하나이므로 `project.yaml` · `technical-preferences.md`도 하나입니다. 한 프로젝트에 여러 게임이 있으면 코드 루트를 여러 개 넘겨 함께 실측합니다.
+- 측정 스크립트만 따로 돌려 볼 수도 있습니다: `bash .claude/skills/ko-setup-engine/measure.sh Assets/YourGame` (Godot `measure-godot.sh src` · Unreal `measure-unreal.sh Source/MyGame`, 파일을 쓰지 않음).
 
 ## 문서 운영 규칙 (컨텍스트 비용)
 
@@ -426,6 +456,7 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 
 - **work_log 월별 분리** — `doc/work_log.md`에는 현재 월만 두고 새 항목은 최상단에 추가(최신순). 지난 달은 `doc/work_log/YYYY-MM.md`로 옮기고 하단 인덱스에 한 줄 추가.
 - **active.md 3~5KB** — `production/session-state/active.md`에는 현재 상태·최근 완료분·다음 할 것·블로커만. 지난 이력은 work_log로, 커밋은 해시만, 넘치면 `production/session-state/archive/`로.
+- **세션 로그** — 세션 종료 훅이 `active.md` 사본을 월별 파일(`production/session-logs/session-log-YYYY-MM.md`)에 쌓고 최근 3개월만 남긴다 (`session-stop.sh` 의 `KEEP_MONTHS`). `active.md` 가 크면 사본도 커지므로 3~5KB 기준을 지키는 것이 로그 관리의 핵심이다.
 
 `ko-story-cycle`·`ko-sprint-plan`도 이 기준(work_log 최상단 = 최신)을 따릅니다. 일부 GS 스킬(`dev-story`·`story-done` 등)은 active.md에 내용을 덧붙이므로 주기적으로 정리하세요 — upstream 미러라 스킬 자체는 수정하지 않습니다.
 
@@ -433,29 +464,31 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 
 | 트리거 | 발화 | 효과 |
 |---|---|---|
-| 세션 시작 | `session-start.sh` + `detect-gaps.sh` | 한국어 컨텍스트 + 신규 프로젝트 안내 |
-| 세션 종료 | `session-stop.sh` | `production/session-logs/session-log.md` 아카이브 |
-| Bash 명령 직전 | `validate-commit.sh` + `validate-push.sh` | git commit/push 정책 점검 (non-blocking) |
+| 세션 시작 | `session-start.sh` + `detect-gaps.sh` | 한국어 컨텍스트(엔진 · 세션 상태 3,000자 상한 · 단계 · 스프린트 · 코드 헬스) + 엔진 레퍼런스 불일치 · 설정 스키마 경고 + 신규 프로젝트 안내 |
+| 세션 종료 · 매 턴 | `session-stop.sh` | `active.md` 가 바뀌었을 때만 월별 `production/session-logs/session-log-YYYY-MM.md` 에 아카이브, 최근 3개월만 보관 (git 무시 · 읽는 도구 없음 — 오래 남길 이력은 git · `doc/work_log.md`) |
+| Bash/PowerShell 명령 직전 | `validate-commit.sh` + `validate-push.sh` + `validate-lint.sh` | git commit/push 정책 점검 + 엔진별 정적 검사 (Unity unity_lint 차단 규칙만 막음, 그 밖의 엔진은 "검사 안 함" 알림) |
+| Read 직전 | `validate-read.sh` | 40KB 넘는 설계 문서 통째 읽기를 막고 제목 목록을 돌려줌 (구간 읽기 유도) |
+| Write/Edit 직전 | `validate-registry.sh` + `validate-write.sh` + `studio-write-guard.sh` | 레지스트리 · 설정 · 덮어쓰기 경고 + 스튜디오 역할 쓰기 영역 |
 | Write/Edit 직후 | `validate-assets.sh` + `validate-skill-change.sh` | 에셋 네이밍/JSON 유효성 점검 |
 | Notification | `notify.sh` | Windows balloon tip |
-| Compact 전/후 | `pre-compact.sh` / `post-compact.sh` | 컨텍스트 보존 |
-| Agent 호출 | `log-agent.sh` / `log-agent-stop.sh` | 감사 로그 |
+| Compact 전 | `pre-compact.sh` | 컨텍스트 보존 |
+| Agent 호출 · 종료 | `log-agent.sh` / `log-agent-stop.sh` + `validate-agent-artifact.sh` | 감사 로그 + 서브에이전트가 지시받은 파일을 안 쓰고 끝나면 경고 |
 
-`.cs` 파일 편집 시 `gameplay-code.md` 룰이 globs 매칭으로 자동 적용됩니다.
+게임플레이 코드(Unity `Assets/*/Scripts/**/*.cs` · Godot `src/**/*.gd` · Unreal `Source/**/*.cpp|h`) 편집 시 `gameplay-code.md` 룰이 globs 매칭으로 자동 적용됩니다 (공통 절 + 엔진 절).
 
 ## 동일 이름 7개 skill 처리
 
 `brainstorm`, `design-review`, `design-system`, `map-systems`, `playtest-report`, `balance-check`, `scope-check` 는 L1(영문 워크플로) 과 L2(SkillForge `11-game-design` 카테고리, 한국어 상세) 양쪽에 존재합니다.
 
 - 슬래시 `/brainstorm` 등 → **L1** 발화
-- 한국어 상세 → `/sf-info <name>`
+- 한국어 상세 → `/sf-info <name>` (L2 는 Unity 설치에만 들어간다)
 - 각 L1 파일 상단에 한국어 안내 한 줄 명시
 
 ## 출처·라이선스
 
 `.claude/docs/ATTRIBUTION.md` 참조. 외부 저장소:
 
-1. **Donchitos/Claude-Code-Game-Studios** — L1 프로세스 (skills, agents, hooks, rules, docs)
+1. **Donchitos/Claude-Code-Game-Studios** v1.2.0 — L1 프로세스 (skills, agents — 엔진 전문가 포함, hooks, rules, docs, scripts, 엔진 레퍼런스, `project.yaml` 설정 체계)
 2. **nlelouche/Unity-SkillForge** (Unity3D-AntiGravitySkills) — L2 C# 코드 패턴
 3. **Besty0728/Unity-Skills** — L3 보조 카탈로그 (현재 미설치, 외부 URL 참조)
 4. **sickn33/antigravity-awesome-skills** — L4 패키징 포맷 차용
@@ -463,7 +496,7 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 6. **coreyhaines31/marketingskills** — 외부 카탈로그 `marketing` (MIT, 포함)
 7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
 7-1. **android/skills** (Google) — 외부 카탈로그 `android` (Apache-2.0, 포함 — 기기 · 스토어 단 4개만, LICENSE 동봉)
-7-2. **mattpocock/skills** — `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` 의 원본 (MIT, 한국어 · Unity 맞춤 재작성 — 고지는 `THIRD_PARTY_LICENSES.md` §9)
+7-2. **mattpocock/skills** — `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` 의 원본 (MIT, 한국어 · 엔진 맞춤 재작성 — 고지는 `THIRD_PARTY_LICENSES.md` §9)
 8. **Stanestane/game-design-skills-bundle** — 외부 카탈로그 `gamedesign` (PolyForm Noncommercial 1.0.0, **미포함** — 사용자가 직접 받음)
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
@@ -495,6 +528,9 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unit
 # upstream pull 생략 (이미 최신이라 확신할 때)
 .\scripts\sync-upstream.ps1 -SkipPull
 
+# Game-Studios 만 (SkillForge · 외부 카탈로그 생략)
+.\scripts\sync-upstream.ps1 -GameStudiosOnly -SkipPull
+
 # clone 경로 변경
 .\scripts\sync-upstream.ps1 -GameStudiosClone "C:\src\game-studios" -SkillForgeClone "C:\src\skillforge"
 ```
@@ -502,28 +538,32 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unit
 ### 자동 갱신되는 미러 영역
 
 - `.agent/skills/` — SkillForge 전체 (102+ SKILL.md + templates + skills-index.json)
-- `.claude/skills/<GS-skill>/` — Game-Studios 72개 skill (자체 skill `ko-*` · `sf-*` · `studio-*` · `unity-fullstack` 은 덮어쓰지 않음)
-- `.claude/agents/` — 39개 (Godot/UE 패턴 자동 제외)
-- `.claude/docs/gs-*` — 6개 GS docs
-- `.claude/rules/<10 GS rules>` — `gameplay-code.md` 자동 보존
-- `.claude/hooks/<10 GS hooks>` — `session-start.sh`/`session-stop.sh` 자동 보존
+- `.claude/skills/<GS-skill>/` — Game-Studios skill 전부 (v1.2.0 기준 74개 — 자체 skill `ko-*` · `sf-*` · `studio-*` · `unity-fullstack` · `ext` 는 덮어쓰지 않음)
+- `.claude/agents/` — 전부 (v1.2.0 기준 49개, 엔진 전문가 Unity · Godot · Unreal 포함)
+- `.claude/docs/` · `.claude/rules/` · `.claude/hooks/` · `.claude/scripts/` — 상류 이름 그대로 (아래 fork 제외). 예전 `gs-*` 접두 문서는 지운다
+- `docs/engine-reference/` · `docs/*.md` · `design/CLAUDE.md` · `src/CLAUDE.md` · `studio-tests/`
+- 씨앗(없을 때만): `project.yaml` · `docs/registry/` · `docs/architecture/tr-registry.yaml` · `design/registry/`
+- 상류에서 사라진 훅이 남아 있으면 경고한다 (settings.json 등록과 함께 지울 것)
 
 ### 자동 갱신 안 되는 fork 영역
 
-다음 4개 파일은 한국어 톤·로컬 컨텍스트가 머지되어 있어 **수동 검토**가 필요합니다:
+다음 5개 파일은 한국어 톤·로컬 컨텍스트가 머지되어 있어 **수동 검토**가 필요합니다 (스크립트의 `$forkFiles` 목록):
 
 | 파일 | 설명 |
 |---|---|
-| `.claude/hooks/session-start.sh` | 한국어 본문 + GS 코드헬스/스프린트 섹션 머지 |
-| `.claude/hooks/session-stop.sh` | 한국어 체크리스트 + GS archival 머지 |
-| `.claude/rules/gameplay-code.md` | Unity-specific 본문 + GS 원칙 append |
-| `.claude/settings.json` | 권한 머지 + 12 hook wiring |
+| `.claude/hooks/session-start.sh` | 한국어 본문 + STATUS 블록 + 상류 v1.2.0 판정(루트 · 스키마 · 단계 출처 · 엔진 코드 루트 · 엔진 레퍼런스 불일치 · CHECKPOINT) |
+| `.claude/hooks/session-stop.sh` | 한국어 체크리스트 + 상류 해시 중복 방지 |
+| `.claude/rules/gameplay-code.md` | 공통 규칙 + Unity · Godot · Unreal 절 |
+| `.claude/settings.json` | 권한 머지 + 훅 등록 19개 (상류 v1.2.0 등록 + 스튜디오 · validate-lint) |
+| `.claude/statusline.sh` | 한국어 상태줄 |
+
+엔진별 정적 검사(unity_lint)는 상류 `validate-commit.sh` 를 고치지 않고 자체 훅 `validate-lint.sh` 로 분리했다 — `validate-commit.sh` 는 미러로 그대로 갱신된다.
 
 업스트림에서 이 파일들이 의미 있게 변경되었으면 (예: GS의 새 hook 이벤트 추가) 수동으로 우리 fork에 반영해야 합니다. sync 스크립트는 이 영역을 건드리지 않으므로 안전합니다.
 
 ### 권장 주기
 
-- **월 1회** — Game-Studios 와 SkillForge 모두 활발한 개발 단계가 아니므로 빈번한 동기화 불필요
+- **상류 릴리스 때** — Game-Studios 는 릴리스마다 `CHANGELOG.md` · `UPGRADING.md` 에 settings.json 병합 항목을 적는다. fork 5개는 그 항목을 보고 손으로 반영한다
 - **새 게임 프로젝트 시작 전** — 가장 최신 상태로 받아 시작
 
 ### 자동화 옵션 (선택)
@@ -549,39 +589,48 @@ Register-ScheduledTask -TaskName "ClaudeSkillsUpstreamSync" -Action $action -Tri
 AGENTS.md                        ★ 크로스툴 정본 (페르소나·표준·문서규칙)
 CLAUDE.md                        Claude Code 계층 (→AGENTS.md + Technology Stack + 스킬/훅/서브에이전트)
 GEMINI.md / AGENT.md             AGENTS.md 포인터 (Gemini CLI / 단수 폴백)
-.mcp.json.template               MCPForUnity 설정 템플릿
+.mcp.json.template               MCPForUnity 설정 템플릿 (Unity)
+project.yaml                     ★ 프로젝트 설정 정본 (엔진 · 전문가 · 명명 · 모드 · 단계 — 씨앗, /ko-setup-engine · /settings 가 채움)
+docs/                            상류 GS 루트 자산
+├── engine-reference/            엔진 레퍼런스 (unity · godot · unreal — 설치 때 대상 엔진 것만)
+├── registry/ · architecture/     ADR · TR-ID 레지스트리 씨앗
+└── CLAUDE.md · WORKFLOW-GUIDE.md · COLLABORATIVE-DESIGN-PRINCIPLE.md · skill-flow-diagrams.md
+design/                          design/CLAUDE.md · registry/ (엔티티 레지스트리 씨앗)
+src/CLAUDE.md                    Godot 코드 루트 지침 (Godot 설치에만)
+studio-tests/                    상류 스킬 · 에이전트 시험 (템플릿 유지보수용 — 설치 안 함)
 scripts/
-├── install.ps1                  대상 Unity 프로젝트에 설치 (복사·치환·권한·MCP·.gitignore)
-├── sync-upstream.ps1            upstream 2종 동기화
+├── install.ps1                  대상 게임 프로젝트에 설치 (엔진 판정·복사·치환·권한·MCP·.gitignore)
+├── sync-upstream.ps1            upstream 동기화 (Game-Studios · SkillForge · 외부 카탈로그)
 └── gen-rule-mirrors.py          크로스툴 미러 생성 (룰 → 4개 형식 + AGENTS.md 색인, 워크플로 → 7개 형식)
 
-.cursor/rules/ · commands/      12개 .mdc 룰 + 15개 명령 (Cursor — 생성물)
+.cursor/rules/ · commands/      15개 .mdc 룰 + 15개 명령 (Cursor — 생성물)
 .github/instructions/ · prompts/ · skills/ · copilot-instructions.md   Copilot (생성물)
 .agents/skills/                  15개 (Codex — Agent Skills, 생성물)
 .gemini/commands/                15개 .toml (Gemini CLI — 생성물)
 .opencode/commands/              15개 (OpenCode — 생성물)
-.windsurf/rules/ · workflows/    12개 룰 + 15개 워크플로 (Windsurf — 생성물)
-.agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
+.windsurf/rules/ · workflows/    15개 룰 + 15개 워크플로 (Windsurf — 생성물)
+.agent/rules/                    15개 .md  (Antigravity — .claude/rules verbatim)
 .agent/workflows/                15개 (Antigravity 슬래시 — ko-* 12 + unity-fullstack + studio-join + ext)
-.agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · Unity 임포터 템플릿 · 테스트
-.agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 모델 · 라이브러리 · 설정 · Unity 분석기) · 테스트
+.agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · 엔진별 승격 · Unity 임포터 템플릿 · 테스트
+.agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 엔진 에디터 · 모델 · 라이브러리 · 설정 · Unity 분석기) · 테스트
 .agent/tools/lint/               Unity C# 규칙 검사 (unity_lint.py UL001~008 · lint.config.json blocking · Default.ruleset) · 테스트
 .agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 도구 공통 업무 루프 프롬프트 · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋/감시/디스패치 CLI · 테스트
 
 .claude/
-├── settings.json                권한 + 12 hook wiring + 플러그인
+├── settings.json                권한 + 훅 등록 19개 + 플러그인
 ├── statusline.sh                상태줄 (한국어)
-├── hooks/                       12개 (로컬 머지 2 + GS 신규 10)
-├── rules/                       12개 (로컬 fork 2 + GS 10)
-├── agents/                      39개 (Tier 1-3, Godot/UE 제외)
-├── skills/                      93개
+├── hooks/                       21개 (fork 2 + 자체 3 — validate-lint · 스튜디오 2 + GS 16)
+├── rules/                       15개 (fork 2 + GS 13)
+├── scripts/                     35개 (GS 도우미 — test-run · config-set · registry · story-facts 등)
+├── agents/                      49개 (Tier 1-3, 엔진 전문가 Unity · Godot · Unreal 포함)
+├── skills/                      95개
 │   ├── unity-fullstack/         마스터 진입
 │   ├── ko-sprint-plan/          한국어 wrapper · 스킬 12개
 │   ├── ko-story-cycle/
 │   ├── ko-code-review/
 │   ├── ko-perf-profile/
 │   ├── ko-prototype/
-│   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh)
+│   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh · measure-godot.sh · measure-unreal.sh)
 │   ├── ko-art-gen/              그래픽 생성 파이프라인 (artgen CLI 오케스트레이션)
 │   ├── ko-prereq/               사전 설치 점검 · 설치 (prereq.py)
 │   ├── ko-diagnose/             버그 진단 루프 (mattpocock/skills 차용 4종)
@@ -596,16 +645,17 @@ scripts/
 │   ├── sf-list/                 SkillForge 오프라인 헬퍼 3개
 │   ├── sf-info/
 │   ├── sf-add/
-│   └── <72 GS skills>           브레인스토밍·스프린트·리뷰·릴리스 등
-├── docs/                        9개
-│   ├── mcp-unity-guide.md       MCPForUnity 35 도구 한국어 가이드
-│   ├── editor-automation-decision.md  L1/L2/L3 결정 매트릭스
+│   └── <74 GS skills>           브레인스토밍·스프린트·리뷰·릴리스·settings·vertical-slice 등
+├── docs/
+│   ├── engine-layers.md         ★ 엔진 계층 표 (Unity · Godot · Unreal — 엔진별 차이의 정본)
+│   ├── mcp-unity-guide.md       MCPForUnity 35 도구 한국어 가이드 (Unity)
+│   ├── editor-automation-decision.md  L1/L2/L3 결정 매트릭스 (Unity)
 │   ├── ATTRIBUTION.md           출처·라이선스
-│   └── gs-*.md                  GS 원본 docs 6개
+│   └── <GS 문서>                coding-standards · coordination-rules · config-resolution · technical-preferences · templates/ · director-gates/ 등 (상류 이름 그대로)
 ├── data/                        2개
 │   ├── bundles.json             6 번들 (core / gameplay / perf / process / visuals-ui / devops)
 │   └── workflows.json           5 워크플로 (concept-to-prototype / concept-to-art / studio-autodev / feature-implementation / release-cycle)
-└── agent-memory/                (빈 디렉토리, GS hook 출력처)
+└── agent-memory/                (git 무시 — 에이전트 작업 메모리, rules/agent-memory.md)
 
 .agent/skills/                   L2 SkillForge 미러
 ├── 00-core-engineering/         4 skills
@@ -635,19 +685,25 @@ README.md                        이 파일
 
 # Unity Full-Stack Claude Skills
 
-A turnkey agentic scaffolding for **Unity game development** with
+A turnkey agentic scaffolding for **game development on Unity, Godot or Unreal Engine** with
 [Claude Code](https://claude.com/claude-code) (also works with Codex CLI,
 GitHub Copilot, Cursor, Gemini CLI, OpenCode, Windsurf, and Antigravity —
 per-tool rules and slash commands are generated from one source by
 `scripts/gen-rule-mirrors.py`). Its goal is to automate the path from a **game
-idea → design documents → graphics that match the design intent → a Unity
-build**. It integrates four upstream skill repositories into a single,
-generalized **4-layer skill set**, and adds two original tools on top: a
-backend-neutral graphics pipeline and a multi-session "studio mode".
+idea → design documents → graphics that match the design intent → an engine
+build**. It integrates upstream skill repositories into a single,
+engine-neutral **4-layer skill set**, and adds two original tools on top: a
+backend-neutral graphics pipeline and a multi-session "studio mode". (The repo
+name is a leftover from its Unity-only start.) What each engine gets is listed in
+[`.claude/docs/engine-layers.md`](.claude/docs/engine-layers.md): the process
+layer, engine specialist agents, engine references (Unity 6.3 LTS · Godot 4.7 ·
+UE 5.8), measured engine setup and test running work on all three; the C#
+code-pattern catalog, MCP editor automation and the commit-time linter are
+Unity-only for now.
 
 > **Mostly an integration/distribution.** The bulk of the skills come from the
 > upstreams below (all MIT; `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro`
-> are Korean/Unity adaptations of [mattpocock/skills](https://github.com/mattpocock/skills)). Original work here: the integration and
+> are Korean, engine-aware adaptations of [mattpocock/skills](https://github.com/mattpocock/skills)). Original work here: the integration and
 > generalization, cross-tool mirroring, the installer, the Korean `ko-*`
 > wrappers, **artgen** (graphics pipeline), and **studio mode**. Credits and
 > licenses: [`LICENSE`](LICENSE) · [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) ·
@@ -663,18 +719,18 @@ backend-neutral graphics pipeline and a multi-session "studio mode".
 
 | Layer | What | Entry |
 |---|---|---|
-| **L1 — Process** | 93 workflow slash-command skills (sprint / review / gate / release / debug · TDD) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
-| **L2 — C# code patterns** | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
-| **L3 — Editor automation** | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
+| **L1 — Process** (all engines) | 95 workflow slash-command skills (sprint / review / gate / release / debug · TDD), incl. Claude-Code-Game-Studios v1.2.0 | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
+| **L2 — C# code patterns** (Unity) | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
+| **L3 — Editor automation** (Unity) | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
 | **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |
 
-Plus 12 hooks, 12 rules, 39 agents, 9 docs — all auto-applied.
+Plus 21 hooks, 15 rules, 49 agents (Unity · Godot · Unreal specialists), 35 helper scripts, `project.yaml` config — all auto-applied.
 
 ### Original tools
 
 | Tool | What | Entry |
 |---|---|---|
-| **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into `Assets/` with TextureImporter settings applied. **Backend-neutral**: `mock` (placeholder), `comfyui` (local ComfyUI server — SDXL graph or your own exported workflow, BiRefNet transparency), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
+| **artgen** — graphics pipeline | Asset spec → generation request → image → review against the art bible → promote into the engine project (Unity: `Assets/` with TextureImporter settings applied; Godot / Unreal: file copy, import settings by hand). **Backend-neutral**: `mock` (placeholder), `comfyui` (local ComfyUI server — SDXL graph or your own exported workflow, BiRefNet transparency), `command` (any external script/CLI), `manual` (a human artist's deliveries), or your own Python adapter. | `/ko-art-gen` · [`.agent/tools/artgen/`](.agent/tools/artgen/README.md) |
 | **Studio mode** — 3-session auto-dev | You act as **director**; three AI sessions (planning · art · dev) in one project pass work to each other via ticket files. Each role can use a **different AI tool**: interactive Claude Code, or Codex / Gemini / Cursor / Copilot / OpenCode CLIs driven headless by a supervisor loop, or IDE agents (Antigravity, Windsurf). Sessions wake on ticket-file changes, so the tools don't need to talk to each other directly. You approve at stage gates (concept → art direction → pre-production → milestones). Art can be AI-generated or a **human artist** assisted by the art session. | `/studio-join` · `/studio-director` · `/studio-ticket` · `/studio-status` · `studio.py dispatch` · [`.agent/tools/studio/`](.agent/tools/studio/README.md) |
 
 Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytest` for their tests), git 2.25+. Studio mode runs all roles in one working tree on one machine; the director console skills need Claude Code, but everything is also available through the `studio.py` CLI.
@@ -689,22 +745,23 @@ cd unity-fullstack-claude-skills
 
 `install.ps1` copies the assets (git-tracked files only, per `-Tools` — `Claude`,
 `Codex`, `Copilot`, `Cursor`, `Gemini`, `OpenCode`, `Windsurf`, `Antigravity`, or
-`All`), fills
+`All`) for the detected engine (`-Engine Auto|Unity|Godot|Unreal`; Unity-only
+layers are skipped on other engines), fills
 the game-folder mapping table in `AGENTS.md` §6 and the `<SharedModule>` /
-namespace placeholders, creates or merges `.claude/settings.local.json`, adds
-MCPForUnity to `Packages/manifest.json`, writes `.mcp.json`, and updates
-`.gitignore`. It refuses to overwrite an existing install unless you pass
+namespace placeholders, points the engine-reference import in `CLAUDE.md` at your engine, and (Unity only)
+creates or merges `.claude/settings.local.json`, adds MCPForUnity to
+`Packages/manifest.json` and writes `.mcp.json`; it also updates `.gitignore`. It refuses to overwrite an existing install unless you pass
 `-Force` (which backs it up first). Use `-DryRun` to preview. Single-game
 project? Omit `-Games` and ignore the game-tag system.
 
 Then record your engine once: run `/ko-setup-engine` in Claude Code. It
-measures the project (engine version, render pipeline, packages, input
-bindings, UI framework, and naming conventions from your own code) and asks only
-two questions — target platforms and framerate — before writing the
-`## Technology Stack` section of `CLAUDE.md` and
-`.claude/docs/technical-preferences.md`. (Brand-new project with no code yet?
-It hands off to upstream `/setup-engine`.) About 20 L1 skills read these files
-to know the engine, performance budgets, naming conventions, and which Unity
+measures the project (Unity, Godot or Unreal: engine version, renderer, packages
+/ add-ons / plugins, input bindings, and naming conventions from your own code)
+and asks only two questions — target platforms and framerate — before writing
+`project.yaml` (the primary config), `.claude/docs/technical-preferences.md`
+and the `## Technology Stack` section of `CLAUDE.md`. (Brand-new project with no
+code yet? It hands off to upstream `/setup-engine`.) Most L1 skills read these to
+know the engine, performance budgets, naming conventions, and which engine
 specialist agent to route work to.
 
 Studio mode: open one terminal per role in the project. For a Claude Code role,
@@ -724,7 +781,8 @@ and studio docs are Korean only.
 
 ## Credits (upstreams)
 
-- [Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) — L1 process skills
+- [Claude-Code-Game-Studios](https://github.com/Donchitos/Claude-Code-Game-Studios) v1.2.0 — L1 process skills, agents (incl. Unity / Godot / Unreal specialists), hooks, scripts, engine references
+- [mattpocock/skills](https://github.com/mattpocock/skills) — source of `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` (MIT, Korean adaptations)
 - [Unity-SkillForge](https://github.com/nlelouche/Unity-SkillForge) — L2 code-pattern skills
 - [unity-mcp / MCPForUnity](https://github.com/CoplayDev/unity-mcp) — L3 Editor backend (installed as a UPM package)
 - antigravity-awesome-skills — L4 packaging format (format only)

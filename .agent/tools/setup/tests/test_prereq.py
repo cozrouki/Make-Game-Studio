@@ -257,3 +257,90 @@ def test_prereq_unity_analyzers_meta_is_valid_roslyn_plugin():
     meta = prereq.ANALYZER_META.format(guid=prereq.UNITY_ANALYZERS["guid"])
     assert "- RoslynAnalyzer" in meta and "guid: b9fbeda283c554d29f25b4ebf23983c8" in meta
     assert meta.count("enabled: 0") == 2                                  # 모든 플랫폼 · 에디터에서 끔 (분석기 전용)
+
+
+# ---- 엔진별 (Godot · Unreal — Unity 항목은 이름을 밝히고 건너뛴다) ----
+@pytest.fixture
+def godot_project(tmp_path):
+    root = tmp_path / "GodotGame"
+    root.mkdir()
+    (root / "project.godot").write_text('config_version=5\n[application]\nconfig/features=PackedStringArray("4.7", "Forward Plus")\n',
+                                        encoding="utf-8")
+    return root
+
+
+@pytest.fixture
+def unreal_project(tmp_path):
+    root = tmp_path / "UeGame"
+    root.mkdir()
+    (root / "UeGame.uproject").write_text('{\n  "FileVersion": 3,\n  "EngineAssociation": "5.8"\n}\n', encoding="utf-8")
+    return root
+
+
+def test_prereq_unity_items_skip_with_reason_on_godot(godot_project):
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}
+    for i in ("unity-editor", "unity-mcp-pkg", "unity-analyzers", "mcp-json"):
+        assert rows[i]["status"] == "skip"
+        assert "godot" in rows[i]["detail"].lower()
+
+
+def test_prereq_godot_editor_version_must_match_project(godot_project, tmp_path, monkeypatch):
+    exe = tmp_path / ("godot.exe" if os.name == "nt" else "godot")
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(prereq.shutil, "which", lambda name: str(exe) if name.startswith("godot") else None)
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (0, "4.6.2.stable.official.71f334935"))
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}["godot-editor"]
+    assert row["status"] == "missing" and "4.7" in row["detail"]
+
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (0, "4.7.2.stable.official.abc"))
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}["godot-editor"]
+    assert row["status"] == "ok"
+
+
+def test_prereq_gdunit4_missing_is_reported(godot_project):
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}["gdunit4"]
+    assert row["status"] == "missing"
+    (godot_project / "addons" / "gdUnit4" / "bin").mkdir(parents=True)
+    (godot_project / "addons" / "gdUnit4" / "bin" / "GdUnitCmdTool.gd").write_text("", encoding="utf-8")
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}["gdunit4"]
+    assert row["status"] == "ok"
+
+
+def test_prereq_unreal_editor_found_for_engine_association(unreal_project, tmp_path, monkeypatch):
+    base = tmp_path / "Epic Games"
+    exe = base / "UE_5.8" / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_text("", encoding="utf-8")
+    monkeypatch.setattr(prereq, "UNREAL_INSTALL_DIRS", (str(base),))
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(unreal_project, roles=["dev"]))}
+    assert rows["unreal-editor"]["status"] == "ok"
+    assert rows["unity-editor"]["status"] == "skip"
+    assert rows["godot-editor"]["status"] == "skip"
+
+
+def test_prereq_engine_items_skip_named_when_engine_unknown(tmp_path):
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(tmp_path, roles=["dev"]))}
+    assert rows["unity-editor"]["status"] == "skip"
+    assert "엔진 미설정" in rows["unity-editor"]["detail"]
+
+
+def test_prereq_engine_path_in_project_yaml_is_used(godot_project, tmp_path, monkeypatch):
+    exe = tmp_path / "tools" / "Godot_v4.7.exe"
+    exe.parent.mkdir()
+    exe.write_text("", encoding="utf-8")
+    (godot_project / "project.yaml").write_text(f'engine:\n  name: "Godot"\n  path: "{exe.as_posix()}"\n', encoding="utf-8")
+    monkeypatch.setattr(prereq.shutil, "which", lambda name: None)
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (0, "4.7.2.stable.official.abc"))
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(godot_project, roles=["dev"]))}["godot-editor"]
+    assert row["status"] == "ok" and "Godot_v4.7.exe" in row["detail"]
+
+
+def test_prereq_unreal_engine_path_root_is_used(unreal_project, tmp_path, monkeypatch):
+    monkeypatch.setattr(prereq, "UNREAL_INSTALL_DIRS", ())   # 이 PC 의 실제 설치에 기대지 않게
+    root = tmp_path / "UE_src"
+    exe = root / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_text("", encoding="utf-8")
+    (unreal_project / "project.yaml").write_text(f'engine:\n  name: "Unreal"\n  path: "{root.as_posix()}"\n', encoding="utf-8")
+    row = {r["id"]: r for r in prereq.run_checks(_ctx(unreal_project, roles=["dev"]))}["unreal-editor"]
+    assert row["status"] == "ok"

@@ -30,7 +30,7 @@ extra steps each wrapper adds.
 
 The four adapted skills (`ko-diagnose`, `ko-tdd`, `ko-grill`, `ko-agent-retro`)
 have English originals upstream in [mattpocock/skills](https://github.com/mattpocock/skills);
-their pages here link the original and list only the Unity-specific changes.
+their pages here link the original and list only the engine-specific changes.
 
 ## Making the agent respond in English
 

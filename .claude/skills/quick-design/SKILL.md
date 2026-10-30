@@ -1,18 +1,24 @@
 ---
 name: quick-design
-description: "Lightweight design spec for small changes — tuning adjustments, minor mechanics, balance tweaks. Skips full GDD authoring when a system GDD already exists or the change is too small to warrant one. Produces a Quick Design Spec that embeds directly into story files."
+description: "Lightweight spec for small changes — tuning adjustments, minor mechanics. Embeds directly into stories; skips full GDD."
 argument-hint: "[brief description of the change]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, Edit
+allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion, Bash(bash "*/.claude/skills/quick-design/../../hooks/yaml-helper.sh" resolve_config *)
+model: sonnet
 ---
+
+!`bash "${CLAUDE_SKILL_DIR}/../../hooks/yaml-helper.sh" resolve_config --keys automation,workflow`
+
+
 
 # Quick Design
 
 This is the **lightweight design path** for changes that don't need a full GDD.
 Full GDD authoring via `/design-system` is the heavyweight path. Use this skill
-for work under approximately 4 hours of implementation — tuning adjustments,
-minor behavioral tweaks, small additions to existing systems, or standalone
-features too small to warrant a full document.
+for work under about one week of implementation — tuning adjustments, minor
+behavioral tweaks, small additions to existing systems, or standalone features too
+small to warrant a full document. Most tweaks are hours; the one-week ceiling is
+the limit for a New Small System (see the categories below).
 
 **Output:** `design/quick-specs/[name]-[date].md`
 
@@ -20,6 +26,10 @@ features too small to warrant a full document.
 meaningful to implement without a written rationale.
 
 ---
+
+Every `AskUserQuestion` call follows `.claude/docs/automation-modes.md`
+(collaborative asks always · guided major-only · autonomous logs and proceeds;
+`automation_always_ask` categories always prompt).
 
 ## 1. Classify the Change
 
@@ -41,19 +51,38 @@ First, read the argument and determine which category this change falls into:
 If the change does NOT fit these categories — it introduces a new system with
 significant cross-system dependencies, requires more than one week of
 implementation, or fundamentally alters an existing system's core rules — stop
-and redirect to `/design-system` instead.
+and redirect to `/design-system` instead. Verdict: **REDIRECTED** — use
+`/design-system` for this change.
 
-Present the classification to the user and confirm it is correct before
-proceeding. If there is no argument, ask the user to describe the change.
+If there is no argument, ask the user to describe the change (plain text prompt), then classify it using the criteria above.
+
+Present the inferred classification using `AskUserQuestion`:
+- Prompt: "I've classified this as **[inferred type]** — [brief reason]. Is that correct?"
+- Options:
+  - `[A] Yes — [inferred type] is correct`
+  - `[B] Tuning — changing numbers or balance values only`
+  - `[C] Tweak — small behavioral change to an existing system`
+  - `[D] Addition — adding a small mechanic to an existing system`
+  - `[E] New Small System — standalone feature, under one week of work`
+  - `[F] This is too large — redirect me to /design-system`
+
+If [F]: stop. Verdict: **REDIRECTED** — use `/design-system` for this change.
+Otherwise: proceed with the selected type.
 
 ---
 
 ## 2. Context Scan
 
-Before drafting anything, read the relevant context:
+Before drafting anything, read the relevant context. Read the GDD and the systems
+index by section: find the headings you need with the Grep tool (pattern `^#`,
+content mode) and Read those ranges with offset and limit.
 
 - Search `design/gdd/` for the GDD most relevant to this change. Read the
-  sections that this change would affect.
+  sections that this change would affect. If no GDD covers this system — usually
+  the case at `workflow: minimal`, where `design/game-brief.md` and the stories are
+  the design record — read the brief's lines for it and the story the change
+  touches instead, report "No GDD for [system] — using the brief and [story
+  path]", and give the brief as the spec's GDD Reference.
 - Check whether `design/gdd/systems-index.md` exists. If it does, read it to
   understand where this system sits in the dependency graph and what tier it
   belongs to. If it does not exist, note "No systems index found — skipping
@@ -64,7 +93,9 @@ Before drafting anything, read the relevant context:
   holds the relevant values.
 
 Report what was found: "Found GDD at [path]. Relevant section: [section name].
-No conflicting quick specs found." (or note any conflicts found.)
+Prior quick specs for this system: [each path, and whether it agrees or
+conflicts with this change — or "none"]." Name a prior spec even when it
+agrees — "no conflicts" alone reads the same as "no prior specs".
 
 ---
 
@@ -209,9 +240,17 @@ tracking threshold — quick spec is sufficient."]
 
 ## 4. Approval and Filing
 
-Present the draft to the user in full. Then ask:
+Present the draft to the user in full. Then use `AskUserQuestion`:
+- Prompt: "Here's the Quick Design Spec draft. How do you want to proceed?"
+- Options:
+  - `[A] Approve — write it as shown`
+  - `[B] Revise — I'll describe what to change`
+  - `[C] This grew too large — redirect to /design-system instead`
 
-"May I write this Quick Design Spec to
+If [B]: collect the requested changes, revise the draft, and re-present this widget.
+If [C]: stop. Verdict: **REDIRECTED** — use `/design-system` for this change.
+
+If [A]: ask "May I write this Quick Design Spec to
 `design/quick-specs/[kebab-case-title]-[YYYY-MM-DD].md`?"
 
 Use today's date in the filename. The title should be a kebab-case description
@@ -243,7 +282,7 @@ System: [system name]
 GDD update: [Required — pending approval / Applied / Not required]
 
 Next step: This spec is ready for `/story-readiness` validation before
-implementation. Reference this spec in the story's GDD Reference field.
+implementation (at `workflow: minimal`, go straight to `/dev-story`). Reference this spec in the story's GDD Reference field.
 ```
 
 ### Pipeline Notes
@@ -269,6 +308,6 @@ using `/design-system` to author a full GDD for this."
 
 ## Recommended Next Steps
 
-- Run `/story-readiness [story-path]` to validate the story before implementation begins — reference this spec in the story's GDD Reference field
+- Run `/story-readiness [story-path]` to validate the story before implementation begins (skip at `rigor: minimal` — `/dev-story` directly) — reference this spec in the story's GDD Reference field
 - Run `/dev-story [story-path]` to implement once the story passes readiness checks
 - If the change is larger than expected, run `/design-system [system-name]` to author a full GDD instead

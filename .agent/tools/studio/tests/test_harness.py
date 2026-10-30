@@ -179,3 +179,41 @@ def test_harness_upgrade_adds_missing_hooks_and_agents_section(repo, tmp_path):
     assert agents.index("## §3-1.") < agents.index("## §4.") and "| [RH2] | Rehearsal2 |" in agents
     again = M.upgrade(repo, TEMPLATE, dry_run=True)                    # 두 번째는 할 일 없음
     assert not [m for m in again["merge"] if m["file"] in (".claude/settings.json", "AGENTS.md")]
+
+
+# ---- 엔진별 쓰기 영역 (studio.config.json roles.<역할>.ownsByEngine) ----
+def _with_engine(repo, marker, text=""):
+    _touch(repo.root, marker, text)
+    return S.Studio(repo.root, repo.cfg)
+
+
+def test_harness_godot_project_uses_godot_areas(repo):
+    st = _with_engine(repo, "project.godot", "config_version=5\n")
+    assert st.engine == "godot"
+    assert H.guard(st, "src/player/player.gd", "dev")[0]
+    assert H.guard(st, "project.godot", "dev")[0]
+    assert H.guard(st, "assets/game/art/vfx/hit.png", "art")[0]
+    ok, why = H.guard(st, "assets/game/art/vfx/hit.png", "dev")
+    assert not ok and "주인: art" in why
+
+
+def test_harness_unreal_project_uses_unreal_areas(repo):
+    st = _with_engine(repo, "Game.uproject", "{}")
+    assert st.engine == "unreal"
+    assert H.guard(st, "Source/Game/Private/Hero.cpp", "dev")[0]
+    assert H.guard(st, "Config/DefaultEngine.ini", "dev")[0]
+    assert H.guard(st, "Content/Import/Game/VFX/hit.png", "art")[0]
+    assert not H.guard(st, "Source/Game/Private/Hero.cpp", "art")[0]
+
+
+def test_harness_unity_or_unknown_engine_keeps_default_areas(repo):
+    assert repo.engine is None
+    assert H.guard(repo, "Assets/Game/Scripts/Player.cs", "dev")[0]
+    st = _with_engine(repo, "ProjectSettings/ProjectVersion.txt", "m_EditorVersion: 6000.3.1f1\n")
+    assert st.engine == "unity"
+    assert H.guard(st, "Assets/Game/Scripts/Player.cs", "dev")[0]
+
+
+def test_harness_project_yaml_belongs_to_dev(repo):
+    assert H.guard(repo, "project.yaml", "dev")[0]
+    assert not H.guard(repo, "project.yaml", "planning")[0]

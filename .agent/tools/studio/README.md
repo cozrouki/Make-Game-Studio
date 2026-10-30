@@ -1,6 +1,6 @@
 # studio — 기획 · 아트 · 개발 3세션 자동 개발 프로토콜
 
-> 디렉터(사용자) 1명 + Claude Code 세션 3개(기획 · 그래픽 아트 · Unity 개발)가 같은 Unity 프로젝트 폴더에서 서로 일을 주고받으며 게임을 만든다.
+> 디렉터(사용자) 1명 + Claude Code 세션 3개(기획 · 그래픽 아트 · 개발)가 같은 게임 프로젝트 폴더(Unity · Godot · Unreal)에서 서로 일을 주고받으며 게임을 만든다.
 > 디렉터는 **단계 게이트**에서만 승인하고, 그 사이에는 세션끼리 자율로 진행한다.
 > 디렉터는 사람이 직접 맡거나, **디렉터 세션**(`/studio-director`)을 두어 사용자와 의견을 나누며 맡게 할 수 있다 → [디렉터 세션](#디렉터-세션--studio-director)
 
@@ -98,7 +98,9 @@
 - 디렉터 세션은 헤드리스(`dispatch`)로 돌리지 않는다. 사용자와 대화하는 것이 이 역할의 본질이다. 로스터 `kind` 는 `claude` 또는 `manual` 만 허용한다.
 - 디렉터 세션이 있어도 사람은 `/studio-status` 로 언제든 직접 결정할 수 있다. 사람의 직접 결정이 우선한다.
 
-Unity 에디터는 1개만 띄운다. **Unity MCP 는 dev 세션만 사용한다.**
+엔진 에디터는 1개만 띄운다. **엔진 에디터 조작(Unity 는 MCP)은 dev 세션만 한다.**
+
+역할별 쓰기 영역은 엔진에 따라 달라진다 — `studio.config.json` 의 `roles.<역할>.owns` 는 Unity(와 엔진 미판정)용, `ownsByEngine.godot` · `ownsByEngine.unreal` 은 그 엔진용이다. 엔진은 `project.yaml` `engine.name` → 표지 파일 순으로 판정한다 (`.claude/docs/engine-layers.md`).
 
 ## 아트 모드 — AI 생성 / 사람 아티스트
 
@@ -217,7 +219,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 | **래칫** | `studio.py lesson add <종류> --by <역할> --note "…" [--ref T-…]` · `lesson list` · `lesson resolve <종류> --how "…"` (디렉터) | 검수 반려 · 리뷰 지적 · 반복 탈락의 원인 종류를 `production/studio/lessons.json` 에 쌓는다. 같은 종류가 `harness.ratchetAfter`(기본 2)번이면 디렉터에게 "하네스 개선" 티켓이 자동 발행된다. 막은 뒤 재발하면 한 번 만에 다시 발행 |
 | **지표** | `studio.py metrics` · 현황판 [하네스] | 검수 반려율 · 다시 열림 · 차단 발생 · 스토리 소요 중앙값 · 래칫 현황(종류 · 막음 · 재발). 장치를 바꾼 전후를 비교하는 근거 |
 | **쓰기 시점 가드** | `.claude/hooks/studio-write-guard.sh` (PreToolUse Write · Edit) → `studio.py guard --hook` | 역할 세션이 자기 영역 밖의 추적 대상 파일을 쓰려는 순간 막고 주인 역할을 알려 준다. 역할은 launch 의 세션 ID(`locks/launch.json`) 또는 `STUDIO_ROLE`. git 무시 파일 · 역할 미상 세션은 막지 않는다. **Claude Code 세션만** — 다른 도구(dispatch)는 커밋 시점 검사(`commit` · `audit`)에 맡긴다 |
-| **정적 검사** | `.agent/tools/lint/unity_lint.py` (UL001~008) · Unity 공식 분석기(`prereq.py install unity-analyzers`, UNT 규칙) | `gameplay-code.md` 규칙(핫 패스 할당 · 탐색 · 문자열 · Animator 문자열 · Rigidbody 위치 · public 튜닝 필드)을 기계로 본다. `studio.py commit` · `validate-commit` 훅이 커밋할 .cs 를 검사 — `lint.config.json` 의 `blocking` 규칙만 막고 나머지는 경고 |
+| **정적 검사** | (Unity) `.agent/tools/lint/unity_lint.py` (UL001~008) · Unity 공식 분석기(`prereq.py install unity-analyzers`, UNT 규칙). Godot · Unreal 은 검사기가 없어 `commit` 이 "정적 검사 안 함" 경고를 남긴다 | `gameplay-code.md` 규칙(핫 패스 할당 · 탐색 · 문자열 · Animator 문자열 · Rigidbody 위치 · public 튜닝 필드)을 기계로 본다. `studio.py commit` · `validate-commit` 훅이 커밋할 .cs 를 검사 — `lint.config.json` 의 `blocking` 규칙만 막고 나머지는 경고 |
 
 ## 유지보수 — 감사 · 프로토콜 변경 · 업그레이드
 

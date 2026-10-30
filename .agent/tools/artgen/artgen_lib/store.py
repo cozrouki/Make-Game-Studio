@@ -60,6 +60,35 @@ def _rel(root, path):
     return os.path.relpath(path, root).replace("\\", "/")
 
 
+def detect_engine(root):
+    """프로젝트 엔진 — project.yaml engine.name 이 정본, 없으면 표지 파일 (.claude/docs/engine-layers.md).
+    판정하지 못하면 None."""
+    try:
+        with open(os.path.join(root, "project.yaml"), encoding="utf-8") as f:
+            in_engine = False
+            for line in f:
+                if line.startswith("engine:"):
+                    in_engine = True
+                    continue
+                if in_engine and line.strip() and not line[:1].isspace() and not line.startswith("#"):
+                    break  # engine 블록 끝 (다음 최상위 키)
+                s = line.strip()
+                if in_engine and s.startswith("name:"):
+                    name = s[5:].split("#")[0].strip().strip("\"'").split()
+                    if name and name[0].lower() in ("unity", "godot", "unreal"):
+                        return name[0].lower()
+                    break
+    except OSError:
+        pass
+    if os.path.isfile(os.path.join(root, "ProjectSettings", "ProjectVersion.txt")) or os.path.isdir(os.path.join(root, "Assets")):
+        return "unity"
+    if os.path.isfile(os.path.join(root, "project.godot")):
+        return "godot"
+    if any(n.endswith(".uproject") for n in os.listdir(root)):
+        return "unreal"
+    return None
+
+
 class Store:
     def __init__(self, root, config):
         self.root = os.path.abspath(root)
@@ -270,7 +299,7 @@ class Store:
         self._save_state(asset_id, state)
         return state
 
-    # ---- Unity 승격 ----
+    # ---- 승격 (Unity: 임포트 맵까지 · Godot/Unreal: 파일만 — 임포트 설정은 엔진에서 수동) ----
     def promote(self, request, dest=None, force=False):
         asset_id = request["assetId"]
         state = self._require_state(asset_id)
@@ -280,10 +309,15 @@ class Store:
         dest = dest or request.get("unity", {}).get("dest")
         if not dest:
             raise ArtgenError(f"{asset_id}: unity.dest 없음 — 요청에 지정하거나 --dest 사용")
-        if not dest.startswith("Assets/") or ".." in dest.split("/"):
-            raise ArtgenError("dest 는 'Assets/' 로 시작하는 상대경로")
-        if not os.path.isdir(os.path.join(self.root, "Assets")):
-            raise ArtgenError(f"Unity 프로젝트 루트가 아님 (Assets/ 없음): {self.root}")
+        if dest.startswith(("/", "\\")) or ":" in dest or ".." in dest.replace("\\", "/").split("/"):
+            raise ArtgenError("dest 는 프로젝트 루트 기준 상대경로 ('..' · 절대경로 금지)")
+        engine = detect_engine(self.root)
+        if engine is None:
+            raise ArtgenError(f"엔진을 판정하지 못함 — Unity(Assets/) · Godot(project.godot) · Unreal(*.uproject) 루트가 아님: {self.root}")
+        if engine == "unity" and not dest.startswith("Assets/"):
+            raise ArtgenError("Unity 프로젝트의 dest 는 'Assets/' 로 시작해야 한다")
+        if engine == "godot" and dest.split("/")[0] in (".godot", "addons"):
+            raise ArtgenError("Godot dest 는 .godot/ · addons/ 밖이어야 한다")
 
         src = os.path.join(self.asset_dir(asset_id), sel["version"], sel["file"])
         dst = os.path.join(self.root, *dest.split("/"))
@@ -299,17 +333,19 @@ class Store:
         ext = os.path.splitext(sel["file"])[1].lower()
         if os.path.splitext(dest)[1].lower() != ext:
             raise ArtgenError(f"dest 확장자가 선택 파일({ext})과 다름: {dest}")
-        # 임포트 맵을 먼저 써야 Unity 가 파일을 처음 볼 때 설정이 적용된다
-        settings = import_defaults(request)
-        settings.update(request.get("unity", {}).get("import", {}))
-        self._upsert_import_entry(dict(settings, path=dest, assetId=asset_id, kind=kind_of(request),
-                                       sourceSha256=sel["sha256"]))
+        if engine == "unity":
+            # 임포트 맵을 먼저 써야 Unity 가 파일을 처음 볼 때 설정이 적용된다
+            settings = import_defaults(request)
+            settings.update(request.get("unity", {}).get("import", {}))
+            self._upsert_import_entry(dict(settings, path=dest, assetId=asset_id, kind=kind_of(request),
+                                           sourceSha256=sel["sha256"]))
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(src, dst)
         self._record_credit(asset_id, sel, dest)
 
         state.update(status="promoted", promoted={"dest": dest, "at": _now(), "version": sel["version"],
-                                                  "file": sel["file"], "backup": _rel(self.root, backup) if backup else None})
+                                                  "file": sel["file"], "backup": _rel(self.root, backup) if backup else None,
+                                                  "engine": engine, "importManual": engine != "unity"})
         self._save_state(asset_id, state)
         return state
 

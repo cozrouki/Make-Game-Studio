@@ -233,3 +233,49 @@ def test_cli_json_error_exit_code(tmp_path, capsys):
     assert main(["--root", str(tmp_path), "--json", "validate", str(tmp_path / "missing.json")]) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["results"][0]["ok"] is False
+
+
+# ---- 엔진별 승격 (Godot · Unreal — 파일 승격까지, 임포트 설정은 엔진 쪽 수동) ----
+def _generated_store(tmp_path, cfg, marker, dest):
+    marker(tmp_path)
+    req = _example()
+    req["output"].update(width=16, height=16, variants=1)
+    req["unity"]["dest"] = dest
+    path = tmp_path / "r.json"
+    path.write_text(json.dumps(req), encoding="utf-8")
+    store = Store(str(tmp_path), cfg)
+    r = load_request(str(path))
+    store.generate(r, str(path))
+    store.select("ASSET-001", "v001", "variant_01.png")
+    return store, r
+
+
+def test_promote_godot_copies_file_without_unity_import_map(tmp_path, cfg):
+    store, r = _generated_store(tmp_path, cfg, lambda p: (p / "project.godot").write_text("", encoding="utf-8"),
+                                "assets/vfx/frost_hit.png")
+    state = store.promote(r)
+    assert (tmp_path / "assets" / "vfx" / "frost_hit.png").is_file()
+    assert state["promoted"]["engine"] == "godot"
+    assert not os.path.exists(store.import_map_path)
+
+
+def test_promote_unreal_copies_file_and_marks_manual_import(tmp_path, cfg):
+    store, r = _generated_store(tmp_path, cfg, lambda p: (p / "Game.uproject").write_text("{}", encoding="utf-8"),
+                                "Content/Import/VFX/frost_hit.png")
+    state = store.promote(r)
+    assert (tmp_path / "Content" / "Import" / "VFX" / "frost_hit.png").is_file()
+    assert state["promoted"]["engine"] == "unreal"
+    assert state["promoted"]["importManual"] is True
+
+
+def test_promote_unity_dest_outside_assets_is_refused(tmp_path, cfg):
+    store, r = _generated_store(tmp_path, cfg, lambda p: (p / "Assets").mkdir(), "Content/x.png")
+    with pytest.raises(ArtgenError, match="Assets"):
+        store.promote(r)
+
+
+def test_project_yaml_engine_wins_over_markers(tmp_path):
+    from artgen_lib.store import detect_engine
+    (tmp_path / "Assets").mkdir()
+    (tmp_path / "project.yaml").write_text('engine:\n  name: "Godot"\n  version: "4.7"\n', encoding="utf-8")
+    assert detect_engine(str(tmp_path)) == "godot"

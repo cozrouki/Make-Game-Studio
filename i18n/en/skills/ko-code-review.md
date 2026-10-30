@@ -4,6 +4,8 @@
 > Frontmatter: `argument-hint: "<PR-number or branch> [--lean | --solo]"`, `agent: lead-programmer`,
 > `allowed-tools: Read, Glob, Grep, Bash`.
 
+> **Engine note (2026-10-30):** the canonical Korean skill is now engine-neutral (Unity · Godot · Unreal — see `.claude/docs/engine-layers.md`). This translation still describes the Unity path only; the Godot / Unreal branches are in the canonical file.
+
 A Korean review that adds multi-game context on top of the Game-Studios `code-review` skill.
 
 ## Usage

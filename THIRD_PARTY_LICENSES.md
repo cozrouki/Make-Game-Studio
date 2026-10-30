@@ -20,9 +20,14 @@ upstream LICENSE files on **2026-10-23** (items 6–8).
 
 - Source: https://github.com/Donchitos/Claude-Code-Game-Studios
 - License: **MIT**
-- Bundled here: 72 skills (`.claude/skills/<name>/`), 39 agents (`.claude/agents/`),
-  10 hooks, 10 rules, 6 `gs-*` docs. Some files (`session-*.sh`,
-  `gameplay-code.md`, `settings.json` wiring) are local forks/merges.
+- Version: v1.2.0 (commit `05ad7c8`, synced 2026-10-30)
+- Bundled here: 74 skills (`.claude/skills/<name>/`), 49 agents (`.claude/agents/`,
+  incl. Unity / Godot / Unreal specialists), 16 hooks, 13 rules, `.claude/docs/`,
+  35 helper scripts (`.claude/scripts/`), engine references (`docs/engine-reference/`),
+  `docs/*.md`, `design/CLAUDE.md`, `src/CLAUDE.md`, `studio-tests/`, and seed
+  config/registries (`project.yaml`, `docs/registry/`, `design/registry/`). Some files
+  (`session-*.sh`, `gameplay-code.md`, `settings.json`, `statusline.sh`) are local
+  forks/merges.
 
 ```
 Copyright (c) 2026 Donchitos

@@ -22,12 +22,12 @@ allowed-tools: Read, Glob, Grep, Bash
 3. 아래 분류로 개선 후보를 찾는다.
 
    - **탐색**: 에이전트가 필요한 파일을 쉽게 찾았나? 파일 사이에 숨은 의존이 있나? **탐색 포인터**(어디를 보라는 한 줄)가 있으면 나았나? _쓸 때_: 정보 하나를 찾는 데 오래 걸렸을 때. 이 템플릿의 포인터 자리: `doc/{GameName}/architecture.md` · `arch/`, `.claude/docs/`, AGENTS.md 의 색인
-   - **자동 검사**: 에이전트의 실수를 잡을 수 있는 자동 검사가 있나? 먼저 **이미 있는 검사**를 읽는다 — `python .agent/tools/lint/unity_lint.py` (UL 규칙), Unity 분석기(UNT, `.agent/tools/lint/Default.ruleset`), `.claude/hooks/validate-commit.sh` · `validate-push.sh`, 대상 게임의 EditMode/PlayMode 테스트, CI 워크플로. 이미 있는데 연결이 안 됐거나 조용히 깨진 검사가 있으면 그것이 발견이다 (새로 만들지 않는다). 커밋 훅도 CI 도 검사를 돌리지 않는 저장소라면 그 자체가 발견이다. _쓸 때_: 자동 검사로 잡을 수 있었던 실수를 했거나, 안전장치가 아예 없을 때
-   - **코딩 표준**: **리뷰 에이전트**(`/ko-code-review`)에 새 규칙을 줘야 하나? 기존 규칙을 지우거나 분명히 해야 하나? 위반을 먼저 분류한다. **기계적** 위반(고정된 문법 패턴, 금지 API, 파일 위치 규칙, `GetComponent` in `Update` 같은 것)은 결정적 검사로 만든다 — `unity_lint.py` 의 새 UL 규칙이나 훅. 규칙 문서보다 검사를 우선한다. `.claude/rules/*.md` 는 진짜 **판단**이 필요한 것(파일 간 일관성, 주변 스타일과 맞는지)에만 남긴다. _쓸 때_: 리뷰가 실수를 놓쳤을 때
+   - **자동 검사**: 에이전트의 실수를 잡을 수 있는 자동 검사가 있나? 먼저 **이미 있는 검사**를 읽는다 — 엔진별 검사기(`.claude/docs/engine-layers.md` — Unity `unity_lint.py` · UNT 분석기, Godot · Unreal 은 아직 없음), `.claude/hooks/validate-commit.sh` · `validate-push.sh` · `validate-lint.sh`, 대상 게임의 테스트(`.claude/scripts/test-run.sh`), CI 워크플로. 엔진에 검사기가 없는 것 자체가 반복 실수의 원인이면 그것을 발견으로 올린다. 이미 있는데 연결이 안 됐거나 조용히 깨진 검사가 있으면 그것이 발견이다 (새로 만들지 않는다). 커밋 훅도 CI 도 검사를 돌리지 않는 저장소라면 그 자체가 발견이다. _쓸 때_: 자동 검사로 잡을 수 있었던 실수를 했거나, 안전장치가 아예 없을 때
+   - **코딩 표준**: **리뷰 에이전트**(`/ko-code-review`)에 새 규칙을 줘야 하나? 기존 규칙을 지우거나 분명히 해야 하나? 위반을 먼저 분류한다. **기계적** 위반(고정된 문법 패턴, 금지 API, 파일 위치 규칙, `GetComponent` in `Update` · `get_node` in `_process` 같은 것)은 결정적 검사로 만든다 — Unity 는 `unity_lint.py` 의 새 UL 규칙, 그 밖의 엔진은 `validate-lint.sh` 에 검사를 더하는 안. 규칙 문서보다 검사를 우선한다. `.claude/rules/*.md` 는 진짜 **판단**이 필요한 것(파일 간 일관성, 주변 스타일과 맞는지)에만 남긴다. _쓸 때_: 리뷰가 실수를 놓쳤을 때
    - **상시 지침 파일**: `AGENTS.md` · `CLAUDE.md` · 전역 `~/.claude/CLAUDE.md` 에 있는 지시 중 코딩 표준이나 자동 검사로 옮겨야 할 것이 있나? 매 세션 컨텍스트에 상시 올라가는 파일이다. `wc -c` 로 크기를 재서 보고에 적는다. _쓸 때_: 이 파일들이 특히 클 때
    - **도구 비용**: 비싼 도구 호출(큰 파일 통째 읽기, 거대한 훅 출력, 반복 탐색, 큰 MCP 응답)을 줄일 수 있었나? 토큰을 많이 쓰는 훅 · 스크립트 · MCP 가 있나? 세션 시작 훅 출력 크기도 본다. _쓸 때_: 비싼 호출이 있었을 때
    - **무효 지시**: 지침 파일 안에서 에이전트의 행동을 실제로 바꾸지 않는 문장(기본값으로 이미 그렇게 하는 것)을 찾는다. _쓸 때_: 지침 파일이 크고 다루기 힘들 때
-   - **정보 접근**: 결정적인 정보를 에이전트가 볼 수 없었나? Unity 콘솔(`read_console`) · Editor.log · Player.log · 프로파일러 · 빌드 로그 · 외부 서비스 읽기 전용 접근을 늘릴 기회를 찾는다. _쓸 때_: 결정적인 정보가 없었을 때
+   - **정보 접근**: 결정적인 정보를 에이전트가 볼 수 없었나? 엔진 콘솔 · 로그(`.claude/docs/engine-layers.md` — Unity `read_console` · Editor.log · Player.log, Godot 출력 · `godot.log`, Unreal `Saved/Logs/`) · 프로파일러 · 빌드 로그 · 외부 서비스 읽기 전용 접근을 늘릴 기회를 찾는다. _쓸 때_: 결정적인 정보가 없었을 때
 
 4. 후보를 **심각도 순**으로 사용자에게 보인다. 후보마다: 무엇이 일어났나(세션의 근거) → 제안(어느 파일을 어떻게, 또는 어떤 검사를) → 분류. 고치지는 않는다 — 사용자가 고를 항목을 고른 뒤에 작업한다. 스튜디오 모드 역할 세션이면 지침 · 프로토콜 파일은 디렉터 영역이니 티켓으로 올린다.
 
@@ -41,6 +41,6 @@ allowed-tools: Read, Glob, Grep, Bash
 
 - `AGENTS.md` · `CLAUDE.md`: 이 저장소의 모든 에이전트 컨텍스트에 상시 올라간다. 아주 아껴 쓰고, 주로 다른 파일을 가리키는 **탐색 포인터**로 쓴다
 - `.claude/rules/*.md`: glob 으로 자동 적용되는 규칙. 판단이 필요한 기준만 둔다 (도구별 미러는 `scripts/gen-rule-mirrors.py` 가 만든다 — 정본만 고친다)
-- `.agent/tools/lint/unity_lint.py` · 훅: 기계적 규칙의 자리
+- `.agent/tools/lint/unity_lint.py` (Unity) · `.claude/hooks/validate-lint.sh` · 훅: 기계적 규칙의 자리
 - `.claude/docs/` · `doc/{GameName}/`: 다른 파일이 가리키는 참고 문서. 새로 쓰기 전에 기존 문서를 찾는다
 - 스킬: 설명이 컨텍스트에 올라가므로 참고 문서 진입점이나 사용자 호출 명령으로 쓴다. 상시 로딩이 부담이면 `/ext` 카탈로그처럼 필요할 때만 읽게 한다

@@ -4,10 +4,10 @@ description: 어려운 버그 · 성능 회귀 진단 — 재현 루프 → 최�
 
 # /ko-diagnose — 버그 진단 루프
 
-> 정본: `.claude/skills/ko-diagnose/SKILL.md` — 읽고 그대로 따른다. MCP for Unity 가 없는 도구는 테스트를 `Unity -batchmode -runTests` 로, 콘솔은 `Editor.log` 로 대신한다.
+> 정본: `.claude/skills/ko-diagnose/SKILL.md` — 읽고 그대로 따른다. 테스트는 엔진 공통 `bash .claude/scripts/test-run.sh <unity|godot|unreal>`, 콘솔 · 로그는 `.claude/docs/engine-layers.md` 의 엔진 칸으로 대신한다.
 > 인수: `<증상 설명> [게임-태그]`
 
-**1. 재현 루프** — 이 버그에서 red 가 되는 빠르고 결정적인 명령 하나(EditMode/PlayMode 테스트 · 에디터 메뉴 하네스 · bisect 스크립트)를 만들고 실제로 돌려 보인다. 이것이 생기기 전에는 가설로 넘어가지 않는다.
+**1. 재현 루프** — 이 버그에서 red 가 되는 빠르고 결정적인 명령 하나(엔진 단위 · 통합 테스트 · 에디터 스크립트 하네스 · bisect 스크립트)를 만들고 실제로 돌려 보인다. 이것이 생기기 전에는 가설로 넘어가지 않는다.
 
 **2. 재현 + 최소화** — 사용자가 말한 그 증상인지 확인하고, 요소를 하나씩 빼며 실패에 꼭 필요한 것만 남긴다.
 

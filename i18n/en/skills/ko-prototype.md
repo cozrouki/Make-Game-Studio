@@ -4,6 +4,8 @@
 > Frontmatter: `argument-hint: "<game-tag> <one-line concept>"`, `agent: prototyper`,
 > `allowed-tools: Read, Glob, Grep, Write, Edit, AskUserQuestion`.
 
+> **Engine note (2026-10-30):** the canonical Korean skill is now engine-neutral (Unity · Godot · Unreal — see `.claude/docs/engine-layers.md`). This translation still describes the Unity path only; the Godot / Unreal branches are in the canonical file.
+
 Takes a one-line idea from brainstorm → quick design → prototype folder in one pass.
 
 ## Usage

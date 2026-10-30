@@ -8,7 +8,7 @@
 set -u
 
 if [ ! -f "ProjectSettings/ProjectVersion.txt" ]; then
-  echo "ERROR: Unity 프로젝트 루트가 아님 (ProjectSettings/ProjectVersion.txt 없음)" >&2
+  echo "ERROR: Unity 프로젝트 루트가 아님 (ProjectSettings/ProjectVersion.txt 없음) — Godot 은 measure-godot.sh, Unreal 은 measure-unreal.sh" >&2
   exit 1
 fi
 

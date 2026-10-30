@@ -1,6 +1,6 @@
 ---
 name: ko-prereq
-description: 사전 설치 점검 · 설치 (한국어) — 자동화(스튜디오 모드 · 그래픽/사운드 생성 · Unity MCP)를 돌리기 전에 필요한 도구 · 모델 · 효과음 라이브러리 · 설정을 점검하고, 자동으로 고칠 수 있는 것은 사용자 확인 후 설치
+description: 사전 설치 점검 · 설치 (한국어) — 자동화(스튜디오 모드 · 그래픽/사운드 생성 · 엔진 도구 — Unity · Godot · Unreal)를 돌리기 전에 필요한 도구 · 모델 · 효과음 라이브러리 · 설정을 점검하고, 자동으로 고칠 수 있는 것은 사용자 확인 후 설치
 argument-hint: "[check | install] [--roles planning,art,dev] [--comfyui-home DIR] [--library-dir DIR]"
 user-invocable: true
 allowed-tools: Read, Bash, AskUserQuestion
@@ -12,7 +12,7 @@ allowed-tools: Read, Bash, AskUserQuestion
 
 ## 언제
 
-- 템플릿을 새 Unity 프로젝트에 설치한 직후 (`scripts/install.ps1` 다음)
+- 템플릿을 새 게임 프로젝트에 설치한 직후 (`scripts/install.ps1` 다음)
 - `studio launch` 사전 점검에 "사전 설치 누락" 경고가 나왔을 때
 - 다른 PC 에서 같은 프로젝트를 처음 열 때, 또는 설정(그래프 · 오디오 매핑)을 바꾼 뒤
 
@@ -20,10 +20,10 @@ allowed-tools: Read, Bash, AskUserQuestion
 
 1. **점검** — `python .agent/tools/setup/prereq.py check --json [--roles ..]` 을 실행한다.
    - `--roles`: 이 PC 가 맡을 역할. 사용자가 말하지 않았으면 전부(planning,art,dev). art 를 다른 PC 가 맡으면 빼야 모델을 받지 않는다.
-2. **보고** — 묶음(기본 · Unity · 생성 · 사용자 결정)별 표로 보여 준다: 상태 · 내용 · 해결 방법. 상태 기호: ✔ ok · ✖ missing · ! warn · ? 사용자 결정 · · 사용 안 함.
+2. **보고** — 묶음(기본 · Unity · Godot · Unreal · Android · 생성 · 사용자 결정)별 표로 보여 준다. 엔진 묶음은 프로젝트 엔진 것만 점검되고, 나머지는 `skip` 과 이유("Unity 전용 — godot 프로젝트")가 붙는다 — 표에 그 이유를 그대로 적는다: 상태 · 내용 · 해결 방법. 상태 기호: ✔ ok · ✖ missing · ! warn · ? 사용자 결정 · · 사용 안 함.
    - `auto: true` 인 missing 은 자동 설치 후보다. 용량(`size`) · 라이선스(`license`)를 함께 적는다.
    - 제목이 `(선택)` 인 항목(VS Code · pytest · graphify · adb 기기 · protobuf)은 없어도 실패가 아니고, `install` 을 항목 없이 실행하면 설치하지 않는다. 사용자가 원할 때만 `install <항목>` 으로 설치한다 (graphify 는 dev 가 기존 C# 코드 구조를 파악할 때 — 실행은 항상 `GRAPHIFY_BACKEND=none`)
-   - 자동 설치가 안 되는 missing 은 `manual` 안내를 그대로 보여 준다 (Unity 에디터는 `unityhub://` 링크, ComfyUI 본체는 릴리스 페이지).
+   - 자동 설치가 안 되는 missing 은 `manual` 안내를 그대로 보여 준다 (Unity 에디터는 `unityhub://` 링크, Godot 은 다운로드 페이지와 PATH 안내, Unreal 은 Epic Games Launcher, ComfyUI 본체는 릴리스 페이지).
 3. **확인** — 자동 설치 후보가 있으면 `AskUserQuestion` 으로 묻는다:
    - `[A] 모두 설치 (Recommended)` / `[B] 일부만` (항목을 다시 물음) / `[C] 설치 안 함`
    - 대용량 모델(GB 단위)이 있으면 질문에 총 용량과 저장 위치(ComfyUI models 폴더)를 적는다.
@@ -34,7 +34,7 @@ allowed-tools: Read, Bash, AskUserQuestion
 ## 하지 않는 것
 
 - **라이선스 동의를 대신하지 않는다.** `decide` 항목(Stable Audio · gamedesign 카탈로그)은 조건을 설명만 하고 설치하지 않는다. 사용자가 직접 받거나 `/ext` 의 설치 돕기를 쓴다.
-- 시스템 도구(git · Claude Code · uv · Unity · ComfyUI 본체 · GPU 드라이버)를 원격 스크립트로 몰래 설치하지 않는다. winget 이 있으면 `prereq.py` 가 winget 으로 설치하고, 없으면 공식 명령을 안내만 한다.
+- 시스템 도구(git · Claude Code · uv · Unity · Godot · Unreal · ComfyUI 본체 · GPU 드라이버)를 원격 스크립트로 몰래 설치하지 않는다. winget 이 있으면 `prereq.py` 가 winget 으로 설치하고, 없으면 공식 명령을 안내만 한다.
 - 받은 모델 파일을 지우지 않는다. 크기나 SHA256 이 맞지 않으면 보고하고 사용자에게 맡긴다.
 
 ## 관련

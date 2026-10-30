@@ -7,6 +7,7 @@
       "title": "기획",
       "owns": [
         "design",
+        ":(exclude)design/CLAUDE.md",
         ":(exclude)design/assets/requests",
         "production/epics",
         "production/sprints",
@@ -24,10 +25,14 @@
         ":(glob)Assets/*/Art/**",
         ":(glob)Assets/*/Audio/**",
         "Assets/ArtGen"
-      ]
+      ],
+      "ownsByEngine": {
+        "godot": ["design/assets/requests", "production/artgen", "art-source", ":(glob)assets/*/art/**", ":(glob)assets/*/audio/**"],
+        "unreal": ["design/assets/requests", "production/artgen", "art-source", "Content/Import"]
+      }
     },
     "dev": {
-      "title": "Unity 개발",
+      "title": "개발",
       "owns": [
         "Assets",
         ":(exclude,glob)Assets/*/Art/**",
@@ -41,11 +46,28 @@
         "production/dev",
         "tests",
         "production/epics",
+        "project.yaml",
         ".claude/docs/technical-preferences.md",
         "docs/architecture",
+        "docs/registry",
         "docs/engine-reference",
         ".github/workflows"
-      ]
+      ],
+      "ownsByEngine": {
+        "godot": [
+          "src", "scenes", "assets", ":(exclude,glob)assets/*/art/**", ":(exclude,glob)assets/*/audio/**",
+          "addons", "project.godot", "export_presets.cfg", "test", "production/.gdignore",
+          "production/qa", ":(exclude,glob)production/qa/qa-plan-*.md", ":(exclude)production/qa/playtests",
+          "production/dev", "tests", "production/epics", "project.yaml", ".claude/docs/technical-preferences.md",
+          "docs/architecture", "docs/registry", "docs/engine-reference", ".github/workflows"
+        ],
+        "unreal": [
+          "Source", "Config", "Plugins", "Content", ":(exclude)Content/Import", ":(glob)*.uproject",
+          "production/qa", ":(exclude,glob)production/qa/qa-plan-*.md", ":(exclude)production/qa/playtests",
+          "production/dev", "tests", "production/epics", "project.yaml", ".claude/docs/technical-preferences.md",
+          "docs/architecture", "docs/registry", "docs/engine-reference", ".github/workflows"
+        ]
+      }
     }
   },
   "dispatch": {
@@ -107,7 +129,9 @@
     ".agent/tools", ".agent/rules", ".agent/workflows", ".agent/skills",
     ".agent/marketing", ".agent/gamedev", ".agent/android", ".agent/catalogs", ".vscode/tasks.json",
     ".cursor", ".agents", ".gemini", ".opencode", ".windsurf",
-    ".github/instructions", ".github/prompts", ".github/skills", ".github/copilot-instructions.md"
+    ".github/instructions", ".github/prompts", ".github/skills", ".github/copilot-instructions.md",
+    "design/CLAUDE.md", "docs/CLAUDE.md", "src/CLAUDE.md", "docs/COLLABORATIVE-DESIGN-PRINCIPLE.md",
+    "docs/WORKFLOW-GUIDE.md", "docs/skill-flow-diagrams.md", "studio-tests"
   ],
   "allowedOverlaps": ["production/epics"],
   "shared": ["production/studio", ":(exclude)production/studio/events.jsonl", ":(exclude)production/studio/PAUSED", ":(exclude)production/studio/logs", ":(exclude)production/studio/locks", "doc/work_log.md"],

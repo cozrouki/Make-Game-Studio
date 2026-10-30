@@ -1,5 +1,5 @@
 ---
-applyTo: "src/ui/**"
+applyTo: "src/ui/**,Assets/**/UI/**/*.cs,Assets/**/Ui/**/*.cs,Assets/**/ui/**/*.cs,Source/**/UI/**/*.h,Source/**/UI/**/*.cpp,Source/**/Ui/**/*.h,Source/**/Ui/**/*.cpp,Source/**/ui/**/*.h,Source/**/ui/**/*.cpp"
 description: "UI Code Rules"
 ---
 <!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .claude/rules/ui-code.md -->

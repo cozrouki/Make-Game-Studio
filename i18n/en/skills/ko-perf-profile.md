@@ -4,6 +4,8 @@
 > Frontmatter: `argument-hint: "<scope: scene | system | full> [game-tag]"`, `agent: performance-analyst`,
 > `allowed-tools: Read, Glob, Grep, Bash, mcp__UnityMCP__manage_profiler`.
 
+> **Engine note (2026-10-30):** the canonical Korean skill is now engine-neutral (Unity · Godot · Unreal — see `.claude/docs/engine-layers.md`). This translation still describes the Unity path only; the Godot / Unreal branches are in the canonical file.
+
 Diagnoses Unity performance bottlenecks and matches them to SkillForge catalog fixes.
 
 ## Usage

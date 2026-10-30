@@ -4,6 +4,8 @@
 > Frontmatter: `argument-hint: "[code-root ...]  e.g. Assets/YourGame"`,
 > `allowed-tools: Read, Glob, Grep, Bash, Write, Edit, AskUserQuestion`.
 
+> **Engine note (2026-10-30):** the canonical Korean skill is now engine-neutral (Unity · Godot · Unreal — see `.claude/docs/engine-layers.md`). This translation still describes the Unity path only; the Godot / Unreal branches are in the canonical file.
+
 Upstream `/setup-engine` targets new projects and fills engine and naming fields with **defaults**. On a project that already has code, those defaults diverge from the real conventions and `/code-review` then flags existing code en masse. This skill **measures the project** to fill both files and asks only what code cannot reveal (platforms, target fps).
 
 Files it fills:

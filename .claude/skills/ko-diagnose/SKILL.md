@@ -10,9 +10,11 @@ allowed-tools: Read, Glob, Grep, Bash, Edit, Write, mcp__UnityMCP__run_tests, mc
 
 어려운 버그를 위한 절차다. 단계를 건너뛰려면 이유를 명시한다.
 
-> 출처: mattpocock/skills `diagnosing-bugs` (MIT) 를 Unity 용으로 옮기고 조정했다 — `.claude/docs/ATTRIBUTION.md`.
+> 출처: mattpocock/skills `diagnosing-bugs` (MIT) 를 게임 엔진(Unity · Godot · Unreal)용으로 옮기고 조정했다 — `.claude/docs/ATTRIBUTION.md`.
 
 시작 전에 해당 게임의 `doc/{GameName}/architecture.md`(있으면)와 손대는 영역의 ADR 을 읽어 모듈 구조를 잡는다. 증상 · 로그 · 캡처를 보여 줄 때는 비밀 값(토큰 · 키 · 계정)을 `<REDACTED>` 로 가린다.
+
+엔진별 테스트 실행 · 콘솔 · 프로파일러 · 자동화 경로는 `.claude/docs/engine-layers.md` 의 프로젝트 엔진 칸을 쓴다. 아래 예시는 Unity 기준이 많다 — Godot · Unreal 은 같은 행의 도구로 바꿔 읽는다.
 
 ## 1단계: 재현 루프 만들기
 
@@ -20,9 +22,9 @@ allowed-tools: Read, Glob, Grep, Bash, Edit, Write, mcp__UnityMCP__run_tests, mc
 
 ### 루프를 만드는 방법 (대략 이 순서)
 
-1. **실패하는 EditMode 테스트** — 로직이 MonoBehaviour 밖으로 분리되어 있으면 가장 빠르다. `mcp__UnityMCP__run_tests` (mode EditMode, 테스트 이름 필터) 또는 배치 모드 `Unity -batchmode -projectPath . -runTests -testPlatform EditMode -testFilter <이름> -testResults <경로>`
-2. **실패하는 PlayMode 테스트** — 프레임 · 물리 · 코루틴 · 씬 로딩이 얽힌 버그. 최소 씬이나 코드로 구성한 GameObject 로 재현한다
-3. **에디터 스크립트 / 메뉴 아이템 하네스** — `Scripts/Editor/` 에 임시 `[MenuItem]` 을 만들어 한 번 호출로 버그 경로를 태우고, 결과를 `Debug.Log` 로 남겨 `read_console` 로 읽는다
+1. **실패하는 단위 테스트** — 로직이 엔진 객체(MonoBehaviour · Node · Actor) 밖으로 분리되어 있으면 가장 빠르다. 공통 진입점 `bash .claude/scripts/test-run.sh <unity|godot|unreal>`. Unity 는 EditMode (에디터가 열려 있으면 `mcp__UnityMCP__run_tests`), Godot 은 gdUnit4, Unreal 은 Automation (`--filter <루트>`)
+2. **실패하는 통합 테스트** — 프레임 · 물리 · 코루틴 · 씬 로딩이 얽힌 버그. Unity PlayMode · Godot 씬을 띄우는 gdUnit4 테스트 · Unreal 월드를 만드는 Automation/Functional 테스트로, 최소 씬이나 코드로 구성한 객체로 재현한다
+3. **에디터 스크립트 하네스** — 한 번 호출로 버그 경로를 태우는 임시 스크립트. Unity `Scripts/Editor/` 의 `[MenuItem]` + `read_console` · Godot `godot --headless --script <임시.gd>` · Unreal 에디터 Python(`-ExecutePythonScript`) 또는 콘솔 명령. 결과는 로그로 남겨 읽는다
 4. **기록 재생** — 입력 · 이벤트 · 저장 데이터를 파일로 떠서 해당 코드 경로에 그대로 다시 흘린다
 5. **무작위 · 반복 루프** — "가끔 틀린다" 면 시드 고정 무작위 입력을 1000번 돌려 실패 모드를 찾는다
 6. **이분 탐색 하네스** — 두 커밋 사이에 생긴 버그면 "그 상태로 테스트 실행 → 판정" 을 자동화해 `git bisect run` 으로 돌린다
@@ -33,9 +35,9 @@ allowed-tools: Read, Glob, Grep, Bash, Edit, Write, mcp__UnityMCP__run_tests, mc
 
 루프 하나가 생기면 더 **tight** 하게 만든다.
 
-- 더 빠르게: 불필요한 씬 · 에셋 로딩 제거, 테스트 범위 좁히기, 도메인 리로드 없는 EditMode 로 내리기
+- 더 빠르게: 불필요한 씬 · 에셋 로딩 제거, 테스트 범위 좁히기, 엔진을 띄우지 않는 단위 테스트로 내리기 (Unity EditMode · Unreal `-nullrhi`)
 - 더 날카롭게: "예외 없음" 이 아니라 사용자가 말한 **바로 그 증상**을 단언한다
-- 더 결정적으로: `Random.InitState` 시드 고정, 시간 · deltaTime 주입, 물리 스텝 고정, 외부 입력 차단
+- 더 결정적으로: 난수 시드 고정(`Random.InitState` · `seed()` · `FRandomStream`), 시간 · deltaTime 주입, 물리 스텝 고정, 외부 입력 차단
 
 30초짜리 불안정한 루프는 없는 것과 거의 같다. 2초짜리 결정적 루프가 목표다.
 
@@ -90,15 +92,15 @@ allowed-tools: Read, Glob, Grep, Bash, Edit, Write, mcp__UnityMCP__run_tests, mc
 
 **디버그 로그에는 고유 접두사를 단다** (예: `Debug.Log("[DEBUG-a4f2] ...")`). 정리할 때 grep 한 번이면 된다.
 
-**성능 회귀 분기**: 로그는 대개 쓸모없다. 기준선부터 측정한다 — `mcp__UnityMCP__manage_profiler` 캡처, `Stopwatch` 타이밍 하네스, Profiler 마커. 그다음 이분 탐색한다. 측정이 먼저, 수정은 나중이다. 해결 패턴은 `/ko-perf-profile` 과 `.agent/skills/06-performance/` 를 참고한다.
+**성능 회귀 분기**: 로그는 대개 쓸모없다. 기준선부터 측정한다 — 엔진 프로파일러 캡처(Unity `manage_profiler` · Godot Profiler/Monitors · Unreal Insights), 타이밍 하네스, 프로파일러 마커. 그다음 이분 탐색한다. 측정이 먼저, 수정은 나중이다. 해결 패턴은 `/ko-perf-profile` 과 `.agent/skills/06-performance/` 를 참고한다.
 
 ## 5단계: 수정 + 회귀 테스트
 
 회귀 테스트는 **수정 전에** 쓴다. 단, **올바른 접점(seam)** 이 있을 때만이다.
 
-올바른 접점이란 호출 지점에서 실제로 일어나는 버그 패턴을 그대로 태우는 경계다. 접점이 너무 얕으면(여러 호출자가 얽혀야 나는 버그를 단일 호출 테스트로, MonoBehaviour 생명주기가 필요한 버그를 순수 EditMode 로) 그 테스트는 거짓 안심만 준다.
+올바른 접점이란 호출 지점에서 실제로 일어나는 버그 패턴을 그대로 태우는 경계다. 접점이 너무 얕으면(여러 호출자가 얽혀야 나는 버그를 단일 호출 테스트로, 엔진 생명주기가 필요한 버그를 엔진 없는 단위 테스트로) 그 테스트는 거짓 안심만 준다.
 
-**올바른 접점이 없다면 그것 자체가 발견이다.** 기록한다 — 구조가 버그를 테스트로 고정하지 못하게 막고 있다는 뜻이다 (로직이 MonoBehaviour 에 묶임, static 싱글톤, 시간 · 랜덤 직접 호출 등). `/ko-code-review` 나 기술 부채(`/tech-debt`)로 넘긴다.
+**올바른 접점이 없다면 그것 자체가 발견이다.** 기록한다 — 구조가 버그를 테스트로 고정하지 못하게 막고 있다는 뜻이다 (로직이 MonoBehaviour · Node · Actor 에 묶임, static 싱글톤 · autoload · 서브시스템 남용, 시간 · 랜덤 직접 호출 등). `/ko-code-review` 나 기술 부채(`/tech-debt`)로 넘긴다.
 
 올바른 접점이 있으면:
 

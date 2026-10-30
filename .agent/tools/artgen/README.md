@@ -1,4 +1,4 @@
-# artgen — 기획 의도 → 게임 그래픽 → Unity 에셋 파이프라인
+# artgen — 기획 의도 → 게임 그래픽 → 게임 엔진 에셋 파이프라인 (Unity · Godot · Unreal)
 
 > 백엔드 중립 그래픽 생성 도구. 이미지 생성 백엔드(로컬 ComfyUI · 상용 API · 사내 서버 등)는 **어댑터로 나중에 연결**한다.
 > 백엔드가 정해지기 전에도 `mock` 어댑터로 파이프라인 전체(요청 → 생성 → 검수 → 승격 → Unity 임포트)를 돌릴 수 있다.
@@ -35,7 +35,7 @@
 
 ## CLI
 
-Unity 프로젝트 루트에서 실행. 모든 명령에 `--json` (기계 판독), `--root <경로>` 사용 가능.
+게임 프로젝트 루트에서 실행 (엔진은 `project.yaml` `engine.name` → 표지 파일 순으로 판정). 모든 명령에 `--json` (기계 판독), `--root <경로>` 사용 가능.
 
 ```bash
 python .agent/tools/artgen/artgen.py providers                       # 어댑터 목록 · 준비 상태
@@ -265,6 +265,18 @@ python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.j
 - `promote` 는 임포트 맵을 **먼저** 쓰고 그다음 파일을 복사한다. 그래서 첫 임포트부터 설정이 적용된다.
 - 설정만 바꾸고 파일이 그대로면 Unity 가 다시 임포트하지 않는다. 이때는 `promote --force` 로 다시 승격하거나 에디터에서 Reimport 한다. MCP 를 쓸 수 있으면 `manage_asset` 으로 처리한다.
 - 아직 범위 밖: 스프라이트 시트 자동 슬라이싱(`spriteMode: Multiple` 은 모드만 설정), 3D 메시·머티리얼, 음성(TTS).
+
+## Godot · Unreal 승격
+
+`promote` 는 엔진을 판정해 동작을 나눈다 (`.claude/docs/engine-layers.md`).
+
+| 엔진 | `unity.dest` (키 이름은 호환 때문에 그대로) | 승격이 하는 일 | 사람이 할 일 |
+|---|---|---|---|
+| Unity | `Assets/` 로 시작 | 임포트 맵 기록 → 파일 복사 → 위 임포터가 설정 적용 | 없음 |
+| Godot | 프로젝트 상대경로 (`.godot/` · `addons/` 밖, 예: `assets/vfx/x.png`) | 파일 복사 | 에디터가 자동 임포트한다. 필터 · 밉맵 · 압축은 Import 독에서 설정 |
+| Unreal | 프로젝트 상대경로 (예: `Content/Import/VFX/x.png`) | 파일 복사 | 에디터 Import 로 `.uasset` 을 만든다 (Auto Reimport 를 켰으면 `Content/` 아래는 자동). 압축 · LOD 그룹 설정 |
+
+Godot · Unreal 은 `state.json` 의 `promoted.importManual: true` 로 남는다 — 임포트 설정까지 끝냈다는 뜻이 아니다. 엔진을 판정하지 못하면 승격을 거부한다.
 
 ## 테스트
 

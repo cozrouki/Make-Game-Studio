@@ -1,9 +1,9 @@
 # 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .agent/workflows/ko-setup-engine.md
-description = "엔진 설정 자동화 — 기존 Unity 프로젝트 실측으로 Technology Stack·technical-preferences.md 작성"
+description = "엔진 설정 자동화 — 기존 Unity · Godot · Unreal 프로젝트 실측으로 project.yaml · technical-preferences.md · Technology Stack 작성"
 prompt = """
 # /ko-setup-engine
 
-엔진 설정 자동화 — 기존 Unity 프로젝트 실측으로 Technology Stack·technical-preferences.md 작성
+엔진 설정 자동화 — 기존 Unity · Godot · Unreal 프로젝트 실측으로 project.yaml · technical-preferences.md · Technology Stack 작성
 
 **정본 절차: `.agent/workflows/ko-setup-engine.md` — 이 파일을 먼저 읽고 그 절차를 그대로 따른다.**
 절차가 `.claude/skills/<이름>/SKILL.md` 를 가리키면 그 파일도 읽고 따른다 (이 도구에서 슬래시로 호출할 수 없는 스킬).

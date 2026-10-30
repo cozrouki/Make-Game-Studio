@@ -2,6 +2,7 @@
   "$schema": "https://example.com/tikiproject-bundles.schema.json",
   "version": 1,
   "generatedAt": "2026-05-13",
+  "engineNote": "Unity 기준 정의다. Godot · Unreal 에서는 unity-* 에이전트 · SkillForge · MCP 항목을 .claude/docs/engine-layers.md 의 같은 행(엔진 전문가 · 엔진 레퍼런스 · 명령줄 자동화)으로 바꿔 읽는다.",
   "bundles": [
     {
       "id": "unity-fullstack-core",

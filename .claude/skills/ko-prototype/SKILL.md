@@ -56,12 +56,12 @@ prototypes/$1-<slug>/
 └── (옵션) PROBE.md      (Phase 3에서 식별한 가정 검증 계획)
 ```
 
-### Unity 통합 고려
-- `$1`이 `NEW`면 → 신규 어셈블리 디렉토리 `Assets/<NewGame>/Scripts/Prototype/` 제안
-- 기존 게임이면 → 해당 게임의 `Scripts/Prototype/` 또는 `Scripts/Experiments/`
+### 엔진 통합 고려 (`.claude/docs/engine-layers.md` 코드 루트)
+- `$1`이 `NEW`면 → Unity `Assets/<NewGame>/Scripts/Prototype/` (신규 asmdef) · Godot `src/<new_game>/prototype/` · Unreal `Source/<Module>/Private/Prototype/` 제안
+- 기존 게임이면 → 해당 게임 코드 폴더의 `Prototype/` 또는 `Experiments/`
 - `prototype-code.md` 룰 적용 (느슨한 표준, README 필수)
 
-### SkillForge 패턴 참조
+### SkillForge 패턴 참조 (Unity 만 — Godot · Unreal 은 이 절을 "카탈로그 없음" 으로 건너뛰고 엔진 전문가 에이전트에게 구조를 묻는다)
 컨셉에 따라 관련 SkillForge skill 추천:
 - 전투/액션 → `/sf-info 02-gameplay/combat-system-pro` 또는 `ability-skill-system`
 - 퍼즐 → `/sf-info 02-gameplay/grid-puzzle-mechanics` 등

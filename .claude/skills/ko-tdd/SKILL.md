@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Bash, Edit, Write, mcp__UnityMCP__run_tests, mc
 
 # /ko-tdd — 테스트 주도 개발
 
-> 출처: mattpocock/skills `tdd` (MIT) 를 Unity C# · NUnit 용으로 옮기고 조정했다 — `.claude/docs/ATTRIBUTION.md`.
+> 출처: mattpocock/skills `tdd` (MIT) 를 게임 엔진(Unity NUnit · Godot gdUnit4 · Unreal Automation)용으로 옮기고 조정했다 — `.claude/docs/ATTRIBUTION.md`.
 
 TDD 는 red → green 루프다. 이 스킬은 그 루프가 **남길 가치가 있는 테스트**를 만들게 하는 기준이다: 좋은 테스트란 무엇인가, 테스트를 어디에 두는가, 피할 패턴, 루프의 규칙. 모든 절은 매 사이클에 적용된다 — 루프가 끝난 뒤가 아니라 루프 전과 도중에 참고한다.
 
@@ -18,7 +18,7 @@ TDD 는 red → green 루프다. 이 스킬은 그 루프가 **남길 가치가 
 
 테스트는 구현 세부가 아니라 **공개 인터페이스를 통한 동작**을 검증한다. 내부를 통째로 갈아엎어도 테스트는 그대로여야 한다. 좋은 테스트는 명세처럼 읽힌다 — `PlayerCanRespawnAtNearestElevatorWhenOnEscapeFloor` 는 어떤 능력이 있는지 정확히 말하고, 내부 구조에 관심이 없으니 리팩터링에도 살아남는다.
 
-예시와 대역(mock · fake) 기준은 [tests.md](tests.md).
+예시와 대역(mock · fake) 기준은 [tests.md](tests.md) (Unity C# 예시). 엔진별 테스트 이름 · 구조 예시는 `.claude/rules/test-standards.md` (Godot · Unity · Unreal).
 
 ## 접점(seam): 테스트를 두는 곳
 
@@ -28,12 +28,20 @@ TDD 는 red → green 루프다. 이 스킬은 그 루프가 **남길 가치가 
 
 묻기: "공개 인터페이스는 무엇이고, 어떤 접점을 테스트할까요?" 제안하는 접점마다 무엇을 잡고 무엇을 놓치는지 한 줄씩 붙인다.
 
-Unity 에서의 접점 기준:
+엔진 공통 접점 기준:
 
-- **우선 EditMode** — 게임 로직을 MonoBehaviour 밖의 순수 C# 클래스로 분리하고(험블 오브젝트) 그 클래스의 공개 메서드를 접점으로 삼는다. 빠르고 결정적이다
-- **PlayMode 는 필요할 때만** — 생명주기(Awake/Start/OnEnable) · 물리 · 코루틴 · 씬 로딩 자체가 검증 대상일 때
-- 시간 · 랜덤 · 입력 · 저장소는 생성자나 `[SerializeField]` 로 주입받는 인터페이스로 둔다 (`gameplay-code.md` — static 싱글톤 금지, DI). 이것이 대역을 끼울 수 있는 경계다
-- 테스트 어셈블리는 별도 asmdef (`Tests/EditMode`, `Tests/PlayMode`) 로 두고 대상 어셈블리만 참조한다
+- **우선 엔진을 띄우지 않는 단위 테스트** — 게임 로직을 엔진 객체(MonoBehaviour · Node · Actor) 밖의 순수 클래스로 분리하고(험블 오브젝트) 그 공개 메서드를 접점으로 삼는다. 빠르고 결정적이다
+- **엔진 통합 테스트는 필요할 때만** — 생명주기 · 물리 · 코루틴/await · 씬 로딩 자체가 검증 대상일 때
+- 시간 · 랜덤 · 입력 · 저장소는 주입받는 인터페이스로 둔다 (`gameplay-code.md` — static 싱글톤 금지, DI). 이것이 대역을 끼울 수 있는 경계다
+
+엔진별:
+
+| | Unity | Godot | Unreal |
+|---|---|---|---|
+| 단위 | EditMode (NUnit) — 순수 C# 클래스 | gdUnit4 — `RefCounted` · `Resource` 기반 클래스, 노드는 `auto_free` | Automation (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` · Spec) — `F` 구조체 · 일반 C++ |
+| 통합 | PlayMode | gdUnit4 씬 러너 (`scene_runner`) | Automation 에서 월드 생성 · Functional Test |
+| 배치 | 테스트 asmdef (`Tests/EditMode`, `Tests/PlayMode`) — 대상 어셈블리만 참조 | `tests/` (또는 `test/`) 아래 `*_test.gd` | `Source/<Module>/Private/Tests/` + `WITH_DEV_AUTOMATION_TESTS` |
+| 실행 | `bash .claude/scripts/test-run.sh unity [--platform playmode]` · 에디터가 열려 있으면 `mcp__UnityMCP__run_tests` | `bash .claude/scripts/test-run.sh godot` | `bash .claude/scripts/test-run.sh unreal --filter <루트>` |
 
 인터페이스 모양 자체가 문제라면(모듈 깊이, 접점 위치, 무엇을 노출할지) 먼저 `/ko-grill` 로 결정을 정리하거나 `/architecture-decision` 으로 남긴다.
 
@@ -47,9 +55,9 @@ Unity 에서의 접점 기준:
 
 - **green 전에 red.** 실패하는 테스트를 먼저 쓰고, 통과할 만큼만 코드를 쓴다. 다음 테스트를 앞질러 짐작하거나 쓰일지 모를 기능을 넣지 않는다
 - **한 번에 한 조각.** 사이클마다 접점 하나, 테스트 하나, 최소 구현 하나
-- **red 를 직접 본다.** `mcp__UnityMCP__run_tests` (또는 `-runTests` 배치 모드) 결과에서 그 테스트가 **기대한 이유로** 실패하는지 확인한다. 컴파일 오류는 red 가 아니다 — `read_console` 로 확인하고 먼저 컴파일되게 만든다
+- **red 를 직접 본다.** 위 실행 명령 결과에서 그 테스트가 **기대한 이유로** 실패하는지 확인한다. 컴파일 · 파싱 오류는 red 가 아니다 — 콘솔 · 로그(`.claude/docs/engine-layers.md`)로 확인하고 먼저 빌드되게 만든다. `test-run.sh` 가 "테스트 0개 실행" 을 보고하면 그것도 red 가 아니다
 - **리팩터링은 루프 밖이다.** 리뷰 단계(`/ko-code-review`)에서 한다
 
 ## 완료
 
-합의한 접점의 테스트가 모두 green 이고, 대상 게임의 EditMode(필요하면 PlayMode) 전체 테스트를 다시 돌려 기존 테스트도 green 일 때 끝난다. 통과 수를 보고에 적는다 (예: `EditMode 389/389`).
+합의한 접점의 테스트가 모두 green 이고, 대상 게임의 단위(필요하면 통합) 전체 테스트를 다시 돌려 기존 테스트도 green 일 때 끝난다. 통과 수를 보고에 적는다 (예: `EditMode 389/389`). 엔진 실행 파일이 없어 돌리지 못했으면 "테스트 실행 안 함 — <이유>" 로 보고하고 green 이라고 쓰지 않는다.

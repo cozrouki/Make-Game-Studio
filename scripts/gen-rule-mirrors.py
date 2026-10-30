@@ -89,12 +89,25 @@ def toml_str(s):
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
+def expand_braces(pattern):
+    """{a,b} 를 펼친다 — Cursor · Windsurf · Copilot 은 glob 목록을 쉼표로 이어 받아 중괄호 안 쉼표에서 잘린다.
+    예: "Source/**/*.{h,cpp}" → ["Source/**/*.h", "Source/**/*.cpp"]. 중첩은 바깥부터 차례로 펼친다."""
+    m = re.search(r"\{([^{}]*,[^{}]*)\}", pattern)
+    if not m:
+        return [pattern]
+    out = []
+    for alt in m.group(1).split(","):
+        out += expand_braces(pattern[:m.start()] + alt + pattern[m.end():])
+    return out
+
+
 # ---------------------------------------------------------------- 룰
 def gen_rules():
     rows, count = [], 0
     for src in sorted(glob.glob(os.path.join(RULES_SRC, "*.md"))):
         name = os.path.basename(src)[:-3]
         desc, globs, body = parse_rule(src)
+        globs = [g for pat in globs for g in expand_braces(pat)]
 
         shutil.copyfile(src, os.path.join(ROOT, ".agent", "rules", name + ".md"))
 

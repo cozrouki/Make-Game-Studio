@@ -1,6 +1,6 @@
 ---
 description: AI Code Rules
-globs: src/ai/**
+globs: src/ai/**, Assets/**/AI/**/*.cs, Assets/**/Ai/**/*.cs, Assets/**/ai/**/*.cs, Source/**/AI/**/*.h, Source/**/AI/**/*.cpp, Source/**/Ai/**/*.h, Source/**/Ai/**/*.cpp, Source/**/ai/**/*.h, Source/**/ai/**/*.cpp
 alwaysApply: false
 ---
 # AI Code Rules
