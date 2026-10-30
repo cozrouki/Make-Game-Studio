@@ -63,7 +63,7 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (88 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/studio-*` 등 |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 워크플로 (93 skills) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
@@ -208,7 +208,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 89개 (Game-Studios 72 + 한국어 wrapper 8 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
+- **Skills (L1)**: 93개 (Game-Studios 72 + 한국어 wrapper · 스킬 12 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
 - **Agents**: 39개 (Tier 1-3, Godot/UE 11개 제외)
 - **Rules**: 12개 (Unity gameplay-code, doc-writing, GS 10개)
 - **Hooks**: 13개 (SessionStart/Stop, validate-commit/push/assets, notify, log-agent, 스튜디오 정지 알림 등)
@@ -245,15 +245,15 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 |---|---|---|---|---|---|---|---|---|
 | **페르소나 · 표준** | `CLAUDE.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` + `.github/copilot-instructions.md` | `AGENTS.md` | `GEMINI.md`→`AGENTS.md` | `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
 | **파일별 자동 적용 룰** | `.claude/rules/` | `AGENTS.md` §8 색인 | `.github/instructions/` (`applyTo`) | `.cursor/rules/*.mdc` | `AGENTS.md` §8 색인 | `AGENTS.md` §8 색인 | `.windsurf/rules/` (`trigger: glob`) | `.agent/rules/` |
-| **슬래시 명령 (워크플로 9종)** | `.claude/skills/` 86개 | `.agents/skills/` (Agent Skills) | `.github/prompts/` (VS Code) · `.github/skills/` (CLI) | `.cursor/commands/` | `.gemini/commands/*.toml` | `.opencode/commands/` | `.windsurf/workflows/` | `.agent/workflows/` |
+| **슬래시 명령 (워크플로 15종)** | `.claude/skills/` 93개 | `.agents/skills/` (Agent Skills) | `.github/prompts/` (VS Code) · `.github/skills/` (CLI) | `.cursor/commands/` | `.gemini/commands/*.toml` | `.opencode/commands/` | `.windsurf/workflows/` | `.agent/workflows/` |
 | **L2 C# 코드 패턴** (`.agent/skills/`) | `/sf-add` 등 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 | 파일 참조 |
 | **훅 / 서브에이전트** | ✅ | — | — | — | — | — | — | — |
 | **artgen CLI** | `/ko-art-gen` | `/ko-art-gen` 스킬 | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` | `/ko-art-gen` |
 | **스튜디오 모드 참여** | `/studio-join` (대화형) | `dispatch --agent codex` | `dispatch --agent copilot` | `dispatch --agent cursor` | `dispatch --agent gemini` | `dispatch --agent opencode` | `/studio-join` 워크플로 (IDE) | `/studio-join` 워크플로 (IDE) |
 
-**워크플로 11종** — `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/ko-prereq` · `/unity-fullstack` · `/studio-join` · `/ext`
+**워크플로 15종** — `/ko-sprint-plan` · `/ko-story-cycle` · `/ko-code-review` · `/ko-perf-profile` · `/ko-prototype` · `/ko-setup-engine` · `/ko-art-gen` · `/ko-prereq` · `/ko-diagnose` · `/ko-tdd` · `/ko-grill` · `/ko-agent-retro` · `/unity-fullstack` · `/studio-join` · `/ext`
 
-> **핵심 구분** — **콘텐츠 층**(페르소나 · 룰 · C# 카탈로그 · 워크플로 절차 · artgen · 스튜디오 CLI)은 모든 도구에서 쓴다. Claude Code 외 도구의 슬래시 명령은 `.agent/workflows/<이름>.md` 정본을 가리키는 **얇은 포인터**이고, 절차가 Claude 스킬(`.claude/skills/<이름>/SKILL.md`)을 지시하면 그 파일을 읽어 따른다. **훅 · 서브에이전트 · 나머지 77개 스킬의 슬래시 호출은 Claude Code 전용**이다 (다른 도구에서도 `SKILL.md` 를 읽게 하면 절차는 따라 할 수 있다).
+> **핵심 구분** — **콘텐츠 층**(페르소나 · 룰 · C# 카탈로그 · 워크플로 절차 · artgen · 스튜디오 CLI)은 모든 도구에서 쓴다. Claude Code 외 도구의 슬래시 명령은 `.agent/workflows/<이름>.md` 정본을 가리키는 **얇은 포인터**이고, 절차가 Claude 스킬(`.claude/skills/<이름>/SKILL.md`)을 지시하면 그 파일을 읽어 따른다. **훅 · 서브에이전트 · 나머지 78개 스킬의 슬래시 호출은 Claude Code 전용**이다 (다른 도구에서도 `SKILL.md` 를 읽게 하면 절차는 따라 할 수 있다).
 
 ### AGENTS.md 정본 구조
 
@@ -463,6 +463,7 @@ L1 스킬 20여 개(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 6. **coreyhaines31/marketingskills** — 외부 카탈로그 `marketing` (MIT, 포함)
 7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
 7-1. **android/skills** (Google) — 외부 카탈로그 `android` (Apache-2.0, 포함 — 기기 · 스토어 단 4개만, LICENSE 동봉)
+7-2. **mattpocock/skills** — `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` 의 원본 (MIT, 한국어 · Unity 맞춤 재작성 — 고지는 `THIRD_PARTY_LICENSES.md` §9)
 8. **Stanestane/game-design-skills-bundle** — 외부 카탈로그 `gamedesign` (PolyForm Noncommercial 1.0.0, **미포함** — 사용자가 직접 받음)
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
@@ -554,14 +555,14 @@ scripts/
 ├── sync-upstream.ps1            upstream 2종 동기화
 └── gen-rule-mirrors.py          크로스툴 미러 생성 (룰 → 4개 형식 + AGENTS.md 색인, 워크플로 → 7개 형식)
 
-.cursor/rules/ · commands/      12개 .mdc 룰 + 9개 명령 (Cursor — 생성물)
+.cursor/rules/ · commands/      12개 .mdc 룰 + 15개 명령 (Cursor — 생성물)
 .github/instructions/ · prompts/ · skills/ · copilot-instructions.md   Copilot (생성물)
-.agents/skills/                  9개 (Codex — Agent Skills, 생성물)
-.gemini/commands/                9개 .toml (Gemini CLI — 생성물)
-.opencode/commands/              9개 (OpenCode — 생성물)
-.windsurf/rules/ · workflows/    12개 룰 + 9개 워크플로 (Windsurf — 생성물)
+.agents/skills/                  15개 (Codex — Agent Skills, 생성물)
+.gemini/commands/                15개 .toml (Gemini CLI — 생성물)
+.opencode/commands/              15개 (OpenCode — 생성물)
+.windsurf/rules/ · workflows/    12개 룰 + 15개 워크플로 (Windsurf — 생성물)
 .agent/rules/                    12개 .md  (Antigravity — .claude/rules verbatim)
-.agent/workflows/                11개 (Antigravity 슬래시 — ko-* 8 + unity-fullstack + studio-join + ext)
+.agent/workflows/                15개 (Antigravity 슬래시 — ko-* 12 + unity-fullstack + studio-join + ext)
 .agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · Unity 임포터 템플릿 · 테스트
 .agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 모델 · 라이브러리 · 설정 · Unity 분석기) · 테스트
 .agent/tools/lint/               Unity C# 규칙 검사 (unity_lint.py UL001~008 · lint.config.json blocking · Default.ruleset) · 테스트
@@ -573,15 +574,20 @@ scripts/
 ├── hooks/                       12개 (로컬 머지 2 + GS 신규 10)
 ├── rules/                       12개 (로컬 fork 2 + GS 10)
 ├── agents/                      39개 (Tier 1-3, Godot/UE 제외)
-├── skills/                      86개
+├── skills/                      93개
 │   ├── unity-fullstack/         마스터 진입
-│   ├── ko-sprint-plan/          한국어 wrapper 7개
+│   ├── ko-sprint-plan/          한국어 wrapper · 스킬 12개
 │   ├── ko-story-cycle/
 │   ├── ko-code-review/
 │   ├── ko-perf-profile/
 │   ├── ko-prototype/
 │   ├── ko-setup-engine/         실측 엔진 설정 (measure.sh)
 │   ├── ko-art-gen/              그래픽 생성 파이프라인 (artgen CLI 오케스트레이션)
+│   ├── ko-prereq/               사전 설치 점검 · 설치 (prereq.py)
+│   ├── ko-diagnose/             버그 진단 루프 (mattpocock/skills 차용 4종)
+│   ├── ko-tdd/
+│   ├── ko-grill/
+│   ├── ko-agent-retro/
 │   ├── studio-join/             스튜디오 모드 4종 (역할 등록·업무 루프 / 디렉터 세션 / 디렉터 지시 / 디렉터 콘솔)
 │   ├── studio-director/
 │   ├── studio-ticket/
@@ -640,7 +646,8 @@ generalized **4-layer skill set**, and adds two original tools on top: a
 backend-neutral graphics pipeline and a multi-session "studio mode".
 
 > **Mostly an integration/distribution.** The bulk of the skills come from the
-> upstreams below (all MIT). Original work here: the integration and
+> upstreams below (all MIT; `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro`
+> are Korean/Unity adaptations of [mattpocock/skills](https://github.com/mattpocock/skills)). Original work here: the integration and
 > generalization, cross-tool mirroring, the installer, the Korean `ko-*`
 > wrappers, **artgen** (graphics pipeline), and **studio mode**. Credits and
 > licenses: [`LICENSE`](LICENSE) · [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) ·
@@ -656,7 +663,7 @@ backend-neutral graphics pipeline and a multi-session "studio mode".
 
 | Layer | What | Entry |
 |---|---|---|
-| **L1 — Process** | 86 workflow slash-command skills (sprint / review / gate / release) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
+| **L1 — Process** | 93 workflow slash-command skills (sprint / review / gate / release / debug · TDD) | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
 | **L2 — C# code patterns** | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 — Editor automation** | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
 | **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |

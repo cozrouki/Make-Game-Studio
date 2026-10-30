@@ -9,7 +9,7 @@
 | [AGENTS.md](AGENTS.md) | `/AGENTS.md` — persona §1–§7 (tool-neutral) |
 | [rules/gameplay-code.md](rules/gameplay-code.md) | `.claude/rules/gameplay-code.md` |
 | [rules/doc-writing.md](rules/doc-writing.md) | `.claude/rules/doc-writing.md` |
-| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 7 Korean wrappers |
+| [skills/*.md](skills/) | `.claude/skills/ko-*/SKILL.md` — 7 Korean wrappers + 4 mattpocock/skills adaptations (`ko-prereq` not translated) |
 
 Not translated (Korean only): the artgen tool docs (`.agent/tools/artgen/README.md`),
 studio mode (`.agent/tools/studio/` — protocol, role charters, templates) and the
@@ -27,6 +27,10 @@ The `ko-*` skills are thin **Korean wrappers** around English L1 skills
 (`/code-review`, `/sprint-plan`, …). English-speaking users can simply invoke the
 underlying English skills directly; these translations exist so you can see what
 extra steps each wrapper adds.
+
+The four adapted skills (`ko-diagnose`, `ko-tdd`, `ko-grill`, `ko-agent-retro`)
+have English originals upstream in [mattpocock/skills](https://github.com/mattpocock/skills);
+their pages here link the original and list only the Unity-specific changes.
 
 ## Making the agent respond in English
 

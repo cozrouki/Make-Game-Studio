@@ -37,6 +37,10 @@ Unity 풀스택 4계층 스킬 셋입니다. 무엇을 할지 알려주시면 �
 ## 자주 쓰는 작업
 
 - **새 기능 구현 사이클**: `/ko-story-cycle <스토리-id>` (L1 process) + `/sf-info <관련-skill>` (L2 code 참조)
+- **구현 전 의도 맞추기**: `/ko-grill <계획>` — 결정 트리를 라운드 질문으로 정리 (추천 답 포함)
+- **테스트 먼저 구현**: `/ko-tdd <기능>` — 합의한 접점에서 red → green 수직 조각
+- **어려운 버그 진단**: `/ko-diagnose <증상>` — 재현 루프 → 최소화 → 가설 → 계측 → 수정 + 회귀 테스트
+- **에이전트 작업 환경 회고**: `/ko-agent-retro` — 세션을 돌아보고 지침 · 자동 검사 · 도구 비용 개선점 제안 (스프린트 회고는 `/retrospective`)
 - **성능 문제 진단**: `/ko-perf-profile <범위>` + `.agent/skills/06-performance/` 카탈로그
 - **씬·에셋 자동화**: MCPForUnity 도구 (`.claude/docs/mcp-unity-guide.md` 참조)
 - **새 게임 온보딩**: `/onboard` → `/start` → 게임 태그 결정 (프로젝트 `CLAUDE.md`의 게임 폴더 매핑 표 참조)
