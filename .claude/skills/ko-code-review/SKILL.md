@@ -28,8 +28,8 @@ Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한�
 ## Phase 2: 게임 태그 분류
 
 변경된 파일 경로에서 게임 태그를 추출 (멀티 게임 프로젝트):
-- `Assets/{GameName}/...` → 해당 게임 태그 (예: `[GAME1]`, `[GAME2]`)
-- `Assets/<SharedModule>/...` → `[CORE]`
+- `<코드 루트>/{GameName}/...` → 해당 게임 태그 (예: `[GAME1]`, `[GAME2]`) — 코드 루트는 Unity `Assets/` · Godot `src/` · Unreal `Source/`
+- `<코드 루트>/<SharedModule>/...` → `[CORE]`
 - 태그 매핑은 프로젝트 `CLAUDE.md`의 "게임 폴더 매핑" 표를 따른다.
 - 단일 게임 프로젝트면 이 단계를 생략한다.
 
@@ -37,21 +37,21 @@ Game-Studios의 `code-review` skill에 멀티 게임 컨텍스트를 더한 한�
 
 ## Phase 2-1: 결정적 검사 먼저
 
-AI 리뷰 전에 기계 검사를 돌리고 결과를 리뷰 보고에 그대로 붙인다 (하네스: 결정적 센서 + AI 센서).
-- `python .agent/tools/lint/unity_lint.py <바뀐 .cs>` — UL001~008. 오탐은 `// unity-lint: ignore ULxxx` 와 이유가 있는지 본다.
-- Unity 공식 분석기(`Assets/Analyzers/Microsoft.Unity.Analyzers.dll`)가 있으면 Unity 콘솔 · 컴파일 로그의 UNT 경고를 확인한다. 없으면 `prereq.py install unity-analyzers` 를 권한다.
+AI 리뷰 전에 기계 검사를 돌리고 결과를 리뷰 보고에 그대로 붙인다 (하네스: 결정적 센서 + AI 센서). 엔진별 검사기는 `.claude/docs/engine-layers.md` — Godot · Unreal 은 아직 검사기가 없으므로 보고 첫 줄에 "결정적 검사 없음 (<엔진>) — AI 리뷰만" 이라고 적는다.
+- (Unity) `python .agent/tools/lint/unity_lint.py <바뀐 .cs>` — UL001~008. 오탐은 `// unity-lint: ignore ULxxx` 와 이유가 있는지 본다.
+- (Unity) Unity 공식 분석기(`Assets/Analyzers/Microsoft.Unity.Analyzers.dll`)가 있으면 Unity 콘솔 · 컴파일 로그의 UNT 경고를 확인한다. 없으면 `prereq.py install unity-analyzers` 를 권한다.
 - 같은 지적이 이 프로젝트에서 반복되면(스튜디오 모드) `studio.py lesson add <종류> --by <역할> --note "…"` 로 기록하라고 보고에 적는다.
 
 ## Phase 3: 본 skill 위임
 
 `.claude/skills/code-review/SKILL.md` 절차에 따라 진행. 추가 점검 항목 (한국어로 보고):
 
-### Unity-specific (gameplay-code.md 준수)
-- [ ] 매직 넘버 — `[SerializeField] private` 또는 데이터 ScriptableObject로 외부화 되어 있나?
-- [ ] `Time.deltaTime` / `Time.fixedDeltaTime` 누락 없는지
-- [ ] Hot Path (`Update`/`FixedUpdate`)에서 LINQ/string 연산/new 호출 없는지
-- [ ] `GetComponent` 가 `Awake()` 캐싱 되어 있는지
-- [ ] `Animator.StringToHash` 캐싱
+### 엔진 규칙 (gameplay-code.md — 공통 절 + 프로젝트 엔진 절)
+- [ ] 매직 넘버 — 에디터 노출 또는 데이터 자산(ScriptableObject · Resource · Data Asset)으로 외부화 되어 있나?
+- [ ] 프레임 시간(`Time.deltaTime` · `delta` · `DeltaTime`) 누락 없는지
+- [ ] 매 프레임 코드(`Update` · `_process` · `Tick`)에서 할당 · 문자열 연산 · 탐색 없는지
+- [ ] 탐색 캐싱 (Unity `GetComponent` → `Awake` · Godot `@onready` · Unreal `BeginPlay`)
+- [ ] Unity: `Animator.StringToHash` 캐싱 · Godot: 정적 타입 · signal 통신 · Unreal: UObject 포인터에 `UPROPERTY()` · 필요 없는 Tick 꺼짐
 
 ### 변경 범위 · 단순성 (AGENTS.md §3-1)
 - [ ] 모든 변경 줄이 요청 · 스토리로 거슬러 올라가나? (관련 없는 리팩터링 · 포맷 정리 · 주석 수정이 섞이지 않았나)
@@ -62,8 +62,8 @@ AI 리뷰 전에 기계 검사를 돌리고 결과를 리뷰 보고에 그대로
 
 ### 멀티게임 어셈블리 (멀티 게임 프로젝트)
 - [ ] 네임스페이스 `{GamePrefix}.{Category}.{Subsystem}` 준수
-- [ ] **Game → <SharedModule> 단방향** 의존만 — 역방향 / 게임 간 직접 참조 금지
-- [ ] Editor 코드는 `Scripts/Editor/` + Editor asmdef 내부
+- [ ] **Game → <SharedModule> 단방향** 의존만 — 역방향 / 게임 간 직접 참조 금지 (Unity asmdef · Unreal `*.Build.cs` · Godot 은 폴더 규칙)
+- [ ] Editor 코드 격리 (Unity `Scripts/Editor/` + Editor asmdef · Godot `@tool` 스크립트는 `editor/` · Unreal Editor 모듈)
 
 ### 일반 (engine-agnostic)
 - 본 `code-review` skill의 ADR 컴플라이언스 체크 적용

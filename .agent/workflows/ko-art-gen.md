@@ -1,5 +1,5 @@
 ---
-description: 그래픽 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 생성 → 아트 바이블 검수 → Unity 승격
+description: 그래픽 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 생성 → 아트 바이블 검수 → 엔진 승격
 ---
 
 # /ko-art-gen — 기획 의도대로 그래픽 만들기
@@ -7,7 +7,7 @@ description: 그래픽 생성 파이프라인 (한국어) — 에셋 스펙 → 
 > Antigravity 워크플로. 정본 절차는 `.claude/skills/ko-art-gen/SKILL.md`, 도구 문서는 `.agent/tools/artgen/README.md`.
 > 인수: `<ASSET-NNN | spec:<target> | next> [--provider <이름>] [--variants N] [--rounds N] [--auto]`
 
-CLI: `python .agent/tools/artgen/artgen.py --json <명령>` (Unity 프로젝트 루트에서 실행)
+CLI: `python .agent/tools/artgen/artgen.py --json <명령>` (게임 프로젝트 루트에서 실행 — Unity · Godot · Unreal)
 
 ## 절차
 
@@ -23,7 +23,7 @@ CLI: `python .agent/tools/artgen/artgen.py --json <명령>` (Unity 프로젝트 
 
 **5. 선택** — 추천 변형과 점수를 보여 주고 사용자에게 고르게 한다 (승격 / 다른 변형 / 재생성 / 반려). 결과에 따라 `artgen select` 또는 `artgen reject --reason` 을 실행한다.
 
-**6. Unity 승격** — `Assets/ArtGen/Editor/` 에 임포터가 없으면 확인받은 뒤 `.agent/tools/artgen/unity/` 의 `.cs` 와 `.asmdef` 를 복사한다. 이어서 `artgen promote <요청>` 을 실행한다 (기존 파일이 있으면 확인받고 `--force`). 매니페스트를 `Done` 으로 바꾼다. mock 결과면 `In Progress (placeholder)` 로 둔다.
+**6. 엔진 승격** — (Unity) `Assets/ArtGen/Editor/` 에 임포터가 없으면 확인받은 뒤 `.agent/tools/artgen/unity/` 의 `.cs` 와 `.asmdef` 를 복사한다. 이어서 `artgen promote <요청>` 을 실행한다 (기존 파일이 있으면 확인받고 `--force`). 매니페스트를 `Done` 으로 바꾼다. mock 결과면 `In Progress (placeholder)` 로 둔다.
 
 **7. 마무리** — 요약 표를 보여 주고 `doc/work_log.md` 에 `[<tag>] /ko-art-gen: ASSET-… 승격 (provider=…)` 를 기록한다. 다음 단계로 `/ko-art-gen next` 또는 `/asset-audit` 을 제안한다.
 

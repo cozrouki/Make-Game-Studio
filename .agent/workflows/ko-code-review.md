@@ -1,10 +1,10 @@
 ---
-description: 한국어 코드 리뷰 — 게임 태그 분류 + Unity 코딩 규칙 점검
+description: 한국어 코드 리뷰 — 게임 태그 분류 + 엔진 코딩 규칙 점검 (Unity · Godot · Unreal)
 ---
 
 # /ko-code-review — 한국어 코드 리뷰
 
-> Antigravity 워크플로. 변경분을 한국어로 리뷰하고 Unity/멀티게임 컨텍스트를 더한다.
+> Antigravity 워크플로. 변경분을 한국어로 리뷰하고 엔진/멀티게임 컨텍스트를 더한다 (`.claude/docs/engine-layers.md`).
 > 인수: `<PR번호 | 브랜치 | HEAD> [--lean] [--solo]`  예) `/ko-code-review feature/my-feature`
 
 ## 절차
@@ -18,7 +18,7 @@ description: 한국어 코드 리뷰 — 게임 태그 분류 + Unity 코딩 규
 - `Assets/{GameName}/...` → 해당 게임 태그, `Assets/<SharedModule>/...` → `[CORE]`
 - 매핑은 `AGENTS.md` §6 "게임 폴더 매핑" 표를 따른다. 단일 게임이면 생략.
 
-**3. 본 절차 위임** — `.claude/skills/code-review/SKILL.md` 절차 적용. Unity 추가 점검(`.agent/rules/gameplay-code.md` 준수):
+**3. 본 절차 위임** — `.claude/skills/code-review/SKILL.md` 절차 적용. 엔진 추가 점검(`.agent/rules/gameplay-code.md` 의 공통 절 + 프로젝트 엔진 절 준수):
 - [ ] 매직 넘버 → `[SerializeField] private` 또는 ScriptableObject 외부화
 - [ ] `Time.deltaTime` / `Time.fixedDeltaTime` 누락 없음
 - [ ] Hot Path(`Update`/`FixedUpdate`)에 LINQ/string/new 없음

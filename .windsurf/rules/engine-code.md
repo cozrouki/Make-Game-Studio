@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: src/core/**
+globs: src/core/**, Assets/**/Core/**/*.cs, Assets/**/core/**/*.cs, Source/**/Core/**/*.h, Source/**/Core/**/*.cpp, Source/**/core/**/*.h, Source/**/core/**/*.cpp
 description: Engine Code Rules
 ---
 <!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .claude/rules/engine-code.md -->
@@ -19,7 +19,7 @@ description: Engine Code Rules
 
 ## Examples
 
-**Correct** (zero-alloc hot path):
+**Correct** (zero-alloc hot path) — Godot:
 
 ```gdscript
 # Pre-allocated array reused each frame
@@ -28,6 +28,29 @@ var _nearby_cache: Array[Node3D] = []
 func _physics_process(delta: float) -> void:
     _nearby_cache.clear()  # Reuse, don't reallocate
     _spatial_grid.query_radius(position, radius, _nearby_cache)
+```
+
+Unity:
+
+```csharp
+private readonly Collider[] _nearbyCache = new Collider[64];  // allocated once
+
+void FixedUpdate()
+{
+    int count = Physics.OverlapSphereNonAlloc(transform.position, radius, _nearbyCache);
+}
+```
+
+Unreal:
+
+```cpp
+// TArray member, reserved once; Reset() keeps the allocation
+void UProximityComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                        FActorComponentTickFunction* ThisTickFunction)
+{
+    NearbyCache.Reset();
+    SpatialGrid->QueryRadius(GetComponentLocation(), Radius, NearbyCache);
+}
 ```
 
 **Incorrect** (allocating in hot path):

@@ -1,10 +1,12 @@
-# 역할 헌장 — dev (Unity 개발 세션)
+# 역할 헌장 — dev (게임 엔진 개발 세션 — Unity · Godot · Unreal)
 
 > 공통 프로토콜: `.agent/tools/studio/README.md` · 코딩 표준: `AGENTS.md`, `.claude/rules/gameplay-code.md`
 
 ## 사명
 
-기획의 스토리를 **테스트되고 유지보수 가능한 Unity 구현**으로 만들고, 아트 에셋을 게임에 연결한다. Unity 에디터와 MCP 의 유일한 조작자다.
+기획의 스토리를 **테스트되고 유지보수 가능한 게임 엔진 구현**으로 만들고, 아트 에셋을 게임에 연결한다. 엔진 에디터(Unity 는 MCP 포함)의 유일한 조작자다.
+
+이 헌장의 경로 · 도구 예시는 Unity 기준이다. 프로젝트 엔진이 Godot · Unreal 이면 아래 "엔진이 Unity 가 아닐 때" 절의 대체를 먼저 읽는다.
 
 ## 쓰기 영역
 
@@ -55,6 +57,19 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
    - 오디오는 `sound-events.md` 의 이벤트에 연결한다: 이벤트 버스로 재생 요청을 보내고 AudioSource · AudioMixer 그룹(음악 · 효과음 · UI)으로 라우팅한다. 루프는 `AudioSource.loop` 로 정한다. 게임플레이 코드가 AudioClip 을 직접 잡지 않는다 (L2 `dynamic-audio-mixers` · `audio-soundscape-architect`).
 9. 문제가 있으면 → art `bug` 티켓을 보낸다. 정상이면 done 처리하고 note 에 "임포트 확인, .meta 생성" 을 남긴다. 이 note 가 art 쪽 `.meta` 커밋의 신호가 된다.
 10. 이 에셋을 기다리던 스토리가 있으면 이어서 연결한다.
+
+## 엔진이 Unity 가 아닐 때
+
+엔진은 `project.yaml` `engine.name` → 표지 파일로 판정한다. 도구 칸은 `.claude/docs/engine-layers.md` 가 정본이다.
+
+| 이 헌장의 Unity 항목 | Godot | Unreal |
+|---|---|---|
+| 쓰기 영역 `Assets/**` · `Packages` · `ProjectSettings` | `src/` · `scenes/` · `assets/`(아트 폴더 제외) · `addons/` · `project.godot` (`studio.config.json` `ownsByEngine`) | `Source/` · `Config/` · `Plugins/` · `Content/`(`Content/Import` 제외) · `*.uproject` |
+| L3 Unity MCP (씬 · 에셋 refresh · 테스트) | 에디터를 사람이 조작하거나 `godot --headless` 스크립트. 테스트는 `bash .claude/scripts/test-run.sh godot` | 에디터 Python · 커맨드렛. 테스트는 `bash .claude/scripts/test-run.sh unreal --filter <루트>` |
+| L2 SkillForge (`/sf-*`) | 없음 — `docs/engine-reference/godot/` + `godot-*-specialist` | 없음 — `docs/engine-reference/unreal/` + `unreal-specialist` · `ue-*-specialist` |
+| 정적 검사 `unity_lint.py` · UNT 분석기 | 없음 — `studio.py commit` 이 "정적 검사 안 함" 을 경고로 남긴다. 리뷰에서 `gameplay-code.md` Godot 절 확인 | 없음 — 같은 방식, Unreal 절 확인 |
+| 에셋 임포트 확인 · `.meta` | 에디터가 만든 `.import` 를 art 가 다음 커밋 때 함께 커밋 | Import 로 만든 `.uasset` 은 `Content/Import` 아래 — art 가 커밋 |
+| Unity 에디터 생성물 커밋 분리 (`--only`) | `.godot/` 는 git 무시. `project.godot` 변경이 스토리와 무관하면 `--only` 로 뺀다 | `Config/*.ini` · `*.uproject` 변경이 스토리와 무관하면 `--only` 로 뺀다 |
 
 ## 스킬 사용 맵 — 모든 계층을 쓴다
 

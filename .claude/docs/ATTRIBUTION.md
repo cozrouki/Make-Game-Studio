@@ -6,17 +6,20 @@
 
 - **저장소**: https://github.com/Donchitos/Claude-Code-Game-Studios
 - **라이선스**: **MIT** ✅ (2026-07-20 GitHub API 확인 — `Copyright (c) 2026 Donchitos`). 고지는 `THIRD_PARTY_LICENSES.md`에 보존.
-- **사용 유형**: 일부 직접 복사 + 일부 로컬 fork
+- **기준 버전**: **v1.2.0** (2026-10-19, 커밋 `05ad7c8`) — 2026-10-30 동기화
+- **사용 유형**: 대부분 직접 복사 + 일부 로컬 fork
 - **차용 자산**:
-  - 72 skills (`.claude/skills/<name>/SKILL.md`) — **직접 복사, 원본 그대로**
-  - 49 → 39 agents (Godot/UE specialist 10개 제외) — **직접 복사**
-  - 12 hooks 중 10개 (`session-*` 제외) — **직접 복사**
-  - `session-start.sh`, `session-stop.sh` — **로컬 fork (한국어 톤에 머지)**
-  - 11 rules 중 10개 (`gameplay-code.md` 제외) — **직접 복사**
-  - `gameplay-code.md` — **로컬 fork (한국어 룰 + GS 원칙 머지)**
-  - 6 docs (`gs-` prefix로 복사) — **직접 복사**
-  - `settings.json` hook wiring — **로컬 fork (권한 + GS hook 머지)**
-- **분기 정책**: hooks/settings/gameplay-code.md 는 로컬 fork 상태. 다른 모든 자산은 직접 복사 — 업스트림 변경 시 수동 sync.
+  - 74 skills (`.claude/skills/<name>/`) — **직접 복사, 원본 그대로** (11-game-design 겹침 7개에 한국어 안내 한 줄만 삽입)
+  - 49 agents — **직접 복사** (엔진 전문가 Unity 5 · Godot 5 · Unreal 5 포함 — 엔진 중립화로 Godot/UE 제외를 없앴다)
+  - hooks 18개 중 16개 — **직접 복사** (`session-start.sh` · `session-stop.sh` 는 fork). 상류에서 사라진 `post-compact.sh` 는 지웠다
+  - 14 rules 중 13개 — **직접 복사** (`gameplay-code.md` 는 fork)
+  - `.claude/docs/` 전부 (templates · director-gates · hooks-reference 포함) — **직접 복사, 상류 이름 그대로** (예전 `gs-` 접두 복사는 GS 스킬의 참조 경로를 깨뜨려 폐지)
+  - `.claude/scripts/` 35개 · `docs/engine-reference/` (Unity · Godot · Unreal) · `docs/*.md` · `design/CLAUDE.md` · `src/CLAUDE.md` · `studio-tests/` — **직접 복사**
+  - `project.yaml` · `docs/registry/` · `docs/architecture/tr-registry.yaml` · `design/registry/` — **씨앗 복사** (없을 때만)
+  - `session-start.sh`, `session-stop.sh` — **로컬 fork** (한국어 출력 · STATUS 블록 + 상류 판정 · 해시 중복 방지 병합)
+  - `gameplay-code.md` — **로컬 fork** (한국어 공통 규칙 + Unity · Godot · Unreal 절)
+  - `settings.json` · `statusline.sh` — **로컬 fork** (권한 + 상류 v1.2.0 훅 등록 병합 + 스튜디오 · validate-lint)
+- **분기 정책**: fork 5개(`scripts/sync-upstream.ps1` `$forkFiles`)는 상류 `CHANGELOG.md` · `UPGRADING.md` 를 보고 손으로 반영. 나머지는 `sync-upstream.ps1 -GameStudiosOnly` 로 미러. unity_lint 연동은 상류 `validate-commit.sh` 를 고치지 않고 자체 훅 `validate-lint.sh` 로 분리했다.
 
 ## 2. Unity-SkillForge / Unity3D-AntiGravitySkills (L2 C# 코드 패턴)
 
@@ -134,5 +137,6 @@
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
 | 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |
+| 2026-10-30 | Game-Studios v1.2.0 동기화 + 엔진 중립 재편 (Unity · Godot · Unreal): 에이전트 49 · 스킬 74 · scripts · 엔진 레퍼런스 · `project.yaml`, `gs-*` 문서 폐지, `engine-layers.md` · `validate-lint.sh` · Godot/Unreal 측정 스크립트 · 엔진별 prereq · artgen 승격 · 스튜디오 쓰기 영역 | `scripts/sync-upstream.ps1` 갱신 |
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

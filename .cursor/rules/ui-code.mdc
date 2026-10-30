@@ -1,6 +1,6 @@
 ---
 description: UI Code Rules
-globs: src/ui/**
+globs: src/ui/**, Assets/**/UI/**/*.cs, Assets/**/Ui/**/*.cs, Assets/**/ui/**/*.cs, Source/**/UI/**/*.h, Source/**/UI/**/*.cpp, Source/**/Ui/**/*.h, Source/**/Ui/**/*.cpp, Source/**/ui/**/*.h, Source/**/ui/**/*.cpp
 alwaysApply: false
 ---
 # UI Code Rules

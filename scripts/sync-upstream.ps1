@@ -15,18 +15,19 @@
           (Stanestane/game-design-skills-bundle 은 비상업 라이선스라 동기화 대상이 아니다 — 사용자가 직접 받음)
 
     미러 영역 (자동 갱신):
-      - .agent/skills/                    (SkillForge 전체 미러)
-      - .claude/skills/<GS-skill>/        (72 GS skill — ko-/sf-/unity-fullstack 보존)
-      - .claude/agents/                   (39 agents, Godot/UE 자동 제외)
-      - .claude/docs/gs-*                 (6 GS docs)
-      - .claude/rules/<10 GS rules>       (gameplay-code.md 보존)
-      - .claude/hooks/<10 GS hooks>       (session-*.sh 보존)
+      - .agent/skills/                    (SkillForge 전체 미러 — Unity 전용 L2)
+      - .claude/skills/<GS-skill>/        (GS skill 전부 — ko-/sf-/studio-/unity-fullstack/ext 보존)
+      - .claude/agents/                   (GS agent 전부 — Unity · Godot · Unreal 엔진 전문가 포함)
+      - .claude/docs/ · rules/ · hooks/ · scripts/   (상류 이름 그대로, 아래 fork 제외)
+      - docs/engine-reference/ · docs/*.md · design/CLAUDE.md · src/CLAUDE.md · studio-tests/
+
+    씨앗 (없을 때만 복사 — 프로젝트가 채우는 데이터):
+      - project.yaml · docs/registry/ · docs/architecture/tr-registry.yaml · design/registry/
 
     Fork 영역 (자동 갱신 안 함, 수동 머지 필요):
-      - .claude/hooks/session-start.sh    (한국어 톤 머지)
-      - .claude/hooks/session-stop.sh
-      - .claude/rules/gameplay-code.md
-      - .claude/settings.json
+      - .claude/hooks/session-start.sh · session-stop.sh  (한국어 출력 + STATUS 블록)
+      - .claude/rules/gameplay-code.md                    (한국어 · 엔진별 규칙)
+      - .claude/settings.json · .claude/statusline.sh
 
 .PARAMETER GameStudiosClone
     Claude-Code-Game-Studios 로컬 clone 경로
@@ -42,6 +43,9 @@
 
 .PARAMETER AndroidClone
     android/skills 로컬 clone 경로 (없으면 임시 clone)
+
+.PARAMETER GameStudiosOnly
+    Game-Studios 만 동기화 (SkillForge · 외부 카탈로그 단계 생략)
 
 .PARAMETER DryRun
     변경 시도 표시만, 파일 쓰기 안 함
@@ -59,17 +63,25 @@
 param(
     # 기본값: upstream clone 이 이 패키지 저장소의 형제 폴더에 있다고 가정.
     # 다른 위치면 -GameStudiosClone / -SkillForgeClone 로 override.
-    [string]$GameStudiosClone = (Join-Path $PSScriptRoot "..\..\Claude-Code-Game-Studios"),
-    [string]$SkillForgeClone  = (Join-Path $PSScriptRoot "..\..\Unity3D-AntiGravitySkills"),
-    [string]$MarketingClone   = (Join-Path $PSScriptRoot "..\..\marketingskills"),
-    [string]$GamedevClone     = (Join-Path $PSScriptRoot "..\..\awesome-gamedev-agent-skills"),
-    [string]$AndroidClone     = (Join-Path $PSScriptRoot "..\..\android-skills"),
+    # (Windows PowerShell 5.1 은 -File 실행 때 param 기본값에서 $PSScriptRoot 가 비어 있어 본문에서 채운다)
+    [string]$GameStudiosClone,
+    [string]$SkillForgeClone,
+    [string]$MarketingClone,
+    [string]$GamedevClone,
+    [string]$AndroidClone,
+    [switch]$GameStudiosOnly,
     [switch]$DryRun,
     [switch]$SkipPull
 )
 
 $ErrorActionPreference = "Stop"
-$pkg = Split-Path -Parent $PSScriptRoot
+$scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+if (-not $GameStudiosClone) { $GameStudiosClone = Join-Path $scriptDir "..\..\Claude-Code-Game-Studios" }
+if (-not $SkillForgeClone)  { $SkillForgeClone  = Join-Path $scriptDir "..\..\Unity3D-AntiGravitySkills" }
+if (-not $MarketingClone)   { $MarketingClone   = Join-Path $scriptDir "..\..\marketingskills" }
+if (-not $GamedevClone)     { $GamedevClone     = Join-Path $scriptDir "..\..\awesome-gamedev-agent-skills" }
+if (-not $AndroidClone)     { $AndroidClone     = Join-Path $scriptDir "..\..\android-skills" }
+$pkg = Split-Path -Parent $scriptDir
 
 # === 한국어 안내 재삽입 함수 ===
 # 7개 11-game-design overlap skill (L1과 L2 양쪽 존재) 의 SKILL.md 본문 상단에
@@ -148,7 +160,9 @@ Write-Host ""
 Write-Host "[2/6] SkillForge → .agent/skills/ 미러..." -ForegroundColor Yellow
 $skfSrc = Join-Path $SkillForgeClone ".agent\skills"
 $skfDst = Join-Path $pkg ".agent\skills"
-if (-not (Test-Path $skfSrc)) {
+if ($GameStudiosOnly) {
+    Write-Host "  생략 (-GameStudiosOnly)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path $skfSrc)) {
     Write-Warning "  스킵: $skfSrc 없음"
 } else {
     if (-not $DryRun) {
@@ -199,107 +213,81 @@ if (Test-Path $gsSkillsSrc) {
     }
 }
 
-# 3b. agents — 다 복사 후 Godot/UE 제거
+# 3b. agents — 엔진 전문가(Unity · Godot · Unreal) 포함 전부 미러 (엔진 중립 템플릿)
 $gsAgentsSrc = Join-Path $GameStudiosClone ".claude\agents"
 $gsAgentsDst = Join-Path $pkg ".claude\agents"
 if (Test-Path $gsAgentsSrc) {
     if (-not $DryRun) {
         New-Item -ItemType Directory -Force -Path $gsAgentsDst | Out-Null
         Copy-Item -Path "$gsAgentsSrc\*.md" -Destination $gsAgentsDst -Force
-        Get-ChildItem $gsAgentsDst -Filter "godot-*.md"  -ErrorAction SilentlyContinue | Remove-Item -Force
-        Get-ChildItem $gsAgentsDst -Filter "ue-*.md"     -ErrorAction SilentlyContinue | Remove-Item -Force
-        Get-ChildItem $gsAgentsDst -Filter "unreal*.md"  -ErrorAction SilentlyContinue | Remove-Item -Force
     }
-    $cnt = (Get-ChildItem $gsAgentsDst -File -ErrorAction SilentlyContinue).Count
-    Write-Host "  agents: $cnt agent 유지 (Godot/UE 자동 제외)" -ForegroundColor Green
+    $cnt = (Get-ChildItem $gsAgentsSrc -Filter "*.md" -File).Count
+    Write-Host "  agents: $cnt agent 미러 (엔진 전문가 포함)" -ForegroundColor Green
 }
 
-# === [4/6] Game-Studios docs/rules/hooks 미러 ===
+# === [4/6] Game-Studios docs/rules/hooks/scripts + 루트 자산 미러 ===
 Write-Host ""
-Write-Host "[4/6] Game-Studios → .claude/ 미러 (docs + rules + hooks)..." -ForegroundColor Yellow
+Write-Host "[4/6] Game-Studios → .claude/ docs · rules · hooks · scripts + 루트 자산..." -ForegroundColor Yellow
 
-# 4a. docs (gs- prefix)
-$gsDocsSrc = Join-Path $GameStudiosClone ".claude\docs"
-$gsDocsDst = Join-Path $pkg ".claude\docs"
-$gsDocFiles = @(
-    'coding-standards.md',
-    'coordination-rules.md',
-    'agent-roster.md',
-    'workflow-catalog.yaml',
-    'skills-reference.md',
-    'hooks-reference.md'
+# 이 템플릿이 고친 파일 (fork) — 자동 갱신하지 않는다. 상류 변경은 수동 머지
+$forkFiles = @(
+    '.claude\hooks\session-start.sh', '.claude\hooks\session-stop.sh',
+    '.claude\rules\gameplay-code.md', '.claude\settings.json', '.claude\statusline.sh'
 )
-if (Test-Path $gsDocsSrc) {
+function Copy-GsTree {
+    param([string]$Rel, [switch]$SeedOnly)
+    $root = (Get-Item -LiteralPath $GameStudiosClone).FullName.TrimEnd('\', '/')
+    $src = Join-Path $root $Rel
+    if (-not (Test-Path $src)) { Write-Warning "  스킵: $Rel 없음"; return 0 }
     $n = 0
-    foreach ($f in $gsDocFiles) {
-        $src = Join-Path $gsDocsSrc $f
-        $dst = Join-Path $gsDocsDst ("gs-$f")
-        if (Test-Path $src) {
-            if (-not $DryRun) {
-                New-Item -ItemType Directory -Force -Path $gsDocsDst | Out-Null
-                Copy-Item $src $dst -Force
-            }
-            $n++
+    $files = if ((Get-Item $src).PSIsContainer) { Get-ChildItem $src -Recurse -File -Force } else { @(Get-Item $src) }
+    foreach ($f in $files) {
+        $relFile = $f.FullName.Substring($root.Length + 1)
+        if ($forkFiles -contains $relFile) { continue }
+        $dst = Join-Path $pkg $relFile
+        if ($SeedOnly -and (Test-Path $dst)) { continue }   # 프로젝트 데이터 — 없을 때만 씨앗으로
+        if (-not $DryRun) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $dst) | Out-Null
+            Copy-Item $f.FullName $dst -Force
         }
+        $n++
     }
-    Write-Host "  docs: $n gs-* docs 미러" -ForegroundColor Green
+    return $n
 }
 
-# 4b. rules (gameplay-code.md 제외)
-$gsRulesSrc = Join-Path $GameStudiosClone ".claude\rules"
-$gsRulesDst = Join-Path $pkg ".claude\rules"
-$gsRuleFiles = @(
-    'ai-code.md','data-files.md','design-docs.md','engine-code.md',
-    'narrative.md','network-code.md','prototype-code.md','shader-code.md',
-    'test-standards.md','ui-code.md'
-)
-if (Test-Path $gsRulesSrc) {
-    $n = 0
-    foreach ($f in $gsRuleFiles) {
-        $src = Join-Path $gsRulesSrc $f
-        $dst = Join-Path $gsRulesDst $f
-        if (Test-Path $src) {
-            if (-not $DryRun) {
-                New-Item -ItemType Directory -Force -Path $gsRulesDst | Out-Null
-                Copy-Item $src $dst -Force
-            }
-            $n++
-        }
-    }
-    Write-Host "  rules: $n GS rules 미러 (gameplay-code.md 보존)" -ForegroundColor Green
+# 4a. 예전 gs-* 접두사 문서 정리 (v1.2.0 부터 상류 이름 그대로 — 스킬 참조 경로와 맞춘다)
+if (-not $DryRun) {
+    Get-ChildItem (Join-Path $pkg ".claude\docs") -Filter "gs-*" -File -ErrorAction SilentlyContinue | Remove-Item -Force
 }
-
-# 4c. hooks (session-start/stop 제외)
-$gsHooksSrc = Join-Path $GameStudiosClone ".claude\hooks"
-$gsHooksDst = Join-Path $pkg ".claude\hooks"
-$gsHookFiles = @(
-    'detect-gaps.sh','notify.sh','pre-compact.sh','post-compact.sh',
-    'log-agent.sh','log-agent-stop.sh',
-    'validate-commit.sh','validate-push.sh',
-    'validate-assets.sh','validate-skill-change.sh'
-)
-if (Test-Path $gsHooksSrc) {
-    $n = 0
-    foreach ($f in $gsHookFiles) {
-        $src = Join-Path $gsHooksSrc $f
-        $dst = Join-Path $gsHooksDst $f
-        if (Test-Path $src) {
-            if (-not $DryRun) {
-                New-Item -ItemType Directory -Force -Path $gsHooksDst | Out-Null
-                Copy-Item $src $dst -Force
-            }
-            $n++
-        }
-    }
-    Write-Host "  hooks: $n GS hooks 미러 (session-*.sh 보존)" -ForegroundColor Green
+# 4b. 미러 (상류가 정본)
+foreach ($rel in @('.claude\docs', '.claude\rules', '.claude\hooks', '.claude\scripts',
+                   'docs\engine-reference', 'docs\CLAUDE.md', 'docs\COLLABORATIVE-DESIGN-PRINCIPLE.md',
+                   'docs\WORKFLOW-GUIDE.md', 'docs\skill-flow-diagrams.md',
+                   'design\CLAUDE.md', 'src\CLAUDE.md', 'studio-tests', 'production\.gdignore')) {
+    $n = Copy-GsTree -Rel $rel
+    Write-Host ("  {0,-42} {1} 파일" -f $rel, $n) -ForegroundColor Green
 }
+# 4c. 씨앗 (프로젝트가 채우는 데이터 — 없을 때만 복사)
+foreach ($rel in @('project.yaml', 'docs\registry', 'docs\architecture\tr-registry.yaml', 'design\registry',
+                   'production\session-state')) {
+    $n = Copy-GsTree -Rel $rel -SeedOnly
+    Write-Host ("  {0,-42} {1} 파일 (씨앗)" -f $rel, $n) -ForegroundColor Green
+}
+# 4d. 상류에서 사라진 훅 — 남아 있으면 알린다 (settings.json 등록도 함께 지울 것)
+$gsHookNames = Get-ChildItem (Join-Path $GameStudiosClone ".claude\hooks") -File | ForEach-Object Name
+$ownHooks = @('studio-pause-notice.sh', 'studio-write-guard.sh', 'validate-lint.sh')
+Get-ChildItem (Join-Path $pkg ".claude\hooks") -File | Where-Object { $gsHookNames -notcontains $_.Name -and $ownHooks -notcontains $_.Name } |
+    ForEach-Object { Write-Warning "  상류에 없는 훅: $($_.Name) — 쓰지 않으면 settings.json 등록과 함께 지운다" }
+Write-Host "  fork (수동 머지): $($forkFiles -join ', ')" -ForegroundColor DarkGray
 
 # === [5/6] 외부 카탈로그 (marketing · gamedev · android) ===
 Write-Host ""
 Write-Host "[5/6] 외부 카탈로그 → .agent/marketing · .agent/gamedev · .agent/android (scripts/sync-catalog.py)" -ForegroundColor Yellow
-$catScript = Join-Path $PSScriptRoot "sync-catalog.py"
-foreach ($cat in @(@{ Name = "marketing"; Clone = $MarketingClone }, @{ Name = "gamedev"; Clone = $GamedevClone },
-                   @{ Name = "android"; Clone = $AndroidClone })) {
+$catScript = Join-Path $scriptDir "sync-catalog.py"
+$catalogs = if ($GameStudiosOnly) { Write-Host "  생략 (-GameStudiosOnly)" -ForegroundColor DarkGray; @() } else {
+    @(@{ Name = "marketing"; Clone = $MarketingClone }, @{ Name = "gamedev"; Clone = $GamedevClone },
+      @{ Name = "android"; Clone = $AndroidClone }) }
+foreach ($cat in $catalogs) {
     $catArgs = @($catScript, $cat.Name)
     if (Test-Path $cat.Clone) { $catArgs += @("--src", $cat.Clone) } else { $catArgs += "--fetch" }
     if ($DryRun) { $catArgs += "--dry-run" }

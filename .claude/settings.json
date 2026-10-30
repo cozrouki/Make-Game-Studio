@@ -27,7 +27,10 @@
       "Bash(*>.env*)",
       "Bash(cat *.env*)",
       "Bash(type *.env*)",
-      "Read(**/.env*)"
+      "Read(**/.env*)",
+      "Edit(**/*.uasset)",
+      "Edit(**/*.umap)",
+      "Edit(**/.env*)"
     ],
     "additionalDirectories": []
   },
@@ -75,7 +78,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|PowerShell",
         "hooks": [
           {
             "type": "command",
@@ -86,6 +89,11 @@
             "type": "command",
             "command": "bash .claude/hooks/validate-push.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-lint.sh",
+            "timeout": 60
           }
         ]
       },
@@ -96,6 +104,31 @@
             "type": "command",
             "command": "bash .claude/hooks/studio-write-guard.sh",
             "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-registry.sh",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-write.sh",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-read.sh",
+            "timeout": 10
           }
         ]
       }
@@ -151,18 +184,6 @@
         ]
       }
     ],
-    "PostCompact": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/post-compact.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "SubagentStart": [
       {
         "matcher": "",
@@ -183,6 +204,11 @@
             "type": "command",
             "command": "bash .claude/hooks/log-agent-stop.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/validate-agent-artifact.sh",
+            "timeout": 10
           }
         ]
       }

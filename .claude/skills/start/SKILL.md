@@ -1,225 +1,219 @@
 ---
 name: start
-description: "First-time onboarding — asks where you are, then guides you to the right workflow. No assumptions."
+description: "Guides a first-time user through onboarding and picks the right workflow. Use when the user is new, just cloned or installed the studio, has no idea or engine yet, asks where to begin, or wants to bring in an existing game."
 argument-hint: "[no arguments]"
 user-invocable: true
-allowed-tools: Read, Glob, Grep, Write, AskUserQuestion
+allowed-tools: Read, Glob, Grep, AskUserQuestion, Bash(bash .claude/scripts/project-state.sh*), Bash(bash .claude/scripts/set-stage.sh *), Bash(bash .claude/scripts/config-set.sh *)
+model: sonnet
 ---
 
 # Guided Onboarding
 
-This skill writes one file: `production/review-mode.txt` (review mode config set in Phase 3b).
+The entry point for a new user. It assumes no game idea, no engine and no experience: it reads
+the project, asks where the user is starting from, shows what it assumes about the project, and
+names the one next step. It never runs that step itself.
 
-This skill is the entry point for new users. It does NOT assume you have a game idea, an engine preference, or any prior experience. It asks first, then routes you to the right workflow.
+It writes these settings to `project.yaml`, all through helpers, and only after an explicit yes:
+`project.stage` (with its legacy mirror `production/stage.txt`), `modes.rigor` and
+`modes.automation`. It never writes `modes.review_mode` or `production/review-mode.txt`, and none
+of the other knobs rigor fronts (`modes.workflow`, `docs.density`, `qa.level`,
+`modes.story_granularity`, `team.size`): a written value pins that knob over the rigor expansion,
+and a mirror file outranks it.
 
----
+Ask with the question tool. Without one, list the options numbered and end your turn to wait. The
+question is the last thing in the reply: no path, note or advice after it. A skipped or dismissed
+question is not an answer: ask again in plain text.
 
-## Phase 1: Detect Project State
+The questions in Phases 2, 4 and 5 shape the project, so they are asked in every automation mode.
+The engine is not one of them: `/setup-engine` chooses it. Phase 6's last question follows a
+`modes.automation` already in `project.yaml`, per `.claude/docs/automation-modes.md`; with none
+set, ask it.
 
-Before asking anything, silently gather context so you can tailor your guidance. Do NOT show these results unprompted — they inform your recommendations, not the conversation opener.
+## Phase 1: Read the project
 
-Check:
-- **Engine configured?** Read `.claude/docs/technical-preferences.md`. If the Engine field contains `[TO BE CONFIGURED]`, the engine is not set.
-- **Game concept exists?** Check for `design/gdd/game-concept.md`.
-- **Source code exists?** Glob for source files in `src/` (`*.gd`, `*.cs`, `*.cpp`, `*.h`, `*.rs`, `*.py`, `*.js`, `*.ts`).
-- **Prototypes exist?** Check for subdirectories in `prototypes/`.
-- **Design docs exist?** Count markdown files in `design/gdd/`.
-- **Production artifacts?** Check for files in `production/sprints/` or `production/milestones/`.
+Run `bash .claude/scripts/project-state.sh` and keep its rows. Do not show them yet; they check
+the user's answer in Phase 2.
 
-Store these findings internally to validate the user's self-assessment and tailor recommendations.
+| Row | Use |
+|---|---|
+| `engine`, `code_root`, `source_files` | Is an engine set, and how much code is there. `source_files` of `unknown` means the code root could not be found: say that, never "no code" |
+| `concept` | `design/gdd/game-concept.md` or `design/game-brief.md` exists |
+| `gdd_files`, `adr` | Design documents and architecture decisions on disk (they set the stage in Phase 4) |
+| `prototype`, `sprint`, `milestone`, `story` | Other existing work |
+| `origin_url` | Contains `donchitos/claude-code-game-studios`, matched case-insensitively: the clone still points at the template repo, so a push or pull request would go there. A fork under another owner is the user's own |
+| `stage` | The stage already recorded, if any |
 
----
+Ignore `phase_inferred`: it guesses from file counts, and a project with code but no design
+documents is not in Production. If the helper fails, say so and read the same facts by hand
+(engine in `project.yaml`, the two concept files, the code root's files, `design/gdd/`).
 
-## Phase 2: Ask Where the User Is
+The helper does not report rigor or automation. Read `project.yaml`, if it exists, and note
+whether `modes.rigor` and `modes.automation` are set: a set value is kept, and its question is
+not asked (Phases 4 and 5).
 
-This is the first thing the user sees. Use `AskUserQuestion` with these exact options so the user can click rather than type:
+**Returning user** (an engine is set and `concept` is present): ask nothing. Say the engine, the
+concept or brief found, and the review mode: `modes.review_mode` if set, otherwise the one
+`modes.rigor` implies (`minimal` → `solo`, `standard` → `lean`, `full` → `full`). Suggest `/help` for the next step, add the
+template-remote note if it applies, and stop.
 
-- **Prompt**: "Welcome to Claude Code Game Studios! Before I suggest anything, I'd like to understand where you're starting from. Where are you at with your game idea right now?"
-- **Options**:
-  - `A) No idea yet` — I don't have a game concept at all. I want to explore and figure out what to make.
-  - `B) Vague idea` — I have a rough theme, feeling, or genre in mind (e.g., "something with space" or "a cozy farming game") but nothing concrete.
-  - `C) Clear concept` — I know the core idea — genre, basic mechanics, maybe a pitch sentence — but haven't formalized it into documents yet.
-  - `D) Existing work` — I already have design docs, prototypes, code, or significant planning done. I want to organize or continue the work.
+## Phase 2: Ask where the user is
 
-Wait for the user's selection. Do not proceed until they respond.
+Ask with the question tool: "Welcome! Where are you starting from with your game?" Options:
+- `A) No idea yet`: no game concept; explore and find what to make.
+- `B) Vague idea`: a theme, feeling or genre ("something with space", "a cozy farming game").
+- `C) Clear concept`: the core idea and genre are known, nothing is written down yet.
+- `D) Existing work`: design documents, prototypes, code or plans already exist.
 
----
+Wait for the answer. If it contradicts Phase 1, say what you found once and ask again: D on an
+empty project ("this looks like a fresh template; would A or B fit better?"), or A with code on
+disk ("I found code in `[code_root]`; did you mean D?"). If no option fits, let the user describe
+their situation and route from that.
 
-## Phase 3: Route Based on Answer
+## Phase 3: Route
 
-#### If A: No idea yet
+Name the immediate next step only. The full path waits for Phase 6, after the rigor is known.
 
-The user needs creative exploration before anything else.
+- **A, no idea:** starting from zero is fine. `/brainstorm open` explores freely; `/brainstorm
+  [hint]` starts from a word or theme. Next step: `/brainstorm open`, or a hint if one comes to
+  mind. Describe it as "turns no idea into a written design the next step builds from"; how long
+  that design is depends on the rigor, so leave that for Phase 6.
+- **B, vague idea:** ask for the idea in a few words, take it as it is, and name
+  `/brainstorm [their words]`.
+- **C, clear concept:** ask for the concept in one sentence (genre and core mechanic), as plain
+  text. Then ask: "How would you like to proceed?" Options: `Formalize it first` (`/brainstorm
+  [concept]` writes it down) / `Jump straight in` (`/setup-engine` now, write the design after).
+  The next step is their pick.
+- **D, existing work:** say what Phase 1 found ("N source files under `[code_root]`, N design
+  documents, engine [X / not set]"). Next step: `/setup-engine` when no engine is set and there is
+  no more than a concept; otherwise `/project-stage-detect`.
 
-1. Acknowledge that starting from zero is completely fine
-2. Briefly explain what `/brainstorm` does (guided ideation using professional frameworks — MDA, player psychology, verb-first design). Mention that it has two modes: `/brainstorm open` for fully open exploration, or `/brainstorm [hint]` if they have even a vague theme (e.g., "space", "cozy", "horror").
-3. Recommend running `/brainstorm open` as the next step, but invite them to use a hint if something comes to mind
-4. Show the recommended path:
-   **Concept phase:**
-   - `/brainstorm open` — discover your game concept
-   - `/setup-engine` — configure the engine (brainstorm will recommend one)
-   - `/art-bible` — define visual identity (uses the Visual Identity Anchor brainstorm produces)
-   - `/map-systems` — decompose the concept into systems
-   - `/design-system` — author a GDD for each MVP system
-   - `/review-all-gdds` — cross-system consistency check
-   - `/gate-check` — validate readiness before architecture work
-   **Architecture phase:**
-   - `/create-architecture` — produce the master architecture blueprint and Required ADR list
-   - `/architecture-decision (×N)` — record key technical decisions, following the Required ADR list
-   - `/create-control-manifest` — compile decisions into an actionable rules sheet
-   - `/architecture-review` — validate architecture coverage
-   **Pre-Production phase:**
-   - `/ux-design` — author UX specs for key screens (main menu, HUD, core interactions)
-   - `/prototype` — build a throwaway prototype to validate the core mechanic
-   - `/playtest-report (×1+)` — document each vertical slice playtest session
-   - `/create-epics` — map systems to epics
-   - `/create-stories` — break epics into implementable stories
-   - `/sprint-plan` — plan the first sprint
-   **Production phase:** → pick up stories with `/dev-story`
+Then say: "I'll lay out the full path in a moment."
 
-#### If B: Vague idea
+## Phase 4: Show what you assume, then save it
 
-1. Ask them to share their vague idea — even a few words is enough
-2. Validate the idea as a starting point (don't judge or redirect)
-3. Recommend running `/brainstorm [their hint]` to develop it
-4. Show the recommended path:
-   **Concept phase:**
-   - `/brainstorm [hint]` — develop the idea into a full concept
-   - `/setup-engine` — configure the engine
-   - `/art-bible` — define visual identity (uses the Visual Identity Anchor brainstorm produces)
-   - `/map-systems` — decompose the concept into systems
-   - `/design-system` — author a GDD for each MVP system
-   - `/review-all-gdds` — cross-system consistency check
-   - `/gate-check` — validate readiness before architecture work
-   **Architecture phase:**
-   - `/create-architecture` — produce the master architecture blueprint and Required ADR list
-   - `/architecture-decision (×N)` — record key technical decisions, following the Required ADR list
-   - `/create-control-manifest` — compile decisions into an actionable rules sheet
-   - `/architecture-review` — validate architecture coverage
-   **Pre-Production phase:**
-   - `/ux-design` — author UX specs for key screens (main menu, HUD, core interactions)
-   - `/prototype` — build a throwaway prototype to validate the core mechanic
-   - `/playtest-report (×1+)` — document each vertical slice playtest session
-   - `/create-epics` — map systems to epics
-   - `/create-stories` — break epics into implementable stories
-   - `/sprint-plan` — plan the first sprint
-   **Production phase:** → pick up stories with `/dev-story`
+Work out two values.
 
-#### If C: Clear concept
+**Stage.** Paths A, B and C: `Concept`. Path D, from the Phase 1 rows:
 
-1. Ask them to describe their concept in one sentence — genre and core mechanic. Use plain text, not AskUserQuestion (it's an open response).
-2. Acknowledge the concept, then use `AskUserQuestion` to offer two paths:
-   - **Prompt**: "How would you like to proceed?"
-   - **Options**:
-     - `Formalize it first` — Run `/brainstorm [concept]` to structure it into a proper game concept document
-     - `Jump straight in` — Go to `/setup-engine` now and write the GDD manually afterward
-3. Show the recommended path:
-   **Concept phase:**
-   - `/brainstorm` or `/setup-engine` — (their pick from step 2)
-   - `/art-bible` — define visual identity (after brainstorm if run, or after concept doc exists)
-   - `/design-review` — validate the concept doc
-   - `/map-systems` — decompose the concept into individual systems
-   - `/design-system` — author a GDD for each MVP system
-   - `/review-all-gdds` — cross-system consistency check
-   - `/gate-check` — validate readiness before architecture work
-   **Architecture phase:**
-   - `/create-architecture` — produce the master architecture blueprint and Required ADR list
-   - `/architecture-decision (×N)` — record key technical decisions, following the Required ADR list
-   - `/create-control-manifest` — compile decisions into an actionable rules sheet
-   - `/architecture-review` — validate architecture coverage
-   **Pre-Production phase:**
-   - `/ux-design` — author UX specs for key screens (main menu, HUD, core interactions)
-   - `/prototype` — build a throwaway prototype to validate the core mechanic
-   - `/playtest-report (×1+)` — document each vertical slice playtest session
-   - `/create-epics` — map systems to epics
-   - `/create-stories` — break epics into implementable stories
-   - `/sprint-plan` — plan the first sprint
-   **Production phase:** → pick up stories with `/dev-story`
+| On disk | Stage |
+|---|---|
+| no engine, or nothing beyond a concept (`gdd_files` 0) | `Concept` |
+| `gdd_files` 1 or more, `adr` 0 | `Systems Design` |
+| `adr` 1 or more | `Technical Setup` |
 
-#### If D: Existing work
+**Rigor.** If `modes.rigor` is already set in `project.yaml`, keep it and say so. Otherwise infer
+it from what the user said in Phases 2 and 3, using the signals in
+`.claude/docs/settings-guidance.md` §3:
 
-1. Share what you found in Phase 1:
-   - "I can see you have [X source files / Y design docs / Z prototypes]..."
-   - "Your engine is [configured as X / not yet configured]..."
+| The user's words mention | Rigor |
+|---|---|
+| open world, RPG, sim, sandbox, factions, crafting, economy, MMO, multiplayer, many systems | `full` |
+| release, commercial, Steam, one clear core loop | `standard` |
+| jam, weekend, prototype, first game, small, just trying | `minimal` |
+| nothing above, or no idea yet | `minimal` (the default) |
 
-2. **Sub-case D1 — Early stage** (engine not configured or only a game concept exists):
-   - Recommend `/setup-engine` first if engine not configured
-   - Then `/project-stage-detect` for a gap inventory
+A path B hint is still a description: "some kind of open-world survival sim" is `full`.
 
-   **Sub-case D2 — GDDs, ADRs, or stories already exist:**
-   - Explain: "Having files isn't the same as the template's skills being able to use them. GDDs might be missing required sections. `/adopt` checks this specifically."
-   - Recommend:
-     1. `/project-stage-detect` — understand what phase and what's missing entirely
-     2. `/adopt` — audit whether existing artifacts are in the right internal format
+Show the card:
 
-3. Show the recommended path for D2:
-   - `/project-stage-detect` — phase detection + existence gaps
-   - `/adopt` — format compliance audit + migration plan
-   - `/setup-engine` — if engine not configured
-   - `/design-system retrofit [path]` — fill missing GDD sections
-   - `/architecture-decision retrofit [path]` — add missing ADR sections
-   - `/architecture-review` — bootstrap the TR requirement registry
-   - `/gate-check` — validate readiness for next phase
+```
+What I'll set up
+  Stage:  [stage]  ([why, from what was found or picked])
+  Rigor:  [value]  ([why, in the user's words] | already set)
+          minimal: short brief, coarse stories, tests optional; about 4 steps to code
+          standard: about 8 design documents before code; standard QA evidence
+          full: everything in standard plus validation builds; evidence everywhere
+  /settings changes either of these any time.
+```
 
----
+Then ask with the question tool: "Save these to `project.yaml` (and the stage to
+`production/stage.txt`)?" Options: `Save them` / `Don't save`. Ask no question about the rigor
+itself: the card shows it, and `/settings` changes it.
 
-## Phase 3b: Set Review Mode
+- **Save them:** run `bash .claude/scripts/set-stage.sh "[stage]"`, then, only when rigor was not
+  already set, `bash .claude/scripts/config-set.sh modes.rigor [value]`. Check the read-back rows
+  match. Say: "Saved. Rigor `[value]` sets six other settings; `/settings` shows them and changes
+  any of them."
+- **Don't save**, or anything other than an explicit yes: write nothing, keep the values for this
+  run, and say they were not saved.
 
-Check if `production/review-mode.txt` already exists.
+If a helper exits non-zero, show its output, say which setting was not written, and go on with the
+value for this run.
 
-**If it exists**: Read it and show the current mode — "Review mode is set to `[current]`." — then proceed to Phase 4. Do not ask again.
+## Phase 5: Ask how much to confirm
 
-**If it does not exist**: Use `AskUserQuestion`:
+If `modes.automation` is already set, say "Automation is `[value]`" and go on. Otherwise ask:
+"Last one: how much should I confirm with you as we work?" Options:
+- `Guided (Recommended)`: I decide small things and still stop for big ones (scope changes,
+  deletions, schema changes).
+- `Collaborative`: I ask before each significant step and show drafts before writing.
+- `Autonomous`: I proceed and log decisions, stopping only for the always-ask categories. Fastest,
+  most tokens.
 
-- **Prompt**: "One setup choice: how much design review would you want as you work through the workflow?"
-- **Options**:
-  - `Full` — Director specialists review at each key workflow step. Best for teams, learning the workflow, or when you want thorough feedback on every decision.
-  - `Lean (recommended)` — Directors only at phase gate transitions (/gate-check). Skips per-skill reviews. Balanced approach for solo devs and small teams.
-  - `Solo` — No director reviews at all. Maximum speed. Best for game jams, prototypes, or if the reviews feel like overhead.
+Mapping: `Guided` → `guided`, `Collaborative` → `collaborative`, `Autonomous` → `autonomous`. The
+pick is the consent to write it: run `bash .claude/scripts/config-set.sh modes.automation [value]`,
+unless the Phase 4 save was declined (then say it was not saved).
 
-Write the choice to `production/review-mode.txt` immediately after the user
-selects — no separate "May I write?" needed, as the write is a direct
-consequence of the selection:
-- `Full` → write `full`
-- `Lean (recommended)` → write `lean`
-- `Solo` → write `solo`
+## Phase 6: Show the path
 
-Create the `production/` directory if it does not exist.
+Say: "Here's your path at rigor `[value]`. Every skill still runs at any rigor; rigor changes
+what's required, not what's allowed."
 
----
+The path starts with the step Phase 3 named. When that was `/brainstorm` (paths A and B, and C's
+`Formalize it first`), list `/brainstorm` first and `/setup-engine` second: each runs without the
+other.
 
-## Phase 4: Confirm Before Proceeding
+**`minimal`: 4 steps to running code**
+1. `/setup-engine`: choose and configure the engine
+2. `/brainstorm`: write the one-page `design/game-brief.md`
+3. `/create-stories`: turn the brief's MVP list into stories (no epics or sprint plan needed)
+4. `/dev-story`: the first line of game code
 
-After presenting the recommended path, use `AskUserQuestion` to ask the user which step they'd like to take first. Never auto-run the next skill.
+**`standard`**
+- Concept: `/setup-engine` → `/brainstorm` → `/prototype` → `/art-bible` → `/gate-check`
+- Systems Design: `/map-systems` → `/design-system` (once per system) → `/review-all-gdds` →
+  `/gate-check`
+- Architecture: `/create-architecture` → `/architecture-decision` (once per decision) →
+  `/create-control-manifest` → `/architecture-review` → `/test-setup` → `/ux-design`
+  (accessibility and interaction patterns) → `/gate-check`
+- Pre-Production: `/ux-design` (HUD and key screens) → `/create-epics` → `/create-stories` →
+  `/sprint-plan` → `/gate-check`
+- Production: `/dev-story`
 
-- **Prompt**: "Would you like to start with [recommended first step]?"
-- **Options**:
-  - `Yes, let's start with [recommended first step]`
-  - `I'd like to do something else first`
+Each `/gate-check` moves the project one stage, and only when it passes.
 
----
+**`full`:** everything in `standard`, plus `/vertical-slice` and `/playtest-report` in
+Pre-Production and `/design-review` after each GDD.
 
-## Phase 5: Hand Off
+**Path D with existing work** (stage `Systems Design` or later, or code on disk) gets this instead.
+Print only the steps that apply, and for the brief only the one source that applies. At `minimal`:
+1. `/project-stage-detect`: what stage the project is at and what is missing
+2. `/adopt`: whether the existing files are in the format the skills read
+3. `/setup-engine`: only when no engine is set; leave it out when `engine` names one
+4. The brief, only if `concept` is absent: `/reverse-document design [code_root]` when the code
+   root holds 10 or more source files (it writes the brief from the game), and then do not mention
+   `/brainstorm` at all; `/brainstorm` only when it holds fewer
 
-When the user confirms their next step, respond with a single short line: "Type `[skill command]` to begin." Nothing else. Do not re-explain the skill or add encouragement. The `/start` skill's job is done.
+At `standard` and `full`, steps 1 to 3, then `/design-system retrofit [path]`,
+`/architecture-decision retrofit [path]`, `/architecture-review` and `/gate-check`.
 
-Verdict: **COMPLETE** — user oriented and handed off to next step.
+Present `minimal` as the documented floor, not a lesser mode, and name its trade once: no GDDs, so
+design problems show up in code.
 
----
+If `origin_url` pointed at the template repo, add: "Your clone's `origin` still points at the
+CCGS template repo, so a push or pull request would go there. When you're ready, run
+`git remote rename origin template`, then `git remote add origin <your repo URL>`. `UPGRADING.md`
+pulls updates from `template`; skip its own `git remote add template` step, since that remote now
+exists." Suggest it; do not run it.
 
-## Edge Cases
+Ask: "Would you like to start with [first step]?" Options: `Yes, start with [first step]` /
+`Something else first`. Either answer leads to Phase 7, never to running the step.
 
-- **User picks D but project is empty**: Gently redirect — "It looks like the project is a fresh template with no artifacts yet. Would Path A or B be a better fit?"
-- **User picks A but project has code**: Mention what you found — "I noticed there's already code in `src/`. Did you mean to pick D (existing work)?"
-- **User is returning (engine configured, concept exists)**: Skip onboarding entirely — "It looks like you're already set up! Your engine is [X] and you have a game concept at `design/gdd/game-concept.md`. Review mode: `[read from production/review-mode.txt, or 'lean (default)' if missing]`. Want to pick up where you left off? Try `/sprint-plan` or just tell me what you'd like to work on."
-- **User doesn't fit any option**: Let them describe their situation in their own words and adapt.
+## Phase 7: Hand off
 
----
+Respond with exactly one line: "Type `[skill]` to begin." Do not start that skill or call the
+skill tool for it, even after a yes: the user types it. If they picked something else, name the skill for that instead, the same
+way.
 
-## Collaborative Protocol
-
-1. **Ask first** — never assume the user's state or intent
-2. **Present options** — give clear paths, not mandates
-3. **User decides** — they pick the direction
-4. **No auto-execution** — recommend the next skill, don't run it without asking
-5. **Adapt** — if the user's situation doesn't fit a template, listen and adjust
+Verdict: **COMPLETE**, the user is oriented and handed off. If the user stopped before Phase 7,
+say which settings were saved and which were not.

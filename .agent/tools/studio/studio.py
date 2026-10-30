@@ -75,6 +75,34 @@ def deep_merge(base, over):
     return out
 
 
+def detect_engine(root):
+    """프로젝트 엔진 — project.yaml engine.name 이 정본, 없으면 표지 파일 (.claude/docs/engine-layers.md). 모르면 None."""
+    try:
+        with open(os.path.join(root, "project.yaml"), encoding="utf-8") as f:
+            in_engine = False
+            for line in f:
+                if line.startswith("engine:"):
+                    in_engine = True
+                    continue
+                if in_engine and line.strip() and not line[:1].isspace() and not line.startswith("#"):
+                    break
+                s = line.strip()
+                if in_engine and s.startswith("name:"):
+                    name = s[5:].split("#")[0].strip().strip("\"'").split()
+                    if name and name[0].lower() in ("unity", "godot", "unreal"):
+                        return name[0].lower()
+                    break
+    except OSError:
+        pass
+    if os.path.isfile(os.path.join(root, "ProjectSettings", "ProjectVersion.txt")):
+        return "unity"
+    if os.path.isfile(os.path.join(root, "project.godot")):
+        return "godot"
+    if any(n.endswith(".uproject") for n in os.listdir(root)):
+        return "unreal"
+    return None
+
+
 def load_config(tool_dir=TOOL_DIR):
     cfg = read_json(os.path.join(tool_dir, "studio.config.json"))
     local = read_json(os.path.join(tool_dir, "studio.config.local.json"), {})
@@ -87,6 +115,7 @@ class Studio:
         self.cfg = config
         self.dir = os.path.join(self.root, config["dataDir"])
         self.tickets_dir = os.path.join(self.dir, "tickets")
+        self.engine = detect_engine(self.root)  # unity · godot · unreal · None — 역할 쓰기 영역을 고른다
 
     @property
     def art_mode(self):
@@ -399,7 +428,10 @@ class Studio:
         if role == DIRECTOR:
             return list(self.cfg.get("directorOwns", [])) + list(self.cfg.get("shared", []))
         self.check_role(role)
-        return list(self.cfg["roles"][role]["owns"]) + list(self.cfg.get("shared", []))
+        r = self.cfg["roles"][role]
+        # Unity · 엔진 미판정은 owns, Godot · Unreal 은 ownsByEngine 이 있으면 그것 (없으면 owns 로 — 설정 누락이 쓰기를 막지 않게)
+        owns = r.get("ownsByEngine", {}).get(self.engine) or r["owns"]
+        return list(owns) + list(self.cfg.get("shared", []))
 
     def _git(self, *args, check=True, stdin=None):
         for attempt in range(6):
@@ -467,7 +499,12 @@ class Studio:
         warnings = notes + [f"{f}: .meta 없음 — Unity 임포트 후 커밋 권장" for f in files
                     if f.startswith("Assets/") and not f.endswith(".meta")
                     and os.path.isfile(os.path.join(self.root, f)) and not os.path.exists(os.path.join(self.root, f + ".meta"))]
-        lint = self._lint([f for f in files if f.endswith(".cs") and os.path.isfile(os.path.join(self.root, f))])
+        # unity_lint 는 Unity API 규칙이다 — Godot C# 에 돌리면 오탐만 난다 (Unity · 엔진 미판정에서만)
+        cs = [f for f in files if f.endswith(".cs") and os.path.isfile(os.path.join(self.root, f))]
+        if cs and self.engine not in (None, "unity"):
+            warnings.append(f"정적 검사 안 함: {self.engine} 용 검사기 없음 (.claude/docs/engine-layers.md)")
+            cs = []
+        lint = self._lint(cs)
         if lint:
             warnings += [f"unity-lint {x['path']}:{x['line']} {x['rule']} {x['message']}" for x in lint["findings"]
                          if x not in lint["blocking"]]

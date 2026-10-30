@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: src/ai/**
+globs: src/ai/**, Assets/**/AI/**/*.cs, Assets/**/Ai/**/*.cs, Assets/**/ai/**/*.cs, Source/**/AI/**/*.h, Source/**/AI/**/*.cpp, Source/**/Ai/**/*.h, Source/**/Ai/**/*.cpp, Source/**/ai/**/*.h, Source/**/ai/**/*.cpp
 description: AI Code Rules
 ---
 <!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .claude/rules/ai-code.md -->

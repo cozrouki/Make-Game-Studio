@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: src/networking/**
+globs: src/networking/**, Assets/**/Networking/**/*.cs, Assets/**/networking/**/*.cs, Assets/**/Network/**/*.cs, Assets/**/network/**/*.cs, Source/**/Networking/**/*.h, Source/**/Networking/**/*.cpp, Source/**/networking/**/*.h, Source/**/networking/**/*.cpp, Source/**/Network/**/*.h, Source/**/Network/**/*.cpp, Source/**/network/**/*.h, Source/**/network/**/*.cpp
 description: Network Code Rules
 ---
 <!-- 생성물: scripts/gen-rule-mirrors.py — 직접 편집 금지 · 정본: .claude/rules/network-code.md -->

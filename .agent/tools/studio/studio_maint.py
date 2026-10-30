@@ -37,15 +37,18 @@ UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/set
                  ".claude/skills/studio-director",
                  ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq", ".claude/skills/ko-code-review",
                  ".claude/skills/ko-diagnose", ".claude/skills/ko-tdd", ".claude/skills/ko-grill",
-                 ".claude/skills/ko-agent-retro",
+                 ".claude/skills/ko-agent-retro", ".claude/skills/ko-setup-engine",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".agent/workflows/ko-prereq.md",
                  ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh", ".claude/hooks/studio-write-guard.sh",
-                 ".claude/hooks/validate-commit.sh"]
+                 ".claude/hooks/validate-commit.sh", ".claude/hooks/validate-lint.sh", ".claude/hooks/yaml-helper.sh",
+                 ".claude/docs/engine-layers.md"]
 # 스튜디오 훅 등록 — settings.json 은 프로젝트 것을 덮지 않고, 빠진 등록만 더한다 (이벤트, matcher, command)
 STUDIO_HOOKS = [("PreToolUse", "Write|Edit|MultiEdit|NotebookEdit", "bash .claude/hooks/studio-write-guard.sh"),
-                ("PostToolUse", "", "bash .claude/hooks/studio-pause-notice.sh")]
+                ("PostToolUse", "", "bash .claude/hooks/studio-pause-notice.sh"),
+                # 엔진별 정적 검사 — 상류 validate-commit.sh 에서 unity_lint 연동이 빠져 별도 훅으로 옮겼다
+                ("PreToolUse", "Bash", "bash .claude/hooks/validate-lint.sh")]
 # 프로젝트마다 치환된 정본 문서는 통째로 바꾸지 않고, 템플릿에 새로 생긴 절만 끼워 넣는다 (파일, 절 머리, 앞에 둘 절 머리)
 SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4.")]
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록

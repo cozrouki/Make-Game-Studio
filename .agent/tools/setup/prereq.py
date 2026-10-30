@@ -1,4 +1,5 @@
-"""사전 설치 점검 · 설치 — 자동화(스튜디오 모드 · artgen 그래픽/사운드 · Unity MCP)를 돌리기 전에 필요한 것.
+"""사전 설치 점검 · 설치 — 자동화(스튜디오 모드 · artgen 그래픽/사운드 · 엔진 도구)를 돌리기 전에 필요한 것.
+엔진 항목은 프로젝트 엔진(project.yaml engine.name → 표지 파일)에 맞는 것만 점검하고, 나머지는 이유를 붙여 skip 한다.
 
     python .agent/tools/setup/prereq.py check   [--roles dev,art] [--platforms android] [--json]
     python .agent/tools/setup/prereq.py install [항목 ...] [--yes] [--dry-run] [--comfyui-home DIR] [--library-dir DIR]
@@ -27,6 +28,7 @@ sys.path.insert(0, ARTGEN_DIR)
 
 from artgen_lib import library as soundlib  # noqa: E402
 from artgen_lib.config import load_config  # noqa: E402
+from artgen_lib.store import detect_engine  # noqa: E402
 
 ROLES = ("planning", "art", "dev")
 MIN_GIT = (2, 25)
@@ -34,6 +36,8 @@ MIN_COMFYUI = (0, 42)
 MIN_VRAM_MB = 8000
 COMFYUI_CANDIDATES = (r"D:\AI\ComfyUI_windows_portable", r"C:\AI\ComfyUI_windows_portable", r"C:\ComfyUI_windows_portable")
 COMFYUI_RELEASES = "https://github.com/comfyanonymous/ComfyUI/releases (ComfyUI_windows_portable_nvidia.7z)"
+# Epic Games Launcher 기본 설치 위치 — 소스 빌드 엔진은 project.yaml engine.path 로 지정
+UNREAL_INSTALL_DIRS = (r"C:\Program Files\Epic Games", r"D:\Program Files\Epic Games", r"D:\Epic Games")
 UNITY_MCP_PKG = '"com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main"'
 
 # 상업 이용 가능 · 게이트 없음 확인 (2026-10-29). size · sha256 은 HF LFS 메타데이터
@@ -98,6 +102,7 @@ class Ctx:
         self.root = os.path.abspath(root)
         self.roles = set(roles)
         self.platforms = {p.lower() for p in platforms} if platforms is not None else None  # None = 문서에서 판단
+        self.engine = detect_engine(self.root)  # unity · godot · unreal · None
         self.local_path = os.path.join(self.root, ".agent", "tools", "artgen", "artgen.config.local.json")
         self.local = _read_json(self.local_path, {}) or {}
         self.cfg = load_config(os.path.join(self.root, ".agent", "tools", "artgen")) \
@@ -199,6 +204,93 @@ def _project_unity_version(ctx):
     v = re.search(r"m_EditorVersion:\s*(\S+)", text)
     rev = re.search(r"m_EditorVersionWithRevision:\s*\S+\s*\((\w+)\)", text)
     return (v.group(1) if v else None), (rev.group(1) if rev else None)
+
+
+def engine_only(engine, check):
+    """그 엔진 프로젝트에서만 점검한다. 아니면 무엇 때문에 건너뛰는지 밝힌다 (조용한 skip 금지)."""
+    def wrapped(ctx):
+        if ctx.engine != engine:
+            why = f"{ctx.engine} 프로젝트" if ctx.engine else "엔진 미설정 (project.yaml engine.name · 엔진 표지 파일 없음)"
+            return "skip", f"{engine.capitalize()} 전용 — {why}"
+        return check(ctx)
+    return wrapped
+
+
+def _engine_path(ctx):
+    """project.yaml engine.path — Godot 은 실행 파일, Unreal 은 엔진 루트 (/setup-engine 이 쓴다). 없으면 None."""
+    try:
+        with open(os.path.join(ctx.root, "project.yaml"), encoding="utf-8") as f:
+            in_engine = False
+            for line in f:
+                if line.startswith("engine:"):
+                    in_engine = True
+                    continue
+                if in_engine and line.strip() and not line[:1].isspace() and not line.startswith("#"):
+                    break
+                s = line.strip()
+                if in_engine and s.startswith("path:"):
+                    v = s[5:].split(" #")[0].strip().strip("\"'")
+                    return v or None
+    except OSError:
+        pass
+    return None
+
+
+def _project_godot_version(ctx):
+    try:
+        with open(os.path.join(ctx.root, "project.godot"), encoding="utf-8") as f:
+            m = re.search(r'config/features=PackedStringArray\("(\d+\.\d+)', f.read())
+    except OSError:
+        return None
+    return m.group(1) if m else None
+
+
+def c_godot_editor(ctx):
+    want = _project_godot_version(ctx)
+    configured = _engine_path(ctx)
+    exe = configured if configured and os.path.isfile(configured) else         next((shutil.which(n) for n in ("godot", "godot4", "Godot") if shutil.which(n)), None)
+    if not exe:
+        return "missing", f"Godot 실행 파일을 PATH 에서 찾지 못함 (프로젝트 {want or '버전 미상'})"
+    code, out = _run([exe, "--version"])
+    have = re.search(r"(\d+\.\d+)", out or "")
+    if code != 0 or not have:
+        return "warn", f"{exe} --version 실패: {(out or '').strip()[:120]}"
+    if want and have.group(1) != want:
+        return "missing", f"프로젝트는 Godot {want}, PATH 의 godot 은 {have.group(1)} ({exe})"
+    return "ok", f"Godot {out.strip().split()[0]} ({exe})"
+
+
+def c_gdunit4(ctx):
+    p = os.path.join(ctx.root, "addons", "gdUnit4", "bin", "GdUnitCmdTool.gd")
+    return ("ok", "addons/gdUnit4") if os.path.isfile(p) else         ("missing", "gdUnit4 없음 — Godot 테스트 실행(.claude/scripts/test-run.sh godot)이 돌지 않는다")
+
+
+def _project_unreal_version(ctx):
+    for n in sorted(os.listdir(ctx.root)):
+        if n.endswith(".uproject"):
+            data = _read_json(os.path.join(ctx.root, n), {}) or {}
+            return data.get("EngineAssociation")
+    return None
+
+
+def c_unreal_editor(ctx):
+    ver = _project_unreal_version(ctx)
+    if not ver:
+        ver = "?"
+    root = _engine_path(ctx)
+    if root:
+        exe = os.path.join(root, "Engine", "Binaries", "Win64", "UnrealEditor.exe")
+        if os.path.isfile(exe):
+            return "ok", f"Unreal Engine (project.yaml engine.path: {exe})"
+        return "missing", f"project.yaml engine.path 에 UnrealEditor.exe 없음: {exe}"
+    if ver == "?":
+        return "warn", ".uproject 에 EngineAssociation 없음 — 소스 빌드면 project.yaml engine.path 로 지정"
+    for d in UNREAL_INSTALL_DIRS:
+        exe = os.path.join(d, f"UE_{ver}", "Engine", "Binaries", "Win64", "UnrealEditor.exe")
+        if os.path.isfile(exe):
+            return "ok", f"Unreal Engine {ver} ({exe})"
+    return "missing", (f"Unreal Engine {ver} 를 기본 위치({', '.join(UNREAL_INSTALL_DIRS)})에서 찾지 못함 — "
+                       "소스 빌드 · 다른 위치면 project.yaml engine.path")
 
 
 def unity_editor_dirs():
@@ -632,7 +724,7 @@ ITEMS = [
     Item("python", "기본", set(), "Python 3.8+", c_python, None, "https://www.python.org/downloads/"),
     Item("claude", "기본", set(), "Claude Code CLI", c_which("claude", "claude"), None,
          "PowerShell: irm https://claude.ai/install.ps1 | iex"),
-    Item("uv", "기본", {"dev"}, "uv / uvx (Unity MCP 서버 실행)", c_which("uvx", "uvx"), _winget("astral-sh.uv"),
+    Item("uv", "기본", {"dev"}, "uv / uvx (Unity MCP 서버 · 도구 실행)", c_which("uvx", "uvx"), _winget("astral-sh.uv"),
          "PowerShell: irm https://astral.sh/uv/install.ps1 | iex"),
     Item("vscode", "기본", set(), "(선택) VS Code — studio launch 의 vscode 창", c_which("code", "code"),
          _winget("Microsoft.VisualStudioCode"), "https://code.visualstudio.com/"),
@@ -640,15 +732,23 @@ ITEMS = [
     Item("graphify", "기본", {"dev"}, "(선택) graphify — 코드 지식 그래프 (C# 의존 · 영향 범위 질의)", c_graphify,
          i_graphify, "uv tool install graphifyy · 실행은 GRAPHIFY_BACKEND=none (코드만, 외부 모델 없음)",
          license="Apache-2.0 / MIT"),
-    Item("unity-editor", "Unity", {"dev"}, "프로젝트 버전과 같은 Unity 에디터", c_unity_editor, None, m_unity_editor),
-    Item("unity-mcp-pkg", "Unity", {"dev"}, "MCPForUnity 패키지 (Packages/manifest.json)", c_unity_mcp_pkg,
-         i_unity_mcp_pkg, "scripts/install.ps1 를 다시 실행"),
+    Item("unity-editor", "Unity", {"dev"}, "프로젝트 버전과 같은 Unity 에디터", engine_only("unity", c_unity_editor),
+         None, m_unity_editor),
+    Item("unity-mcp-pkg", "Unity", {"dev"}, "MCPForUnity 패키지 (Packages/manifest.json)",
+         engine_only("unity", c_unity_mcp_pkg), i_unity_mcp_pkg, "scripts/install.ps1 를 다시 실행"),
     Item("unity-analyzers", "Unity", {"dev"}, "Unity 공식 C# 분석기 (Microsoft.Unity.Analyzers · Default.ruleset)",
-         c_unity_analyzers, i_unity_analyzers, "prereq.py install unity-analyzers", UNITY_ANALYZERS["size"], "MIT"),
-    Item("mcp-json", "Unity", {"dev"}, ".mcp.json unity-mcp 서버", c_mcp_json, None,
+         engine_only("unity", c_unity_analyzers), i_unity_analyzers, "prereq.py install unity-analyzers",
+         UNITY_ANALYZERS["size"], "MIT"),
+    Item("mcp-json", "Unity", {"dev"}, ".mcp.json unity-mcp 서버", engine_only("unity", c_mcp_json), None,
          "템플릿의 scripts/install.ps1 -Target <프로젝트> (또는 claude mcp add)"),
-    Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈", android_only(c_android_module), None,
-         m_android_module),
+    Item("godot-editor", "Godot", {"dev"}, "프로젝트 버전과 같은 Godot 실행 파일 (PATH)", engine_only("godot", c_godot_editor),
+         None, "https://godotengine.org/download — 실행 파일을 PATH 에 두거나 project.yaml engine.path"),
+    Item("gdunit4", "Godot", {"dev"}, "gdUnit4 테스트 프레임워크 (addons/gdUnit4)", engine_only("godot", c_gdunit4), None,
+         "에디터 AssetLib 에서 gdUnit4 설치 후 플러그인 활성화 (/test-setup)"),
+    Item("unreal-editor", "Unreal", {"dev"}, "프로젝트 EngineAssociation 과 같은 Unreal 에디터",
+         engine_only("unreal", c_unreal_editor), None, "Epic Games Launcher > Unreal Engine > 라이브러리에서 설치"),
+    Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈",
+         android_only(engine_only("unity", c_android_module)), None, m_android_module),
     Item("adb", "Android", {"dev"}, "adb (Android 플랫폼 도구)", android_only(c_adb), None,
          "Unity Android 모듈의 SDK/platform-tools 에 함께 설치됨 — 모듈을 먼저 설치"),
     Item("android-catalog", "Android", {"dev"}, "android 스킬 카탈로그 (/ext — 기기 프로파일링 · Play 정책 · ANR · R8)",
@@ -808,7 +908,7 @@ def main(argv=None):
         except (AttributeError, ValueError):
             pass
     ap = argparse.ArgumentParser(prog="prereq", description="자동화 사전 설치 점검 · 설치")
-    ap.add_argument("--root", default=os.getcwd(), help="Unity 프로젝트 루트 (기본: 현재 디렉터리)")
+    ap.add_argument("--root", default=os.getcwd(), help="게임 프로젝트 루트 — Unity · Godot · Unreal (기본: 현재 디렉터리)")
     ap.add_argument("--roles", default=",".join(ROLES), help="이 PC 에서 맡을 역할 (기본 planning,art,dev)")
     ap.add_argument("--comfyui-home", help="ComfyUI 포터블 폴더")
     ap.add_argument("--library-dir", help="효과음 라이브러리 폴더 (여러 프로젝트가 공유하려면 절대경로)")

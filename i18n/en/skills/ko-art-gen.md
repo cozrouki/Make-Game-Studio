@@ -2,6 +2,8 @@
 
 > Reference translation. **Canonical:** `.claude/skills/ko-art-gen/SKILL.md`. Tool docs (Korean): `.agent/tools/artgen/README.md`.
 
+> **Engine note (2026-10-30):** the canonical Korean skill is now engine-neutral (Unity · Godot · Unreal — see `.claude/docs/engine-layers.md`). This translation still describes the Unity path only; the Godot / Unreal branches are in the canonical file.
+
 Turns the specs written by `/asset-spec` into real images, reviews them against the art bible, and brings the approved ones into Unity.
 Deterministic work (generate · store · promote) is done by the `.agent/tools/artgen/artgen.py` CLI. Judgment (writing the request, visual review, deciding how to regenerate) is done by this skill.
 

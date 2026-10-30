@@ -4,14 +4,14 @@ description: 한국어 성능 프로파일링 — 병목 진단 + SkillForge 06-
 
 # /ko-perf-profile — 한국어 성능 프로파일링
 
-> Antigravity 워크플로. Unity 성능 병목을 진단하고 해결 패턴을 매칭한다.
+> Antigravity 워크플로. 게임(Unity · Godot · Unreal) 성능 병목을 진단하고 해결 패턴을 매칭한다. 엔진별 프로파일러는 `.claude/docs/engine-layers.md`, 카탈로그 매칭(SkillForge)은 Unity 만.
 > 인수: `<scene | system | full> [게임-태그]`  예) `/ko-perf-profile system GAME1`
 
 ## 절차
 
 **1. 범위 + 컨텍스트** — `$1`=범위, `$2`=게임 태그(옵션, 있으면 `Assets/<Game>/` 한정).
 
-**2. 프로파일러 데이터 수집** — MCP for Unity 사용 가능하면 profiler 도구로 수집, 아니면 사용자에게 Unity Profiler 캡처 결과 paste 요청:
+**2. 프로파일러 데이터 수집** — Unity 는 MCP for Unity profiler 도구, 아니면 엔진 프로파일러(Unity Profiler · Godot Profiler/Monitors · Unreal `stat` · Insights) 캡처 결과 paste 요청. 수치가 없으면 "정적 점검만" 이라고 보고한다:
 - CPU 프레임 시간(Main/Render/Physics/Scripts), GC 할당량·빈도, Draw call/Batch, 메모리(Managed/Native/Texture/Mesh)
 
 **3. 병목 분석** — `.claude/skills/perf-profile/SKILL.md` 절차 + 메트릭별 의심 패턴:

@@ -1,5 +1,7 @@
 # Editor 자동화 / 코드 패턴 / 문서 — 결정 매트릭스
 
+> **Unity 기준.** L2(SkillForge) · L3(MCP)는 Unity 전용이다. Godot · Unreal 은 `.claude/docs/engine-layers.md` 의 엔진 칸을 쓴다.
+
 작업을 하려고 할 때 **어느 백엔드를 써야 할지** 빠르게 결정하는 가이드.
 
 ## 4계층 요약
@@ -92,7 +94,7 @@
 ## 관련 문서
 
 - MCP 도구 상세: `.claude/docs/mcp-unity-guide.md`
-- 코딩 표준: `.claude/rules/gameplay-code.md`, `.claude/docs/gs-coding-standards.md`
+- 코딩 표준: `.claude/rules/gameplay-code.md`, `.claude/docs/coding-standards.md`
 - 문서 작성 기준: `.claude/rules/doc-writing.md`
 - 번들 / 워크플로: `.claude/data/bundles.json`, `workflows.json`
 - SkillForge 동기화: `.agent/skills/README-sync.md`

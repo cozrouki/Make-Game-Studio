@@ -141,7 +141,7 @@ def _optional_audio_python(store):
 
 def build_parser():
     ap = argparse.ArgumentParser(prog="artgen", description="백엔드 중립 게임 그래픽 생성 파이프라인")
-    ap.add_argument("--root", default=os.getcwd(), help="Unity 프로젝트 루트 (기본: 현재 디렉터리)")
+    ap.add_argument("--root", default=os.getcwd(), help="게임 프로젝트 루트 — Unity · Godot · Unreal (기본: 현재 디렉터리)")
     ap.add_argument("--json", action="store_true", help="JSON 출력")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -169,9 +169,9 @@ def build_parser():
     p.add_argument("asset_id")
     p.add_argument("--reason", required=True)
 
-    p = sub.add_parser("promote", help="선택 변형을 Unity Assets/ 로 복사 + 임포트 맵 갱신")
+    p = sub.add_parser("promote", help="선택 변형을 프로젝트로 복사 (Unity: Assets/ + 임포트 맵 · Godot/Unreal: 파일만, 임포트는 엔진에서)")
     p.add_argument("request")
-    p.add_argument("--dest", help="unity.dest 대신 사용할 Assets/ 경로")
+    p.add_argument("--dest", help="unity.dest 대신 사용할 프로젝트 상대경로 (Unity 는 Assets/...)")
     p.add_argument("--force", action="store_true", help="기존 파일 교체 (저장소에 백업)")
 
     p = sub.add_parser("status", help="저장소 상태")

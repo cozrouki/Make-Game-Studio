@@ -1,5 +1,7 @@
 # MCPForUnity 사용 가이드 (한국어)
 
+> **Unity 전용.** Godot · Unreal 의 에디터 자동화 · 테스트 · 로그 경로는 `.claude/docs/engine-layers.md`.
+
 **MCPForUnity** (CoplayDev/unity-mcp) 의 35+ 도구를 카테고리별로 정리하고 사용 시나리오를 안내합니다. (별도 설치 필요 — README 4단계 참조)
 
 ## 개요

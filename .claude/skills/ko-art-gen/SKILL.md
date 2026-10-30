@@ -1,6 +1,6 @@
 ---
 name: ko-art-gen
-description: 그래픽 · 사운드 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 · 오디오 생성 → 아트 바이블 · 오디오 방향 검수·재생성 → Unity 승격·임포트 설정. 백엔드 중립(artgen 어댑터)
+description: 그래픽 · 사운드 생성 파이프라인 (한국어) — 에셋 스펙 → 생성 요청 → 이미지 · 오디오 생성 → 아트 바이블 · 오디오 방향 검수·재생성 → 엔진 승격 (Unity 는 임포트 설정까지 · Godot/Unreal 은 파일까지). 백엔드 중립(artgen 어댑터)
 argument-hint: "<ASSET-NNN | spec:<target> | next> [--provider <이름>] [--variants N] [--rounds N] [--auto]"
 user-invocable: true
 allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion
@@ -8,7 +8,7 @@ allowed-tools: Read, Glob, Grep, Write, Edit, Bash, AskUserQuestion
 
 # /ko-art-gen — 기획 의도대로 그래픽 만들기
 
-`/asset-spec` 이 만든 스펙을 실제 이미지로 만들고, 아트 바이블 기준으로 검수한 뒤 Unity 에셋으로 넣는다.
+`/asset-spec` 이 만든 스펙을 실제 이미지로 만들고, 아트 바이블 기준으로 검수한 뒤 게임 엔진 에셋으로 넣는다 (Unity 는 임포트 설정까지, Godot · Unreal 은 파일 승격까지 — `.agent/tools/artgen/README.md` "Godot · Unreal 승격").
 결정적 작업(생성·저장·승격)은 `.agent/tools/artgen/artgen.py` CLI 가, 판단(요청 작성·시각 검수·재생성 방향)은 이 스킬이 맡는다.
 설계·스키마·백엔드 연결: `.agent/tools/artgen/README.md` — **처음 실행할 때는 반드시 읽는다.**
 
@@ -48,7 +48,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 함께 읽을 것:
 - 아트 바이블에서 Visual Identity Statement, Shape Language, Color System(의미 색 hex), 금지 사항, §8 Asset Standards 를 추출한다.
 - `.claude/docs/technical-preferences.md` 에서 네이밍 규칙과 텍스처 예산을 추출한다. 없으면 아트 바이블 §8 만 쓰고 그 사실을 알린다.
-- `AGENTS.md` §6 게임 폴더 매핑으로 `unity.dest` 의 게임 폴더를 정한다.
+- `AGENTS.md` §6 게임 폴더 매핑으로 `unity.dest` 의 게임 폴더를 정한다 (키 이름은 호환 때문에 `unity` 그대로 — 모든 엔진이 쓴다).
 - 기존 요청 `design/assets/requests/ASSET-NNN.json` 이 있으면 재사용한다. 이 경우 Phase 2 를 건너뛰고 history 를 이어 간다.
 
 ## Phase 2: 생성 요청 작성 (기획 → 그래픽 계약)
@@ -62,8 +62,8 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 | `prompt.palette` | 이 에셋의 의미 색만 넣는다 (2~5개, hex) |
 | `prompt.negative` | 공통(text, watermark, signature, blurry, jpeg artifacts)에 아트 바이블 금지 사항을 더한다 |
 | `output` | 스펙의 Dimensions. 스프라이트·아이콘·VFX·UI 는 `transparent: true` 가 기본, 환경·텍스처는 false |
-| `unity.dest` | 스펙의 Naming 을 따르며 `Assets/<게임폴더>/Art/<Category>/...png` 형태 |
-| `unity.import` | 카테고리 기본값(아래 표)에 아트 바이블 §8 · 성능 예산을 반영한다 |
+| `unity.dest` | 스펙의 Naming 을 따르며 Unity `Assets/<게임폴더>/Art/<Category>/...png` · Godot `assets/<게임폴더>/art/<category>/...png` · Unreal `Content/Import/<게임폴더>/<Category>/...png` 형태 |
+| `unity.import` | (Unity 만 적용) 카테고리 기본값(아래 표)에 아트 바이블 §8 · 성능 예산을 반영한다. Godot · Unreal 에서도 적어 두면 사람이 엔진 임포트 설정을 맞출 때 기준이 된다 |
 | `source` | spec · artBible · gdd 경로 (추적성) |
 
 카테고리별 `unity.import` 기본값 (아트 바이블과 충돌하면 **아트 바이블이 우선**한다):
@@ -88,7 +88,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 | `output.durationSec` | 스펙의 길이. 효과음 0.2~3초, 환경음 루프 20~60초, 음악 루프 30~120초가 보통 |
 | `output.loop` | 루프 재생할 소리만 true (카테고리 기본값이 맞으면 생략) |
 | `providerOptions.library.files` | **효과음**: 생성하지 않고 CC0 라이브러리에서 고른다. `artgen library search "<핵심 단어>" --max-duration <초>` 결과에서 이름 · 길이가 맞는 파일 2~4개를 적는다. `--auto` 가 아니면 후보 목록을 보여 주고 고르게 한다 |
-| `unity.dest` | `Assets/<게임폴더>/Audio/<Sfx|Music|Ambience>/...wav` |
+| `unity.dest` | Unity `Assets/<게임폴더>/Audio/<Sfx|Music|Ambience>/...wav` · Godot `assets/<게임폴더>/audio/...wav` · Unreal `Content/Import/<게임폴더>/Audio/...wav` |
 | `unity.import` | 카테고리 기본값(README §오디오)이 대개 맞다. 바꿀 때만 적는다 |
 
 작성 후 `artgen validate <요청들>` 을 실행하고, 실패한 요청은 고친 뒤 다시 검증한다.
@@ -146,17 +146,20 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 `--auto` 모드에서는 통과한 최고점 변형을 자동으로 select 한다. 통과 변형이 없는 에셋은 승격하지 않고 보고만 한다. **승격 직전에 전체 목록을 한 번 확인받는다.**
 단, **스튜디오 모드**(이 세션이 `production/studio/roster.json` 의 art 역할로 등록됨)에서는 이 일괄 확인도 생략한다. 디렉터의 G2 게이트 승인이 양산 승인을 대신한다. 결과는 티켓 note 와 review.md 에 남긴다.
 
-## Phase 6: Unity 승격
+## Phase 6: 엔진 승격
 
-1. **임포터 설치 (최초 1회)** — `Assets/ArtGen/Editor/ArtGenImportPostprocessor.cs` 가 없으면, 사용자에게 확인받은 뒤 `.agent/tools/artgen/unity/` 의 `.cs` 와 `.asmdef` 를 그 위치로 복사한다. 임포터가 없으면 승격된 텍스처가 Unity 기본 설정으로 임포트된다고 알린다.
+엔진은 `artgen promote` 가 판정한다 (`project.yaml` `engine.name` → 표지 파일). 1 · 3 은 Unity 만 한다 — Godot · Unreal 에서는 건너뛰었다고 보고하고 3-1 을 한다.
+
+1. **(Unity) 임포터 설치 (최초 1회)** — `Assets/ArtGen/Editor/ArtGenImportPostprocessor.cs` 가 없으면, 사용자에게 확인받은 뒤 `.agent/tools/artgen/unity/` 의 `.cs` 와 `.asmdef` 를 그 위치로 복사한다. 임포터가 없으면 승격된 텍스처가 Unity 기본 설정으로 임포트된다고 알린다.
 2. `artgen promote <요청>` 을 실행한다. "이미 존재" 오류가 나면 교체 여부를 묻고, 승인받으면 `--force` 로 다시 실행한다 (기존 파일은 자동 백업됨).
-3. **Unity 갱신** — MCP for Unity 가 연결되어 있으면 에셋 데이터베이스를 refresh 한 뒤 임포트 결과(이미지는 textureType·maxSize, 오디오는 loadType·compressionFormat)를 확인한다. 연결되어 있지 않으면 "Unity 에디터로 돌아가면 자동 임포트됩니다" 라고 안내한다.
+3. **(Unity) 에디터 갱신** — MCP for Unity 가 연결되어 있으면 에셋 데이터베이스를 refresh 한 뒤 임포트 결과(이미지는 textureType·maxSize, 오디오는 loadType·compressionFormat)를 확인한다. 연결되어 있지 않으면 "Unity 에디터로 돌아가면 자동 임포트됩니다" 라고 안내한다.
+3-1. **(Godot · Unreal) 수동 임포트 안내** — 승격 결과의 `importManual: true` 를 확인하고, 엔진에서 할 일을 에셋별로 적어 준다: Godot 은 Import 독의 필터 · 밉맵 · 압축(`unity.import` 값을 기준으로), Unreal 은 Import 로 `.uasset` 생성 후 Compression · LOD Group · sRGB. 이 단계를 사람이 끝내기 전에는 매니페스트 Status 를 `Done` 으로 올리지 않고 `In Progress (임포트 대기)` 로 둔다.
 4. 매니페스트 Status 를 `Done` 으로 바꾼다. `Approved` 는 인게임에서 확인한 뒤 사용자가 결정한다. 스펙 파일의 해당 `**Status:**` 줄도 같이 갱신한다.
    - mock 결과를 승격했다면 Status 를 Done 으로 올리지 않고 `In Progress` 에 그대로 둔다. 매니페스트 행 끝에 `(placeholder)` 를 붙여 실제 백엔드로 다시 생성해야 함을 표시한다.
 
 ## Phase 7: 마무리
 
-- 처리 요약을 표로 보여 준다: 에셋 · 라운드 · 최종 점수 · 결과(승격/반려/보류) · Unity 경로.
+- 처리 요약을 표로 보여 준다: 에셋 · 라운드 · 최종 점수 · 결과(승격/반려/보류) · 엔진 경로 · 임포트(자동 / 수동 대기).
 - `doc/work_log.md` 에 한 줄 기록: `[<게임태그>] /ko-art-gen: ASSET-012, ASSET-013 승격 (provider=<이름>)`.
 - 다음 단계 제안:
   - 남은 Needed 에셋 → `/ko-art-gen next`

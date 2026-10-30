@@ -149,8 +149,10 @@ def validate_request(req):
         else:
             dest = u.get("dest")
             if dest is not None:
-                if not isinstance(dest, str) or not dest.startswith("Assets/") or ".." in dest.split("/"):
-                    e.append("unity.dest 는 'Assets/' 로 시작하는 상대경로 ('..' 금지)")
+                # 엔진별 위치 규칙(Unity 는 Assets/ 아래)은 승격 때 프로젝트 엔진을 보고 확인한다 (store.promote)
+                if (not isinstance(dest, str) or not dest or dest.startswith(("/", "\\")) or ":" in dest
+                        or ".." in dest.replace("\\", "/").split("/")):
+                    e.append("unity.dest 는 프로젝트 루트 기준 상대경로 ('..' · 절대경로 금지)")
                 elif kind_of(req) == "audio" and not dest.lower().endswith(".wav"):
                     e.append("unity.dest 는 .wav 로 끝나야 함 (오디오)")
                 elif kind_of(req) == "image" and not dest.lower().endswith(".png"):
