@@ -9,6 +9,9 @@
               Compose · Wear · TV 등 네이티브 앱 전용은 제외)
   gamedesign  Stanestane/game-design-skills-bundle PolyForm Noncommercial 1.0.0 — 템플릿에 포함하지 않음 (git 무시).
               사용자가 라이선스를 확인하고 직접 받는다. 상업적 사용(게임 회사 안에서의 사용 포함)은 작성자의 상업 라이선스가 필요하다.
+  gdpractice  eremes81/game-design-ai-practice     CC BY-NC-SA 4.0 — 책 원고(『게임 기획 실무에서 바로 쓰는 AI·클로드 코드 활용법』).
+              템플릿에 포함하지 않음 (git 무시). 스킬이 아니라 장(章) 색인을 만든다 — /ext 가 필요한 장 하나만 읽는다.
+              회사 상품 · 서비스 포함 · 상업 목적 사용은 저자의 별도 허락이 필요하다.
 
 한국어 요약 · 그룹 · 게임 적합도는 .agent/catalogs/<카탈로그>.ko.json (로컬 작성, 업스트림 원문 아님) 에서 병합한다.
 
@@ -16,7 +19,8 @@
   python scripts/sync-catalog.py marketing --src <로컬 clone>          # 미러 + 카탈로그 (업스트림 갱신)
   python scripts/sync-catalog.py marketing --fetch                     # 임시 clone 후 미러
   python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial|commercial
-  python scripts/sync-catalog.py gamedesign --fetch --accept-license … --root <Unity 프로젝트>   # 설치된 프로젝트에 직접
+  python scripts/sync-catalog.py gamedesign --fetch --accept-license … --root <게임 프로젝트>   # 설치된 프로젝트에 직접
+  python scripts/sync-catalog.py gdpractice --fetch --accept-license noncommercial|commercial
   python scripts/sync-catalog.py <카탈로그> --index-only               # 미러는 그대로, catalog.json 만 다시 생성
   python scripts/sync-catalog.py <카탈로그> --status
 업스트림 파일은 실행하지 않는다 (복사 · 읽기만).
@@ -78,6 +82,16 @@ CATALOGS = {
                     "LICENSE", "COMMERCIAL-LICENSE.md", "CREDITS.md", "README.md", "game-design-skill-catalog.md"],
         "exclude": ["package-skills/*"],
     },
+    "gdpractice": {
+        "repo": "https://github.com/eremes81/game-design-ai-practice.git",
+        "dst": ".agent/gdpractice",
+        "skillsDir": "manuscript",
+        "license": "CC-BY-NC-SA-4.0",
+        "vendored": False,
+        "kind": "book",                  # SKILL.md 묶음이 아니라 장(章) 원고 — build_index 가 장 색인을 만든다
+        "include": ["manuscript/**", "LICENSE", "README.md", "TOC.md"],
+        "exclude": [],
+    },
 }
 
 LICENSE_TEXT = {
@@ -89,6 +103,13 @@ game-design-skills-bundle 은 PolyForm Noncommercial License 1.0.0 이다 (작�
   - 상업 라이선스: https://www.stane-island.net/ (구매해도 재배포 권리는 없다)
   - 원문: https://github.com/Stanestane/game-design-skills-bundle/blob/main/LICENSE · COMMERCIAL-LICENSE.md
 이 템플릿은 번들을 재배포하지 않는다. 받은 파일은 .agent/gamedesign/ 에만 두고 git 에 커밋하지 않는다.""",
+    "gdpractice": """\
+game-design-ai-practice 는 CC BY-NC-SA 4.0 이다 (저자: 이민수 Minsoo Lee, 정본 https://eremes81.github.io/game-design-ai-practice).
+  - 허용(비영리): 복제 · 배포 · 번역 · 각색 — 저자 · 출처 표시, 변경 사실 표시, 2차 저작물은 같은 라이선스
+  - 저자의 별도 허락 필요: 상업적 출판 · 판매, 유료 강의 교재, 회사 상품 · 서비스에의 포함, 저자 표시 없는 재배포
+  - 원문: LICENSE (받은 폴더 안) · https://creativecommons.org/licenses/by-nc-sa/4.0/deed.ko
+이 템플릿은 원고를 재배포하지 않는다. 받은 파일은 .agent/gdpractice/ 에만 두고 git 에 커밋하지 않는다.
+템플릿의 기획 방법론 스킬(ko-design-*)은 원문을 옮기지 않고 따로 쓴 것이라 이 카탈로그 없이도 돈다.""",
 }
 
 
@@ -138,8 +159,9 @@ def mirror(name, src, dry_run=False, license_mode=""):
     cat = CATALOGS[name]
     dst = os.path.join(ROOT, *cat["dst"].split("/"))
     files = selected_files(src, cat)
-    if not any(f.endswith("SKILL.md") for f in files):
-        raise SystemExit(f"오류: {src} 에 SKILL.md 가 없음 — 업스트림 구조가 바뀌었는지 확인")
+    marker = (lambda f: f.startswith(cat["skillsDir"] + "/") and f.endswith(".md")) if cat.get("kind") == "book"         else (lambda f: f.endswith("SKILL.md"))
+    if not any(marker(f) for f in files):
+        raise SystemExit(f"오류: {src} 에 {'원고(.md)' if cat.get('kind') == 'book' else 'SKILL.md'} 가 없음 — 업스트림 구조가 바뀌었는지 확인")
     print(f"{name}: 업스트림 {git_rev(src)} · 파일 {len(files)}개 → {cat['dst']}" + (" [dry-run]" if dry_run else ""))
     if dry_run:
         return
@@ -179,8 +201,46 @@ def _frontmatter(text):
     return meta
 
 
+def _h1(path):
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("# "):
+                return line[2:].strip()
+    return ""
+
+
+def build_book_index(name):
+    """책 원고 카탈로그 — 부(部) 폴더 · 장 파일마다 제목(첫 # 줄)과 경로. 한국어 오버레이는 부 단위 용도 · 기획 단계만."""
+    cat = CATALOGS[name]
+    dst = os.path.join(ROOT, *cat["dst"].split("/"))
+    base = os.path.join(dst, *cat["skillsDir"].split("/"))
+    if not os.path.isdir(base):
+        raise SystemExit(f"오류: 미러 없음 — {cat['dst']} (먼저 --src 또는 --fetch)")
+    overlay = read_json(os.path.join(OVERLAY_DIR, f"{name}.ko.json"), {})
+    parts_ko = overlay.get("parts", {})
+    parts, count = {}, 0
+    for part in sorted(os.listdir(base)):
+        pdir = os.path.join(base, part)
+        if not os.path.isdir(pdir):
+            continue
+        chapters = [{"file": n, "title": _h1(os.path.join(pdir, n)),
+                     "path": rel(os.path.relpath(os.path.join(pdir, n), ROOT))}
+                    for n in sorted(os.listdir(pdir)) if n.endswith(".md")]
+        ko = parts_ko.get(part, {})
+        parts[part] = {"ko": ko.get("ko", ""), "stage": ko.get("stage", ""), "chapters": chapters}
+        count += len(chapters)
+    missing = sorted(p for p in parts if p not in parts_ko)
+    upstream = read_json(os.path.join(dst, "UPSTREAM.json"), {})
+    write_json(os.path.join(dst, "catalog.json"), {"catalog": name, "kind": "book", "upstream": upstream,
+                                                   "builtAt": now(), "count": count, "parts": parts})
+    print(f"{name}: catalog.json — 부 {len(parts)}개 · 장 {count}개"
+          + (f" · 한국어 오버레이 없는 부 {len(missing)}개: {', '.join(missing)}" if missing else ""))
+
+
 def build_index(name):
     cat = CATALOGS[name]
+    if cat.get("kind") == "book":
+        return build_book_index(name)
     dst = os.path.join(ROOT, *cat["dst"].split("/"))
     base = os.path.join(dst, *cat["skillsDir"].split("/")) if cat["skillsDir"] else dst
     if not os.path.isdir(base):
@@ -225,7 +285,8 @@ def status(name):
         print(f"{name}: 설치 안 됨 ({cat['dst']})")
         return 1
     idx = read_json(os.path.join(dst, "catalog.json"), {})
-    print(f"{name}: {up['repo']} @ {up['commit']} · {up['license']} · 동기화 {up['syncedAt']} · 스킬 {idx.get('count', '?')}개"
+    unit = "장" if cat.get("kind") == "book" else "스킬"
+    print(f"{name}: {up['repo']} @ {up['commit']} · {up['license']} · 동기화 {up['syncedAt']} · {unit} {idx.get('count', '?')}개"
           + (f" · 라이선스 동의 {up['licenseAccepted']['mode']} ({up['licenseAccepted']['at']})" if up.get("licenseAccepted") else ""))
     return 0
 
@@ -244,7 +305,7 @@ def main(argv=None):
     src.add_argument("--index-only", action="store_true", help="catalog.json 만 다시 생성")
     src.add_argument("--status", action="store_true")
     ap.add_argument("--accept-license", choices=("noncommercial", "commercial"),
-                    help="비상업 라이선스 카탈로그(gamedesign)에 필요 — noncommercial: 비상업 용도 확인 / commercial: 상업 라이선스 보유")
+                    help="비상업 라이선스 카탈로그(gamedesign · gdpractice)에 필요 — noncommercial: 비상업 용도 확인 / commercial: 상업 라이선스 · 저자 허락 보유")
     ap.add_argument("--root", help="대상 프로젝트 루트 (기본: 이 템플릿 저장소). 설치된 Unity 프로젝트에 직접 받을 때")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args(argv)

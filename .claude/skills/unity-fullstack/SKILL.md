@@ -38,6 +38,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 
 ## 자주 쓰는 작업
 
+- **기획 검증 · 변경 관리 (모든 엔진)**: 문서 그래프 `/ko-design-graph` · 결정 카드 `/ko-design-decision` · 밸런스 시뮬 `/ko-balance-sim` · 데이터 스키마 `/ko-data-schema` · 대사 일관성 `/ko-narrative-lint` · 레벨 · 콘텐츠 패턴 `/ko-content-pattern` (도구 `.agent/tools/design/`, 원고 참고는 `/ext gdpractice`)
 - **새 기능 구현 사이클**: `/ko-story-cycle <스토리-id>` (L1 process) + `/sf-info <관련-skill>` (L2 code 참조)
 - **구현 전 의도 맞추기**: `/ko-grill <계획>` — 결정 트리를 라운드 질문으로 정리 (추천 답 포함)
 - **테스트 먼저 구현**: `/ko-tdd <기능>` — 합의한 접점에서 red → green 수직 조각

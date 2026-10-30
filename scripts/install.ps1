@@ -394,7 +394,7 @@ $gi = Join-Path $Target ".gitignore"
 $need = @(".claude.backup-*/", ".claude/settings.local.json", ".claude/scheduled_tasks.lock", ".mcp.json",
           "production/session-logs/", "production/session-state/active.md", "production/stage.txt",
           "production/artgen/*/v*/", "production/artgen/*/replaced/", "production/artgen/_inbox/", ".agent/tools/artgen/artgen.config.local.json", "art-source/sound-library/",
-          "production/studio/events.jsonl", "production/studio/PAUSED", "production/studio/logs/", "production/studio/locks/", ".agent/tools/studio/studio.config.local.json", ".agent/gamedesign/", "__pycache__/",
+          "production/studio/events.jsonl", "production/studio/PAUSED", "production/studio/logs/", "production/studio/locks/", ".agent/tools/studio/studio.config.local.json", ".agent/gamedesign/", ".agent/gdpractice/", "__pycache__/",
           "project.local.yaml", "CLAUDE.local.md", ".claude/agent-memory/", ".claude/worktrees/", "docs/consistency-failures.md")
 $giText = ""
 if (Test-Path $gi) { $giText = Read-TextFile $gi }

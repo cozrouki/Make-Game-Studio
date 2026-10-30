@@ -30,14 +30,17 @@ DEFAULT_PROTOCOL_FILES = [
 ]
 # upgrade 가 템플릿에서 가져오는 범위 (도구 · 스튜디오 스킬 · 관련 워크플로 · 외부 카탈로그 진입)
 # 외부 카탈로그 미러(.agent/marketing · .agent/gamedev)는 크기가 커서 넣지 않는다 — 필요하면 sync-catalog.py --root.
-# 비상업 번들(.agent/gamedesign)은 절대 넣지 않는다 (사용자가 직접 받음).
+# 비상업 번들(.agent/gamedesign · .agent/gdpractice)은 절대 넣지 않는다 (사용자가 직접 받음).
 # .agent/android 는 작아서(약 0.5MB) 넣는다 — prereq 의 Android 점검과 dev 스킬 맵이 이 미러를 본다
-UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup", ".agent/tools/lint", ".agent/android",
+UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup", ".agent/tools/lint", ".agent/tools/design",
+                 ".agent/android",
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
                  ".claude/skills/studio-director",
                  ".claude/skills/ko-art-gen", ".claude/skills/ko-prereq", ".claude/skills/ko-code-review",
                  ".claude/skills/ko-diagnose", ".claude/skills/ko-tdd", ".claude/skills/ko-grill",
                  ".claude/skills/ko-agent-retro", ".claude/skills/ko-setup-engine",
+                 ".claude/skills/ko-design-decision", ".claude/skills/ko-design-graph", ".claude/skills/ko-balance-sim",
+                 ".claude/skills/ko-narrative-lint", ".claude/skills/ko-data-schema", ".claude/skills/ko-content-pattern",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".agent/workflows/ko-prereq.md",
