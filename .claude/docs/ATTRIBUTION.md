@@ -112,6 +112,15 @@
   - `retro` + `writing-for-agents` → `.claude/skills/ko-agent-retro/` (`WRITING.md`)
 - **들이지 않은 것**: 이슈 트래커 전제 스킬(`to-spec` · `to-tickets` · `triage` · `wayfinder` · `implement*`)은 GS 파이프라인 · 스튜디오 티켓과 겹치고, `code-review` · `prototype` 은 기존 스킬과 이름이 겹쳐 제외. 플러그인 설치(`mattpocock-skills`)는 이름 충돌 때문에 권하지 않는다
 
+## 7-5. game-design-ai-practice / 이민수 (기획 방법론 참고 + 외부 카탈로그 `gdpractice` — **원고 미포함**)
+
+- **저장소**: https://github.com/eremes81/game-design-ai-practice — 『게임 기획 실무에서 바로 쓰는 AI·클로드 코드 활용법』 (이민수, ISBN 979-11-12-21479-9) 한국어판 원고
+- **라이선스**: **CC BY-NC-SA 4.0** — 비영리 · 저작자 표시 · 동일조건. 저자는 상업 출판 · 판매, 유료 강의 교재, 회사 상품 · 서비스 포함에 별도 허락이 필요하다고 명시
+- **사용 유형**:
+  - **방법론 참고 (원문 미포함)**: 기획 스킬 6종(`ko-design-decision` · `ko-design-graph` · `ko-balance-sim` · `ko-narrative-lint` · `ko-data-schema` · `ko-content-pattern`)과 도구 `.agent/tools/design/` 는 원고의 방법(절차 · 산출물 · 검증 기준)을 참고해 **이 템플릿 구조와 말로 새로 쓴 것**이다. 원고 문장 · 표 · 코드를 옮기지 않았다. 각 스킬 머리에 참고한 부(部)를 밝힌다. 숫자 기준(±10% 등)은 조정 가능한 기본값으로 `standard.json` · 스킬에 두었다
+  - **외부 카탈로그 `gdpractice` (선택 설치)**: 원고를 템플릿에 넣지 않는다. 사용자가 `scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>` 로 직접 받고, `.agent/gdpractice/` 는 git 무시 대상이다. `/ext gdpractice <장>` 이 장 하나만 읽고, 산출물에 원문을 옮기지 않고 출처만 남긴다
+- **로컬 추가**: `.agent/catalogs/gdpractice.ko.json` — 부(部)마다 이 템플릿에서의 쓰임과 기획 단계를 짧게 적은 것 (원고 번역 · 요약 아님)
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle
@@ -138,6 +147,7 @@
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
 | 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |
+| 2026-10-30 | 기획 스킬 6종 + `.agent/tools/design/` (game-design-ai-practice 방법론 참고, 원문 미포함) + 외부 카탈로그 `gdpractice` (CC BY-NC-SA, 선택 설치) | 도구 테스트 111개 |
 | 2026-10-30 | Game-Studios v1.2.0 동기화 + 엔진 중립 재편 (Unity · Godot · Unreal): 에이전트 49 · 스킬 74 · scripts · 엔진 레퍼런스 · `project.yaml`, `gs-*` 문서 폐지, `engine-layers.md` · `validate-lint.sh` · Godot/Unreal 측정 스크립트 · 엔진별 prereq · artgen 승격 · 스튜디오 쓰기 영역 | `scripts/sync-upstream.ps1` 갱신 |
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

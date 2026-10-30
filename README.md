@@ -63,13 +63,14 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (95 skills — Game-Studios v1.2.0 74 포함) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
+| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (101 skills — Game-Studios v1.2.0 74 포함) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** (Unity 전용) | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** (Unity 전용 — Godot · Unreal 은 명령줄 경로) | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → 엔진 승격 (Unity 는 임포트 설정까지 · Godot · Unreal 은 파일까지, 백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
+| **기획 검증** (모든 엔진) | 기획 문서 프런트매터 · 관계 그래프 검사와 영향 범위, 기획 결정 카드(이유 · 대안 · 영향 등급 · 사후 확인), 결정론 밸런스 · 경제 시뮬레이션, 데이터 스키마 우선 설계, 대사 일관성, 레벨 룸 그래프 · 콘텐츠 패턴. 계산 · 검사는 코드, 판정은 사람 | `.agent/tools/design/` | `/ko-design-graph` · `/ko-design-decision` · `/ko-balance-sim` · `/ko-data-schema` · `/ko-narrative-lint` · `/ko-content-pattern` |
 | **사전 설치** | 도구 · 모델 · 효과음 라이브러리 · 설정 점검과 자동 설치 (SHA256 검증 · 이어받기) | `.agent/tools/setup/` | `/ko-prereq` |
-| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 · Android 기기/스토어 4 (포함) + 게임 디자인 렌즈 62 (비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · `.agent/android/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
+| **외부 카탈로그** | 마케팅 52 · 게임 개발 실무 36 · Android 기기/스토어 4 (포함) + 게임 디자인 렌즈 62 · 게임 기획 AI 실무 원고 100장 (둘 다 비상업 라이선스 — 선택 설치). 세션 상시 비용 없이 필요할 때 한 스킬만 로드 | `.agent/marketing/` · `.agent/gamedev/` · `.agent/android/` · (`.agent/gamedesign/`) | `/ext` · [외부 스킬 카탈로그](#외부-스킬-카탈로그--ext) |
 | **스튜디오 모드** | 디렉터 + 기획·아트·개발 3세션이 티켓·게이트로 협업하는 자동 개발 (Claude Code 세션 간 알림). 아트는 AI 생성 또는 **사람 아티스트 + 보조 세션** (`artMode`). 역할 쓰기 영역은 엔진별 (`ownsByEngine`) | `.agent/tools/studio/` | `/studio-join <역할>` · `/studio-director` · `/studio-ticket` · `/studio-status` · [프로토콜](.agent/tools/studio/README.md) |
 
 ## 엔진 지원
@@ -130,13 +131,14 @@ git checkout -- .claude/hooks
 
 ## 외부 스킬 카탈로그 — `/ext`
 
-외부 스킬 저장소 3개를 **카탈로그**로 붙였습니다. `.claude/skills/` 에 넣으면 스킬 설명 150여 개가 매 세션 컨텍스트에 상시 올라가므로(스튜디오 모드면 세션마다), `.agent/<카탈로그>/` 에 두고 `/ext` 가 필요할 때 한 스킬만 읽어 실행합니다.
+외부 저장소 5개(스킬 묶음 4 · 책 원고 1)를 **카탈로그**로 붙였습니다. `.claude/skills/` 에 넣으면 스킬 설명 150여 개가 매 세션 컨텍스트에 상시 올라가므로(스튜디오 모드면 세션마다), `.agent/<카탈로그>/` 에 두고 `/ext` 가 필요할 때 한 스킬만 읽어 실행합니다.
 
 | 카탈로그 | 업스트림 | 라이선스 | 템플릿 포함 | 내용 |
 |---|---|---|---|---|
 | `marketing` | [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills) | MIT | ✅ `.agent/marketing/` | 52개 — ASO · 런칭 · 가격 · 페이월 · 광고 크리에이티브 · 커뮤니티 · 인플루언서 · 분석 등 (B2B 영업 · 웹 SEO 계열은 `fit: low`) |
 | `gamedev` | [gamedev-skills/awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) | Apache-2.0 | ✅ `.agent/gamedev/` | 36개 — 분야(손맛 · 저장 · 카메라 · AI 등) · 장르 9종 · Unity 6.3 기능 8종 · 배포(Steam · itch.io). Godot · Unreal · Roblox · 웹 엔진 전용 39개는 제외 |
 | `gamedesign` | [Stanestane/game-design-skills-bundle](https://github.com/Stanestane/game-design-skills-bundle) | **PolyForm Noncommercial 1.0.0** | ❌ 선택 설치 (git 무시) | 62개 — 플레이어 심리 · 경험 구조 감사, 발상 · 우선순위, 리더보드 · 패스, 예산 · 일정 추정 |
+| `gdpractice` | [eremes81/game-design-ai-practice](https://github.com/eremes81/game-design-ai-practice) (이민수) | **CC BY-NC-SA 4.0** | ❌ 선택 설치 (git 무시) | 책 원고 24부 100장 — 기획 문서 구조 · 시스템 · 밸런스 · 정합성 · 결정 추적 · 회의록 등. 스킬이 아니라 장 색인(`/ext gdpractice <장>`). 기획 스킬 6종(`ko-design-*` 등)은 이 원고의 방법을 참고해 **원문 없이 새로 쓴 것**이라 이것 없이도 돈다 |
 
 ```
 /ext                              # 세 카탈로그 상태 · 추천 묶음
@@ -226,7 +228,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 
 ## 패키지 내용 통계
 
-- **Skills (L1)**: 95개 (Game-Studios v1.2.0 74 + 한국어 wrapper · 스킬 12 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
+- **Skills (L1)**: 101개 (Game-Studios v1.2.0 74 + 한국어 wrapper · 스킬 18 + 스튜디오 모드 4 + 마스터 진입 1 + SkillForge 헬퍼 3 + 외부 카탈로그 진입 1)
 - **Agents**: 49개 (Tier 1-3, 엔진 전문가 Unity 5 · Godot 5 · Unreal 5 포함)
 - **Rules**: 15개 (fork 2 — 엔진별 gameplay-code · doc-writing, GS 13)
 - **Hooks**: 21개 (등록 19 · 라이브러리 2 — 세션 시작/종료, validate-commit/push/lint/read/write/registry/assets, notify, log-agent, 스튜디오 가드 · 정지 알림 등)
@@ -235,8 +237,8 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 - **설정**: `project.yaml` (엔진 · 전문가 · 명명 · 모드 · 단계 정본), `project.local.yaml` (개인 · git 무시) — `/settings`
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
 - **SkillForge (L2)**: 102개 SKILL.md (14 카테고리) + skills-index.json + README-sync.md
-- **Tools**: 4개 — `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · 엔진별 승격 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿 · 하네스: 래칫 · 지표 · 쓰기 가드), `setup` (사전 설치 점검 · 설치 — 엔진별 · Unity 공식 분석기), `lint` (Unity C# 규칙 검사 UL001~008 · 분석기 ruleset). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests .agent/tools/lint/tests -q`
-- **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) · android 4 (Apache-2.0, Google) 포함, gamedesign 62 (PolyForm NC) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
+- **Tools**: 5개 — `design` (기획 문서 그래프 · 결정 카드 · 밸런스 시뮬 · 데이터 스키마 · 대사 일관성 · 레벨/패턴 검사 — 표준 `standard.json`), `artgen` (그래픽 · 사운드 생성 CLI · 어댑터 6종 · 사운드 라이브러리 · 엔진별 승격 · Unity 임포터 템플릿), `studio` (스튜디오 모드 CLI · 역할 헌장 5종 · 아트 디렉션 브리프 · 컨셉 후보 템플릿 · 하네스: 래칫 · 지표 · 쓰기 가드), `setup` (사전 설치 점검 · 설치 — 엔진별 · Unity 공식 분석기), `lint` (Unity C# 규칙 검사 UL001~008 · 분석기 ruleset). 모두 테스트 포함 — `python -m pytest .agent/tools/artgen/tests .agent/tools/studio/tests .agent/tools/setup/tests .agent/tools/lint/tests .agent/tools/design/tests -q`
+- **외부 카탈로그**: marketing 52 (MIT) · gamedev 36 (Apache-2.0) · android 4 (Apache-2.0, Google) 포함, gamedesign 62 (PolyForm NC) · gdpractice 100장 (CC BY-NC-SA) 선택 설치 — `/ext`, `scripts/sync-catalog.py`
 
 ### 요구 사항
 
@@ -497,6 +499,7 @@ L1 스킬 대부분(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
 7-1. **android/skills** (Google) — 외부 카탈로그 `android` (Apache-2.0, 포함 — 기기 · 스토어 단 4개만, LICENSE 동봉)
 7-2. **mattpocock/skills** — `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` 의 원본 (MIT, 한국어 · 엔진 맞춤 재작성 — 고지는 `THIRD_PARTY_LICENSES.md` §9)
+7-3. **eremes81/game-design-ai-practice** (이민수) — 기획 스킬 6종 · `.agent/tools/design/` 의 방법론 참고 (원문 미포함) + 외부 카탈로그 `gdpractice` (CC BY-NC-SA 4.0, **미포함** — 사용자가 직접 받음)
 8. **Stanestane/game-design-skills-bundle** — 외부 카탈로그 `gamedesign` (PolyForm Noncommercial 1.0.0, **미포함** — 사용자가 직접 받음)
 
 SkillForge upstream 동기화 절차는 `.agent/skills/README-sync.md` 참조.
@@ -614,6 +617,7 @@ scripts/
 .agent/workflows/                15개 (Antigravity 슬래시 — ko-* 12 + unity-fullstack + studio-join + ext)
 .agent/tools/artgen/             그래픽 · 사운드 생성 CLI · 백엔드 어댑터 · 사운드 라이브러리 · 엔진별 승격 · Unity 임포터 템플릿 · 테스트
 .agent/tools/setup/              사전 설치 점검 · 설치 (prereq.py — 도구 · 엔진 에디터 · 모델 · 라이브러리 · 설정 · Unity 분석기) · 테스트
+.agent/tools/design/             기획 검사 도구 (design_graph · balance_sim · data_schema · narrative_lint · content_pattern · standard.json) · 테스트
 .agent/tools/lint/               Unity C# 규칙 검사 (unity_lint.py UL001~008 · lint.config.json blocking · Default.ruleset) · 테스트
 .agent/tools/studio/             스튜디오 모드 프로토콜 · 역할 헌장 4종(planning · art · art-human · dev) · 도구 공통 업무 루프 프롬프트 · 아트 디렉션 브리프 템플릿 · 티켓/게이트/커밋/감시/디스패치 CLI · 테스트
 
@@ -624,9 +628,9 @@ scripts/
 ├── rules/                       15개 (fork 2 + GS 13)
 ├── scripts/                     35개 (GS 도우미 — test-run · config-set · registry · story-facts 등)
 ├── agents/                      49개 (Tier 1-3, 엔진 전문가 Unity · Godot · Unreal 포함)
-├── skills/                      95개
+├── skills/                      101개
 │   ├── unity-fullstack/         마스터 진입
-│   ├── ko-sprint-plan/          한국어 wrapper · 스킬 12개
+│   ├── ko-sprint-plan/          한국어 wrapper · 스킬 18개
 │   ├── ko-story-cycle/
 │   ├── ko-code-review/
 │   ├── ko-perf-profile/
@@ -638,6 +642,12 @@ scripts/
 │   ├── ko-tdd/
 │   ├── ko-grill/
 │   ├── ko-agent-retro/
+│   ├── ko-design-graph/         기획 검증 6종 (game-design-ai-practice 방법론 참고 · 원문 미포함)
+│   ├── ko-design-decision/
+│   ├── ko-balance-sim/
+│   ├── ko-data-schema/
+│   ├── ko-narrative-lint/
+│   ├── ko-content-pattern/
 │   ├── studio-join/             스튜디오 모드 4종 (역할 등록·업무 루프 / 디렉터 세션 / 디렉터 지시 / 디렉터 콘솔)
 │   ├── studio-director/
 │   ├── studio-ticket/

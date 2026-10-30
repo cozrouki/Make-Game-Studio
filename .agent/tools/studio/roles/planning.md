@@ -33,6 +33,7 @@ C8. 선택된 후보의 화면 시안 경로를 `game-concept.md` 에 "비주얼
 
 ### 컨셉 확정 후 — 분해 · 방향 (C8 다음)
 4. `/map-systems` → `design/gdd/systems-index.md` (MVP 시스템 표시).
+4-0. **기획 문서 그래프 · 결정 기록** (규모와 무관하게 이 시점부터): 새 기획 문서에 표준 프런트매터를 붙이고(`/ko-design-graph`), 값 · 규칙을 정하거나 바꿀 때마다 결정 카드를 남긴다(`/ko-design-decision` — T0 · T1 은 `to: director` 로 올림). 게이트 요청 티켓에 `design_graph.py check` 결과를 붙인다. 수치는 `/ko-balance-sim`, 데이터 테이블은 `/ko-data-schema`, 대사는 `/ko-narrative-lint`, 레벨 · 양산 콘텐츠는 `/ko-content-pattern` 으로 검사한다 — 판정이 FAIL 이면 그 문서를 승인 요청하지 않는다.
 4-1. **게임 플로우** → `design/gdd/game-flow.md`: 화면 흐름도(부팅 → 타이틀 → 플레이 → 결과 → 메타 → 다시 플레이), 화면별 진입 · 이탈 조건, 세션 루프(30초 / 5분 / 세션), 게임 상태 전이 표. 선택된 컨셉의 화면 시안을 해당 화면에 링크한다. dev 의 씬 · 상태 머신 구성과 art 의 UI 에셋 목록이 이 문서에서 나온다.
 5. `/art-bible` → `design/art/art-bible.md`. 선택된 후보의 화면 시안을 시각 출발점으로 쓰고, 시안과 달라지는 결정은 이유를 적는다.
 6. 티켓 발행 (병렬로 진행된다):

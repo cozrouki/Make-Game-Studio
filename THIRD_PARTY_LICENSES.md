@@ -211,6 +211,21 @@ SOFTWARE.
 - **Not installed / not bundled.** Referenced by URL only as an optional future
   integration. No files copied.
 
+### 10. game-design-ai-practice — referenced methods + `gdpractice` external catalog (NOT bundled)
+
+- Source: https://github.com/eremes81/game-design-ai-practice — manuscript of
+  "게임 기획 실무에서 바로 쓰는 AI·클로드 코드 활용법" by 이민수 (Minsoo Lee)
+- License: **CC BY-NC-SA 4.0** (Copyright (c) 2026 이민수 (Minsoo Lee)). Commercial
+  publishing or sale, paid course material, and inclusion in commercial products
+  or services require separate permission from the author.
+- **Not redistributed here.** No text, tables or code from the manuscript are in this
+  repository. The planning skills `ko-design-*`, `ko-balance-sim`, `ko-narrative-lint`,
+  `ko-data-schema`, `ko-content-pattern` and `.agent/tools/design/` were written
+  independently, informed by the methods the book describes; each skill names the
+  parts it consulted. A user who qualifies fetches the manuscript with
+  `python scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>`;
+  it lands in `.agent/gdpractice/`, which is git-ignored.
+
 ### 8. game-design-skills-bundle — `gamedesign` external catalog (NOT bundled)
 
 - Source: https://github.com/Stanestane/game-design-skills-bundle

@@ -774,8 +774,11 @@ ITEMS = [
     Item("gamedesign", "사용자 결정", {"planning"}, "(선택) gamedesign 감사 카탈로그",
          c_decide("PolyForm Noncommercial — 회사 사용이면 상업 라이선스 필요. /ext 의 설치 돕기로 사용자가 조건 선택"),
          None, "python scripts/sync-catalog.py gamedesign --fetch --accept-license <noncommercial|commercial>"),
+    Item("gdpractice", "사용자 결정", {"planning"}, "(선택) 게임 기획 실무 AI 활용 원고 카탈로그 (/ext gdpractice)",
+         c_decide("CC BY-NC-SA 4.0 — 회사 상품 · 서비스 포함 · 상업 목적은 저자 허락 필요. 기획 방법론 스킬(ko-design-*)은 이것 없이도 돈다"),
+         None, "python scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>"),
 ]
-REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "pytest", "adb-device", "protobuf",
+REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "gdpractice", "pytest", "adb-device", "protobuf",
                  "graphify"}
 # 선택 항목은 missing 이어도 실패로 보지 않고, install 을 항목 없이 실행할 때도 설치하지 않는다 (이름을 줘야 설치)  # missing 이어도 실패로 보지 않음
 

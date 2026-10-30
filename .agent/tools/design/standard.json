@@ -1,0 +1,53 @@
+{
+  "_note": "기획 문서 프런트매터 표준 — design_graph.py · decision 검사가 읽는다. 기준을 바꿀 때 코드를 고치지 않고 이 파일만 고친다. 숫자는 모두 조정 가능한 기본값이다.",
+  "required": ["id", "title", "type", "status", "owner", "updated"],
+  "recommended": ["abstraction"],
+  "types": {
+    "pillar": "게임 필러 · 비전 (L0)",
+    "gdd": "시스템 설계 문서",
+    "rule": "규칙 하나 — 결정 하나를 짧게 (한 문장 요약 · 이유 · 규칙 · 예외)",
+    "decision": "기획 결정 카드 (/ko-design-decision)",
+    "spec": "기능 · 콘텐츠 명세",
+    "voice": "캐릭터 보이스 프로필 (/ko-narrative-lint)",
+    "lore": "세계 설정 · 룰북",
+    "level": "레벨 · 룸 문서 (/ko-content-pattern)",
+    "pattern": "재사용 콘텐츠 패턴",
+    "schema": "데이터 스키마 설명 (/ko-data-schema)",
+    "report": "분석 · 검증 보고",
+    "meeting": "회의록"
+  },
+  "status": ["draft", "review", "approved", "archived"],
+  "abstraction": {
+    "L0": "비전 · 필러 — 가장 드물게 바뀐다",
+    "L1": "시스템 · 세계 골격",
+    "L2": "콘텐츠 · 흐름",
+    "L3": "데이터 · 수식",
+    "L4": "빌드 · QA · 운영"
+  },
+  "relations": {
+    "requires": "이 문서가 성립하려면 대상이 있어야 한다",
+    "affects": "이 문서가 바뀌면 대상도 다시 봐야 한다",
+    "derives_from": "대상(주로 상위 추상)에서 나왔다",
+    "conflicts_with": "대상과 함께 승인될 수 없다",
+    "supersedes": "대상을 대체한다 (대상은 archived 여야 한다)",
+    "part_of": "대상의 일부다"
+  },
+  "abstractionCheckedRelations": ["requires", "derives_from", "part_of"],
+  "idPattern": "^[A-Z][A-Z0-9]*-[A-Za-z0-9_.-]+$",
+  "staleDays": 120,
+  "hubInbound": 12,
+  "decision": {
+    "idPattern": "^D\\d{4}-\\d{3}$",
+    "required": ["impact", "decided_by"],
+    "impact": {
+      "T0": "비전 · 필러를 바꾼다 — 사용자(디렉터)가 결정",
+      "T1": "여러 시스템 구조를 바꾼다 — 디렉터 승인",
+      "T2": "한 시스템의 규칙 · 흐름을 바꾼다 — 기획 리드",
+      "T3": "수치 · 콘텐츠 조정 — 담당 기획",
+      "T4": "오류 수정 · 표기 — 담당자 즉시"
+    },
+    "bodySections": ["결정", "이유", "검토한 대안", "영향", "사후 확인"],
+    "reviewAfterDays": 30,
+    "measureTolerance": {"pass": 0.10, "interpret": 0.25}
+  }
+}
