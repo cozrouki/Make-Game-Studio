@@ -203,3 +203,14 @@ def test_project_tuned_tool_configs_are_merged_not_replaced(tmp_path, template):
     merged = {m["file"] for m in plan["merge"]}
     assert {".agent/tools/design/standard.json", ".agent/tools/lint/lint.config.json"} <= merged
     assert ".agent/tools/design/standard.json" not in plan["replace"]
+
+
+def test_upgrade_writes_provenance_fingerprint(tmp_path, template):
+    st = _project(tmp_path, "unity", ("ProjectSettings/ProjectVersion.txt", "m_EditorVersion: 6000.3.1f1\n"))
+    M.upgrade(st, template)
+    prov = _read(st.root, ".agent/PROVENANCE.md")
+    assert "Make Game Studio" in prov
+    assert "1.1.0" in prov                       # 템플릿 VERSION
+    assert "unity" in prov                        # 엔진
+    assert "PolyForm Noncommercial" in prov
+    assert "외부로 아무" in prov                   # 텔레메트리가 아님을 본문에 명시

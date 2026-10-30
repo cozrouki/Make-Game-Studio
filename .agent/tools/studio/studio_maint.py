@@ -308,6 +308,37 @@ def _insert_section(st, rel, block, engine=None):
         f.write(mine)
 
 
+def _write_provenance(st, template, engine, version, rev):
+    """출처 지문 — 이 프로젝트가 어느 템플릿 · 버전 · 커밋에서 왔는지 드러나게 남긴다 (install.ps1 과 같은 형식).
+    외부로 아무것도 보내지 않고, 설치하는 사람 · PC 정보도 담지 않는다. 지우거나 고쳐도 된다."""
+    repo = subprocess.run(["git", "-C", template, "remote", "get-url", "origin"], capture_output=True, text=True,
+                          encoding="utf-8").stdout.strip() or "https://github.com/cozrouki/Make-Game-Studio"
+    today = datetime.date.today().isoformat()
+    text = f"""# 출처 (Provenance)
+
+이 프로젝트의 AI 에이전트 작업 환경(`.claude/` · `.agent/`)은 아래 템플릿에서 설치 · 갱신됐다.
+
+| 항목 | 값 |
+|------|-----|
+| 템플릿 | Make Game Studio |
+| 저장소 | {repo} |
+| 버전 | {version} |
+| 템플릿 커밋 | {rev} |
+| 엔진 | {engine} |
+| 최근 갱신 | {today} |
+
+## 라이선스
+
+이 템플릿의 원저작물은 **PolyForm Noncommercial License 1.0.0** 이다 — 비상업 목적은 자유,
+상업 목적은 저작권자(cozrouki)의 허락이 필요하다. 전문과 상업 이용 안내는 `.agent/licenses/` 를 본다.
+포함된 제3자 구성 요소(MIT · Apache-2.0)는 각자의 라이선스를 따른다.
+
+이 파일은 출처를 드러내기 위한 것이다. 외부로 아무 정보도 보내지 않는다.
+"""
+    with open(os.path.join(st.root, ".agent", "PROVENANCE.md"), "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+
+
 def upgrade(st, template, by=DIRECTOR, dry_run=False):
     template = os.path.abspath(template)
     if not os.path.isfile(os.path.join(template, ".agent", "tools", "studio", "studio.py")):
@@ -398,6 +429,7 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
         _apply_settings_patch(st, settings_patch)
     for rel, text, _head in sections:
         _insert_section(st, rel, text, engine)
+    _write_provenance(st, template, engine, plan["templateVersion"], plan["templateRev"])
 
     note = (f"템플릿 업그레이드 {plan['templateVersion']} ({plan['templateRev']}) — 교체 {len(plan['replace'])} · "
             f"추가 {len(plan['add'])} · 씨앗 {len(plan['seed'])} · 병합 {len(plan['merge'])} · 정리 {len(plan['obsolete'])}")
