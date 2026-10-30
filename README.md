@@ -1,9 +1,9 @@
-# 게임 개발 풀스택 통합 스킬 패키지 (Unity · Godot · Unreal)
+# Make Game Studio — 게임 개발 풀스택 통합 스킬 패키지 (Unity · Godot · Unreal)
 
-> **English:** [jump to the English summary](#unity-full-stack-claude-skills)
+> **English:** [jump to the English summary](#make-game-studio--game-dev-claude-skills-unity--godot--unreal)
 
 게임 개발용 Claude Code 통합 환경입니다. 목표는 **게임 아이디어를 기획으로 만들고, 기획 의도대로 그래픽을 만들고, 게임 엔진(Unity · Godot · Unreal)으로 개발하는 과정을 자동화**하는 것입니다.
-외부 저장소를 흡수해 만든 **엔진 중립 4계층 스킬 셋** 위에, 자체 도구 두 가지(그래픽 생성 파이프라인 · 스튜디오 모드)를 얹었습니다. 저장소 이름(`unity-fullstack`)은 처음 Unity 전용으로 시작한 흔적이고, 지금은 세 엔진을 지원합니다 — 엔진별로 무엇이 되는지는 [엔진 지원](#엔진-지원).
+외부 저장소를 흡수해 만든 **엔진 중립 4계층 스킬 셋** 위에, 자체 도구 두 가지(그래픽 생성 파이프라인 · 스튜디오 모드)를 얹었습니다. 마스터 진입점 `/unity-fullstack` 은 처음 Unity 전용으로 시작한 이름을 호환 때문에 그대로 둔 것이고, 지금은 세 엔진을 지원합니다 — 엔진별로 무엇이 되는지는 [엔진 지원](#엔진-지원).
 
 ```
 아이디어 ─▶ 기획 ──────────────────▶ 그래픽 ─────────────────▶ 엔진 개발
@@ -20,8 +20,8 @@
 
 ```powershell
 # 1. 템플릿 받기
-git clone https://github.com/cozrouki/unity-fullstack-claude-skills
-cd unity-fullstack-claude-skills
+git clone https://github.com/cozrouki/Make-Game-Studio
+cd Make-Game-Studio
 
 # 2. 대상 게임 프로젝트에 설치 (엔진 자동 판정 · 복사 · 자리표시자 · 권한 · MCP(Unity) · .gitignore)
 .\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
@@ -683,7 +683,7 @@ README.md                        이 파일
 
 ---
 
-# Unity Full-Stack Claude Skills
+# Make Game Studio — Game Dev Claude Skills (Unity · Godot · Unreal)
 
 A turnkey agentic scaffolding for **game development on Unity, Godot or Unreal Engine** with
 [Claude Code](https://claude.com/claude-code) (also works with Codex CLI,
@@ -693,8 +693,8 @@ per-tool rules and slash commands are generated from one source by
 idea → design documents → graphics that match the design intent → an engine
 build**. It integrates upstream skill repositories into a single,
 engine-neutral **4-layer skill set**, and adds two original tools on top: a
-backend-neutral graphics pipeline and a multi-session "studio mode". (The repo
-name is a leftover from its Unity-only start.) What each engine gets is listed in
+backend-neutral graphics pipeline and a multi-session "studio mode". (The `/unity-fullstack`
+entry command keeps its Unity-era name for compatibility.) What each engine gets is listed in
 [`.claude/docs/engine-layers.md`](.claude/docs/engine-layers.md): the process
 layer, engine specialist agents, engine references (Unity 6.3 LTS · Godot 4.7 ·
 UE 5.8), measured engine setup and test running work on all three; the C#
@@ -738,8 +738,8 @@ Requirements for the tools: Python 3.8+ as `python` on PATH (stdlib only; `pytes
 ## Quick start
 
 ```powershell
-git clone https://github.com/cozrouki/unity-fullstack-claude-skills
-cd unity-fullstack-claude-skills
+git clone https://github.com/cozrouki/Make-Game-Studio
+cd Make-Game-Studio
 .\scripts\install.ps1 -Target D:\Projects\MyGame -Games "MG=MyGame"
 ```
 
