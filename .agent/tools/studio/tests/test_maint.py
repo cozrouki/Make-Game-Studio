@@ -179,7 +179,7 @@ HOOK = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(TOOL_DIR))),
 def _bash():
     """Claude Code 훅과 같은 Git Bash — Windows 의 PATH 에서는 WSL bash.exe 가 먼저 잡힐 수 있다."""
     if os.name == "nt":
-        p = subprocess.run(["git", "--exec-path"], capture_output=True, text=True).stdout.strip()
+        p = subprocess.run(["git", "--exec-path"], capture_output=True, text=True, encoding="utf-8").stdout.strip()
         cand = os.path.normpath(os.path.join(p, "..", "..", "..", "bin", "bash.exe")) if p else ""
         if os.path.isfile(cand):
             return cand

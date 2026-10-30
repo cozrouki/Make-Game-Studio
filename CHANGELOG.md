@@ -12,6 +12,14 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.0.1 — 2026-10-30
+
+**고침 (수)** — 영어 Windows(cp1252)에서 드러난 인코딩 문제 (템플릿 CI 첫 실행 실패로 발견)
+- 외부 명령 출력을 읽는 곳에 `encoding="utf-8"` · `errors="replace"` 지정 (artgen `command` 어댑터 · prereq · 스튜디오 git · tasklist · 테스트)
+- `audio_post.py` 표준 입출력을 UTF-8 로 고정 — 부모(store · library)와 인코딩이 어긋나 한글 파일 이름에서 깨질 수 있었다 (한국어 Windows 포함)
+- `gen-rule-mirrors.py` 표준 출력 UTF-8 고정
+- CI: 실패한 테스트 · 오류 줄을 주석(annotation)으로 남김, 테스트가 실패해도 나머지 검사 실행, `actions/checkout@v5` · `setup-python@v6`
+
 ## 2.0.0 — 2026-10-30
 
 저장소 이름 · 기본 브랜치 · 설정 체계가 바뀌었다. **1.x 에서 올리는 프로젝트는 위 "기존 프로젝트 올리기" 를 따른다.**

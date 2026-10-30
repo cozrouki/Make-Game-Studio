@@ -61,7 +61,7 @@ def fingerprint(st):
         if os.path.isfile(p):
             stat = os.stat(p)
             h.update(f"{p}|{stat.st_size}|{stat.st_mtime_ns}\n".encode("utf-8"))
-    head = subprocess.run(["git", "-C", st.root, "rev-parse", "HEAD"], capture_output=True, text=True)
+    head = subprocess.run(["git", "-C", st.root, "rev-parse", "HEAD"], capture_output=True, text=True, encoding="utf-8")
     h.update(head.stdout.strip().encode("ascii", "ignore"))
     return h.hexdigest()
 
