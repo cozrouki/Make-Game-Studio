@@ -2,6 +2,8 @@
 
 > **English:** [jump to the English summary](#make-game-studio--game-dev-claude-skills-unity--godot--unreal)
 
+> **라이선스:** [PolyForm Noncommercial 1.0.0](LICENSE) — 비상업 목적은 무료, **상업 목적은 저작권자 허락 필요** ([`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md)). 포함된 제3자 구성 요소는 각자의 라이선스(MIT · Apache-2.0).
+
 게임 개발용 Claude Code 통합 환경입니다. 목표는 **게임 아이디어를 기획으로 만들고, 기획 의도대로 그래픽을 만들고, 게임 엔진(Unity · Godot · Unreal)으로 개발하는 과정을 자동화**하는 것입니다.
 외부 저장소를 흡수해 만든 **엔진 중립 4계층 스킬 셋** 위에, 자체 도구 두 가지(그래픽 생성 파이프라인 · 스튜디오 모드)를 얹었습니다. 마스터 진입점 `/unity-fullstack` 은 처음 Unity 전용으로 시작한 이름을 호환 때문에 그대로 둔 것이고, 지금은 세 엔진을 지원합니다 — 엔진별로 무엇이 되는지는 [엔진 지원](#엔진-지원).
 
@@ -332,7 +334,7 @@ python scripts/gen-rule-mirrors.py
 | 단계 | 하는 일 |
 |---|---|
 | 엔진 판정 | `ProjectSettings/ProjectVersion.txt` → Unity · `project.godot` → Godot · `*.uproject` → Unreal (`-Engine` 으로 지정 가능). Unity 전용 계층(SkillForge · unity_lint · MCP 가이드 · `sf-*`)은 Unity 일 때만, 엔진 레퍼런스는 그 엔진 것만, `src/CLAUDE.md` 는 Godot 일 때만 복사한다 |
-| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. MIT 고지는 `.agent/licenses/`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
+| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. 라이선스 고지(`LICENSE` · `COMMERCIAL-LICENSE.md` · `THIRD_PARTY_LICENSES.md`)는 `.agent/licenses/`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
 | 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지. `CLAUDE.md` 엔진 레퍼런스 import 줄을 대상 엔진으로 |
 | 권한 (Unity) | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
 | MCP (Unity) | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |
@@ -341,6 +343,13 @@ python scripts/gen-rule-mirrors.py
 - `-Games`를 생략하면 엔진 코드 루트(Unity `Assets/` · Godot 프로젝트 루트 · Unreal `Source/`) 하위 후보(소스 파일 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
 - 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다(`settings.local.json`은 보존).
 - 설치 후: (Unity) MCPForUnity 확인 → `claude` 실행 → **`/ko-setup-engine`**(6단계) → `/unity-fullstack`.
+
+### 기존 설치 올리기 — 버전 · 업그레이드
+
+템플릿 버전은 `.agent/VERSION` 에 있고 설치된 프로젝트에도 복사됩니다. 버전별 변경과 올리는 방법은 [`CHANGELOG.md`](CHANGELOG.md) 에 있습니다.
+
+- 스튜디오 모드 프로젝트: `python <템플릿>/.agent/tools/studio/studio.py --root <프로젝트> upgrade --from <템플릿> --dry-run` 으로 미리 보고 실행 — 엔진 필터 · 씨앗(없을 때만) · 프로젝트가 고친 규칙은 "직접 병합 필요" 로 알림 · 사라진 파일 정리 · 훅 등록 병합
+- 그 밖의 프로젝트: `install.ps1 -Target <프로젝트> -Force` 로 다시 설치 (백업 · `*.local.json` · `project.yaml` · 레지스트리 보존)
 
 스크립트를 쓸 수 없는 환경이면 아래 수동 절차를 따르세요.
 
@@ -544,6 +553,7 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unit
 - `.claude/skills/<GS-skill>/` — Game-Studios skill 전부 (v1.2.0 기준 74개 — 자체 skill `ko-*` · `sf-*` · `studio-*` · `unity-fullstack` · `ext` 는 덮어쓰지 않음)
 - `.claude/agents/` — 전부 (v1.2.0 기준 49개, 엔진 전문가 Unity · Godot · Unreal 포함)
 - `.claude/docs/` · `.claude/rules/` · `.claude/hooks/` · `.claude/scripts/` — 상류 이름 그대로 (아래 fork 제외). 예전 `gs-*` 접두 문서는 지운다
+- 템플릿 자체 CI `.github/workflows/template-tests.yml` 이 push 마다 도구 테스트 · 훅 문법 · 미러 최신 여부 · 버전 절을 확인한다 (게임 프로젝트로 설치되지 않음)
 - `docs/engine-reference/` · `docs/*.md` · `design/CLAUDE.md` · `src/CLAUDE.md` · `studio-tests/`
 - 씨앗(없을 때만): `project.yaml` · `docs/registry/` · `docs/architecture/tr-registry.yaml` · `design/registry/`
 - 상류에서 사라진 훅이 남아 있으면 경고한다 (settings.json 등록과 함께 지울 것)
@@ -690,7 +700,12 @@ README.md                        이 파일
 
 ## 라이선스
 
-통합 작업과 자체 도구(ko-* wrapper · artgen · studio · 스크립트)는 [MIT](LICENSE). 포함된 상류 구성 요소는 각자의 MIT 라이선스를 따릅니다 — [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md), `.claude/docs/ATTRIBUTION.md`.
+통합 작업과 자체 도구(ko-* 스킬 · 기획 검증 스킬 · artgen · studio · design · 스크립트 · 문서)는 **[PolyForm Noncommercial 1.0.0](LICENSE)** 입니다.
+
+- **비상업 목적**(개인 · 학습 · 연구 · 교육기관 · 비영리 · 공공기관)은 무료로 자유롭게 쓸 수 있습니다.
+- **상업 목적**(회사 안 개발 · 출시 게임 · 외주 · 유료 교육 · 재판매 등)은 저작권자 허락이 필요합니다 — [`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md) (GitHub 이슈로 문의).
+- 포함된 상류 구성 요소는 각자의 라이선스(MIT · Apache-2.0)를 따릅니다 — [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md), `.claude/docs/ATTRIBUTION.md`. 선택 설치 카탈로그(gamedesign · gdpractice)는 각 작성자의 비상업 라이선스입니다.
+- 2026-10-30 이전에 MIT 로 배포된 판(커밋 `2721499` 까지)은 그 판을 받은 사람에게 MIT 로 남습니다.
 
 ---
 
@@ -711,6 +726,10 @@ layer, engine specialist agents, engine references (Unity 6.3 LTS · Godot 4.7 �
 UE 5.8), measured engine setup and test running work on all three; the C#
 code-pattern catalog, MCP editor automation and the commit-time linter are
 Unity-only for now.
+
+> **License: [PolyForm Noncommercial 1.0.0](LICENSE)** — free for noncommercial use; commercial use needs
+> permission from the copyright holder ([`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md)). Bundled third-party
+> components keep their own licenses (MIT, Apache-2.0).
 
 > **Mostly an integration/distribution.** The bulk of the skills come from the
 > upstreams below (all MIT; `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro`
@@ -803,6 +822,10 @@ and studio docs are Korean only.
 
 ## License
 
-[MIT](LICENSE) for the original integration work. Bundled upstream components
-remain under their own licenses (MIT, Apache-2.0) — see
-[`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md).
+[PolyForm Noncommercial 1.0.0](LICENSE) for the original work in this repository — free for
+noncommercial use (personal, study, research, education, charities, public bodies); **commercial use
+requires permission** from the copyright holder (cozrouki) — see
+[`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md) (request via a GitHub issue). Bundled upstream
+components remain under their own licenses (MIT, Apache-2.0) — see
+[`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md). Versions published under MIT before 2026-10-30
+(up to commit `2721499`) remain MIT-licensed for their recipients.

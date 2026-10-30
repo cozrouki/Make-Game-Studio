@@ -9,6 +9,10 @@ bundled, so no redistribution obligation).
 For a per-asset breakdown (what was copied verbatim, mirrored, forked, or only
 referenced), see [`.claude/docs/ATTRIBUTION.md`](.claude/docs/ATTRIBUTION.md).
 
+The original work in this repository is licensed under the PolyForm Noncommercial
+License 1.0.0 ([`LICENSE`](LICENSE)). The components listed below are **not** relicensed:
+each stays under its own license (MIT, Apache-2.0), and may be used under that license.
+
 Licenses verified against the GitHub API on **2026-07-20** (items 1–5) and against the
 upstream LICENSE files on **2026-10-23** (items 6–8).
 

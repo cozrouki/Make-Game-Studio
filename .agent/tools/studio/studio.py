@@ -646,7 +646,7 @@ def main(argv=None):
     p.add_argument("--by", default="director")
     p.add_argument("--note", default="")
 
-    p = sub.add_parser("upgrade", help="템플릿 저장소에서 스튜디오 · artgen 도구 갱신 (프로젝트 설정 보존 · 공지 티켓)")
+    p = sub.add_parser("upgrade", help="템플릿 저장소에서 도구 · 스킬 · 상류 GS 자산 · 엔진 레퍼런스 갱신 (프로젝트 설정 · 데이터 보존 · 공지 티켓)")
     p.add_argument("--from", dest="template", required=True, help="템플릿 저장소 경로")
     p.add_argument("--dry-run", action="store_true")
 
@@ -809,10 +809,23 @@ def main(argv=None):
             out(r, f"프로토콜: {head} (마지막 승인 {r['ackedAt']} · {r['ackedBy']})" + ("\n" + "\n".join(body) if body else ""))
         elif args.cmd == "upgrade":
             r = _maint().upgrade(st, args.template, dry_run=args.dry_run)
-            lines = [f"템플릿 {r['templateRev']}" + (" [dry-run]" if r["dryRun"] else "")]
+            lines = [f"템플릿 {r.get('templateVersion', '?')} ({r['templateRev']}) · 엔진 {r.get('engine', '?')}"
+                     + (" [dry-run]" if r["dryRun"] else "")]
+            if r.get("engineNote"):
+                lines.append(f"  ! {r['engineNote']}")
             lines += [f"  교체 {f}" for f in r["replace"]] + [f"  추가 {f}" for f in r["add"]]
+            lines += [f"  씨앗 {f} (없어서 넣음)" for f in r.get("seed", [])]
             lines += [f"  병합 {m['file']}" + (f" (새 키: {', '.join(m['newTopLevelKeys'])})" if m["newTopLevelKeys"] else "")
+                      + (f" (절 추가: {m['section']})" if m.get("section") else "")
+                      + (f" (훅 등록 +{len(m['hooks'])})" if m.get("hooks") else "")
+                      + (f" (훅 등록 -{len(m['hooksRemoved'])})" if m.get("hooksRemoved") else "")
+                      + (f" (deny +{len(m['denyAdded'])})" if m.get("denyAdded") else "")
                       for m in r["merge"]]
+            lines += [f"  정리 {f} (템플릿에서 사라짐)" for f in r.get("obsolete", [])]
+            lines += [f"  직접 병합 필요 {f} (프로젝트가 고친 파일 — 덮어쓰지 않음)" for f in r.get("manual", [])]
+            lines += [f"  유지 {f} (프로젝트 값)" for f in r.get("kept", [])]
+            if r.get("skippedByEngine"):
+                lines.append(f"  엔진 밖이라 가져오지 않음 {len(r['skippedByEngine'])}개")
             lines.append(f"  변경 없음 {r['unchanged']}개")
             if r.get("tickets"):
                 lines.append(f"공지 티켓: {', '.join(r['tickets'])}")

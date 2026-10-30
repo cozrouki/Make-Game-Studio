@@ -229,7 +229,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 |---|---|---|
 | **감사** | `studio.py audit` | 미커밋 변경 중 **어느 영역에도 없는 파일**(주인 없음)과 **여러 역할에 겹치는 파일**을 보여 준다. 의도된 겹침(`allowedOverlaps`, 기본 `production/epics`)은 제외. 현황판에 건수가 뜬다 |
 | **프로토콜 변경 기록** | `studio.py protocol` · `protocol ack --by director --note "…"` | 설정 · 도구 · 헌장 · 프롬프트 · `CLAUDE.md` · `AGENTS.md` 의 지문을 `production/studio/protocol.json` 에 기록한다. 바뀌면 inbox · 현황판에 "미승인 변경" 이 표시되고, 디렉터가 확인(ack)하면 누가 · 언제 · 왜가 남는다 |
-| **템플릿 업그레이드** | `studio.py upgrade --from <템플릿 저장소> [--dry-run]` | 스튜디오 · artgen · 사전 설치 · 검사 도구와 스튜디오 스킬을 갱신한다. 설정 파일은 **깊은 병합**(템플릿 기반 + 프로젝트 값 우선) — 디렉터 결정은 보존되고 새 키만 추가된다. `*.local.json` 은 건드리지 않는다. `.claude/settings.json` 에는 빠진 스튜디오 훅 등록만 더하고, 프로젝트마다 치환된 `AGENTS.md` 는 템플릿에 새로 생긴 절(§3-1 등)만 끼워 넣는다. 끝나면 지문을 승인하고 역할마다 `info` 공지 티켓을 낸다 |
+| **템플릿 업그레이드** | `studio.py upgrade --from <템플릿 저장소> [--dry-run]` | 도구(스튜디오 · artgen · 사전 설치 · 검사 · 기획) · 스킬(스튜디오 · `ko-*` · 상류 GS 전부) · 에이전트 · `.claude/scripts` · 규칙 · 문서 · 훅 · 엔진 레퍼런스를 템플릿의 **git 추적 파일**에서 갱신한다. **엔진 필터**: Unity 전용 계층(SkillForge · unity_lint · `sf-*`)은 Unity 프로젝트에만, 엔진 레퍼런스는 그 엔진 것만. **씨앗**: `project.yaml` · 레지스트리는 없을 때만 넣는다. **보존**: `technical-preferences.md` 는 그대로, 프로젝트가 고친 `gameplay-code.md` · `doc-writing.md` 는 덮어쓰지 않고 "직접 병합 필요" 로 알린다. 설정 파일은 **깊은 병합**(템플릿 기반 + 프로젝트 값 우선) — 디렉터 결정은 보존되고 새 키만 추가된다. `*.local.json` 은 건드리지 않는다. `.claude/settings.json` 에는 템플릿에 있고 프로젝트에 빠진 훅 등록 · deny 권한만 더하고, 템플릿에서 사라진 훅(`post-compact.sh`)과 `gs-*` 문서는 정리한다. 프로젝트마다 치환된 `AGENTS.md` · `CLAUDE.md` 는 템플릿에 새로 생긴 절(§3-1 · 엔진 레퍼런스 · 상류 GS 기준 문서)만 끼워 넣는다. 결과에 템플릿 버전(`.agent/VERSION`) · 엔진을 적는다. 끝나면 지문을 승인하고 역할마다 `info` 공지 티켓을 낸다 — 훅 등록이 바뀌었으면 역할 세션을 다시 띄운다 |
 
 **세션의 반응 규칙**
 - inbox 에 "프로토콜 미승인 변경" 이 보이면 **헌장 · README · 업무 루프를 다시 읽고 그대로 진행**한다. 수상한 변경으로 반복 보고하지 않는다 (디렉터가 현황판에서 확인한다).
@@ -317,7 +317,7 @@ statusLine (.claude/statusline.sh — 60초마다 + 응답마다)
 - 자동 재개는 하지 않는다. 리셋 뒤 디렉터가 사용자와 합의해 `resume` 한다.
 - 인계 기록 `production/studio/HANDOFF.md`: 정지 시각 · 사용량 · 리셋 시각, 게이트, 역할별 진행 중 티켓과 마지막 note, 미커밋 변경, 디렉터 대기열, 이어서 하는 법. `studio.py handoff` 로 언제든 다시 쓸 수 있다.
 - 설정: `studio.config.json` 의 `usageGuard` (`enabled`, `weeklyPausePercent`). 현재 값: `studio.py usage`. 수동 시험: `studio.py usage --percent 91 --resets-at <epoch>`.
-- 설치 조건: `.claude/settings.json` 에 statusLine(`bash .claude/statusline.sh` + `refreshInterval`)과 PostToolUse 훅(`studio-pause-notice.sh`, matcher `""`)이 있어야 한다. `upgrade` 는 두 스크립트를 갱신하지만 `settings.json` 은 건드리지 않는다. 기존 프로젝트는 디렉터가 한 번 등록한다.
+- 설치 조건: `.claude/settings.json` 에 statusLine(`bash .claude/statusline.sh` + `refreshInterval`)과 PostToolUse 훅(`studio-pause-notice.sh`, matcher `""`)이 있어야 한다. `upgrade` 는 두 스크립트를 갱신하고, 템플릿 `settings.json` 에 있는 훅 등록 중 빠진 것을 더한다 (statusLine 은 건드리지 않는다 — 없으면 디렉터가 한 번 등록한다).
 - Claude 외 도구(Codex · Gemini 등)의 사용량은 보지 않는다. 다만 `dispatch` 는 정지 중 새 실행을 하지 않으므로 함께 선다.
 
 **예방**
