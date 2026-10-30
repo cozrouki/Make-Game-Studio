@@ -28,6 +28,7 @@
       - .claude/hooks/session-start.sh · session-stop.sh  (한국어 출력 + STATUS 블록)
       - .claude/rules/gameplay-code.md                    (한국어 · 엔진별 규칙)
       - .claude/settings.json · .claude/statusline.sh
+      - .claude/scripts/test-scaffold.sh                  (생성 CI 의 기본 브랜치 master)
 
 .PARAMETER GameStudiosClone
     Claude-Code-Game-Studios 로컬 clone 경로
@@ -232,7 +233,8 @@ Write-Host "[4/6] Game-Studios → .claude/ docs · rules · hooks · scripts + 
 # 이 템플릿이 고친 파일 (fork) — 자동 갱신하지 않는다. 상류 변경은 수동 머지
 $forkFiles = @(
     '.claude\hooks\session-start.sh', '.claude\hooks\session-stop.sh',
-    '.claude\rules\gameplay-code.md', '.claude\settings.json', '.claude\statusline.sh'
+    '.claude\rules\gameplay-code.md', '.claude\settings.json', '.claude\statusline.sh',
+    '.claude\scripts\test-scaffold.sh'   # 생성 CI 의 기본 브랜치 main → master
 )
 function Copy-GsTree {
     param([string]$Rel, [switch]$SeedOnly)
