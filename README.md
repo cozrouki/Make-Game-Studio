@@ -334,7 +334,7 @@ python scripts/gen-rule-mirrors.py
 | 단계 | 하는 일 |
 |---|---|
 | 엔진 판정 | `ProjectSettings/ProjectVersion.txt` → Unity · `project.godot` → Godot · `*.uproject` → Unreal (`-Engine` 으로 지정 가능). Unity 전용 계층(SkillForge · unity_lint · MCP 가이드 · `sf-*`)은 Unity 일 때만, 엔진 레퍼런스는 그 엔진 것만, `src/CLAUDE.md` 는 Godot 일 때만 복사한다 |
-| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. 라이선스 고지(`LICENSE` · `COMMERCIAL-LICENSE.md` · `THIRD_PARTY_LICENSES.md`)는 `.agent/licenses/`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
+| 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. 라이선스 고지(`LICENSE` · `COMMERCIAL-LICENSE.md` · `THIRD_PARTY_LICENSES.md`)는 `.agent/licenses/`, 출처 지문(어느 템플릿 · 버전 · 커밋에서 왔는지 — 외부 전송 없음, 지워도 됨)은 `.agent/PROVENANCE.md`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
 | 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지. `CLAUDE.md` 엔진 레퍼런스 import 줄을 대상 엔진으로 |
 | 권한 (Unity) | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
 | MCP (Unity) | `Packages/manifest.json`에 MCPForUnity 추가(서식 유지), `.mcp.json` 생성(`uvx` 위치 자동 탐지, `-McpPort`) — `-SkipMcp`로 생략 |

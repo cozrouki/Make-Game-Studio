@@ -247,9 +247,39 @@ if (-not $DryRun) {
     Copy-Item (Join-Path $pkg "LICENSE") $lic -Force
     Copy-Item (Join-Path $pkg "THIRD_PARTY_LICENSES.md") $lic -Force
     Copy-Item (Join-Path $pkg "COMMERCIAL-LICENSE.md") $lic -Force
+
+    # 출처 지문 — 이 프로젝트가 어느 템플릿 · 버전 · 커밋에서 왔는지 드러나게 남긴다 (텔레메트리 아님: 외부로
+    # 아무것도 보내지 않고, 설치하는 사람 · PC 정보도 담지 않는다. 템플릿 쪽 사실만 적는다). 지우거나 고쳐도 된다.
+    $tplVer = (Get-Content (Join-Path $pkg ".agent\VERSION") -Raw).Trim()
+    $tplCommit = (& git -C $pkg rev-parse --short HEAD 2>$null); if ($LASTEXITCODE -ne 0) { $tplCommit = "unknown" }
+    $tplRepo = (& git -C $pkg remote get-url origin 2>$null); if ($LASTEXITCODE -ne 0 -or -not $tplRepo) { $tplRepo = "https://github.com/cozrouki/Make-Game-Studio" }
+    $prov = @"
+# 출처 (Provenance)
+
+이 프로젝트의 AI 에이전트 작업 환경(``.claude/`` · ``.agent/``)은 아래 템플릿에서 설치됐다.
+
+| 항목 | 값 |
+|------|-----|
+| 템플릿 | Make Game Studio |
+| 저장소 | $tplRepo |
+| 버전 | $tplVer |
+| 템플릿 커밋 | $tplCommit |
+| 엔진 | $Engine |
+| 설치일 | $(Get-Date -Format 'yyyy-MM-dd') |
+
+## 라이선스
+
+이 템플릿의 원저작물은 **PolyForm Noncommercial License 1.0.0** 이다 — 비상업 목적은 자유,
+상업 목적은 저작권자(cozrouki)의 허락이 필요하다. 전문과 상업 이용 안내는 ``.agent/licenses/`` 를 본다.
+포함된 제3자 구성 요소(MIT · Apache-2.0)는 각자의 라이선스를 따른다.
+
+이 파일은 출처를 드러내기 위한 것이다. 외부로 아무 정보도 보내지 않는다.
+"@
+    Set-Content -Path (Join-Path $Target ".agent\PROVENANCE.md") -Value $prov -Encoding UTF8
+
     New-Item -ItemType Directory -Force -Path (Join-Path $Target "production\session-state") | Out-Null
 }
-Write-Ok "복사 완료 (+ .agent/licenses, production/session-state/)"
+Write-Ok "복사 완료 (+ .agent/licenses, .agent/PROVENANCE.md, production/session-state/)"
 
 # === [2/6] 자리표시자 치환 ===
 Write-Step "[2/6] 게임 폴더 매핑 · 공유 모듈"
