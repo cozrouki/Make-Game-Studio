@@ -47,13 +47,39 @@ UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen
                  ".claude/statusline.sh", ".claude/hooks/studio-pause-notice.sh", ".claude/hooks/studio-write-guard.sh",
                  ".claude/hooks/validate-commit.sh", ".claude/hooks/validate-lint.sh", ".claude/hooks/yaml-helper.sh",
                  ".claude/docs/engine-layers.md"]
+# 프레임워크 범위 — 상류 Game-Studios(v1.2.0~) · 템플릿 공용 자산. 템플릿의 git 추적 파일만 가져온다 (로컬 잔재 제외).
+# 이것이 없으면 새 ko-* 스킬이 의존하는 .claude/scripts · 엔진 레퍼런스 · GS 스킬이 빠진 채 반쯤 깨진다.
+FRAMEWORK_TREES = [".claude/skills", ".claude/agents", ".claude/scripts", ".claude/rules", ".claude/docs",
+                   ".claude/hooks", ".agent/workflows", "docs/engine-reference"]
+FRAMEWORK_FILES = [".agent/VERSION", "docs/CLAUDE.md", "design/CLAUDE.md", "src/CLAUDE.md",
+                   "docs/COLLABORATIVE-DESIGN-PRINCIPLE.md", "docs/WORKFLOW-GUIDE.md", "docs/skill-flow-diagrams.md",
+                   "production/.gdignore"]
+# 프로젝트가 채우는 데이터 — 없을 때만 씨앗으로 넣는다
+SEED_FILES = ["project.yaml", "docs/registry/architecture.yaml", "docs/architecture/tr-registry.yaml",
+              "design/registry/entities.yaml"]
+# 프로젝트가 고쳐 쓴 파일 — 덮어쓰지 않는다. kept: 프로젝트 값이 정본 / manual: 템플릿과 다르면 직접 병합하라고 알린다
+PROJECT_OWNED = {".claude/docs/technical-preferences.md": "kept",
+                 ".claude/rules/gameplay-code.md": "manual", ".claude/rules/doc-writing.md": "manual"}
+# 엔진 전용 — 프로젝트 엔진이 다르면 가져오지 않는다 (install.ps1 의 제외 규칙과 같다)
+ENGINE_ONLY = {
+    "unity": [".claude/skills/sf-*", ".agent/skills/*", ".agent/tools/lint/*", ".claude/docs/mcp-unity-guide.md",
+              ".claude/docs/editor-automation-decision.md", "docs/engine-reference/unity/*"],
+    "godot": ["src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", "docs/engine-reference/godot/*"],
+    "unreal": ["docs/engine-reference/unreal/*"],
+}
+# 템플릿에서 사라진 파일 — 프로젝트에 남아 있으면 지우고, 그 훅의 settings.json 등록도 지운다
+OBSOLETE = [".claude/docs/gs-agent-roster.md", ".claude/docs/gs-coding-standards.md", ".claude/docs/gs-coordination-rules.md",
+            ".claude/docs/gs-hooks-reference.md", ".claude/docs/gs-skills-reference.md", ".claude/docs/gs-workflow-catalog.yaml",
+            ".claude/hooks/post-compact.sh"]
 # 스튜디오 훅 등록 — settings.json 은 프로젝트 것을 덮지 않고, 빠진 등록만 더한다 (이벤트, matcher, command)
 STUDIO_HOOKS = [("PreToolUse", "Write|Edit|MultiEdit|NotebookEdit", "bash .claude/hooks/studio-write-guard.sh"),
                 ("PostToolUse", "", "bash .claude/hooks/studio-pause-notice.sh"),
                 # 엔진별 정적 검사 — 상류 validate-commit.sh 에서 unity_lint 연동이 빠져 별도 훅으로 옮겼다
                 ("PreToolUse", "Bash", "bash .claude/hooks/validate-lint.sh")]
 # 프로젝트마다 치환된 정본 문서는 통째로 바꾸지 않고, 템플릿에 새로 생긴 절만 끼워 넣는다 (파일, 절 머리, 앞에 둘 절 머리)
-SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4.")]
+SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4."),
+                   ("CLAUDE.md", "## Engine Version Reference", "## §7."),
+                   ("CLAUDE.md", "## 상류 GS 기준 문서", "## §7.")]
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존)
 MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json"]
@@ -134,9 +160,32 @@ def protocol_ack(st, by, note=""):
 
 
 # ---------------------------------------------------------------- 템플릿 업그레이드
+def _engine_of(st):
+    """업그레이드 대상 엔진. 표지 파일이 없으면 Unity 로 본다 (엔진 중립 이전 템플릿은 Unity 전용이었다)."""
+    return st.engine or "unity", st.engine is None
+
+
+def _engine_skip(rel, engine):
+    return any(fnmatch.fnmatch(rel, pat) for eng, pats in ENGINE_ONLY.items() if eng != engine for pat in pats)
+
+
+def _template_tracked(template, paths):
+    """템플릿의 git 추적 파일 (paths 아래). git 저장소가 아니면 None."""
+    p = subprocess.run(["git", "-C", template, "ls-files", "-z", "--", *paths], capture_output=True, text=True,
+                       encoding="utf-8")
+    if p.returncode != 0:
+        return None
+    return sorted({_rel(f) for f in p.stdout.split("\0") if f})
+
+
 def _template_files(template):
+    trees = UPGRADE_TREES + FRAMEWORK_TREES
+    tracked = _template_tracked(template, trees + UPGRADE_FILES + FRAMEWORK_FILES)
+    if tracked is not None:
+        return [f for f in tracked if not fnmatch.fnmatch(os.path.basename(f), "*.local.json")
+                and not any(s in f.split("/") for s in SKIP_NAMES)]
     files = []
-    for tree in UPGRADE_TREES:
+    for tree in trees:
         base = os.path.join(template, tree)
         for dirpath, dirnames, filenames in os.walk(base):
             dirnames[:] = [d for d in dirnames if d not in SKIP_NAMES]
@@ -144,24 +193,77 @@ def _template_files(template):
                 if fnmatch.fnmatch(n, "*.local.json"):
                     continue  # 머신별 설정은 템플릿에서 가져오지 않는다
                 files.append(_rel(os.path.relpath(os.path.join(dirpath, n), template)))
-    files += [f for f in UPGRADE_FILES if os.path.isfile(os.path.join(template, f))]
-    return sorted(files)
+    files += [f for f in UPGRADE_FILES + FRAMEWORK_FILES if os.path.isfile(os.path.join(template, f))]
+    return sorted(set(files))
+
+
+def _hook_key(cmd):
+    """등록 비교 키 — 훅 스크립트 파일 이름. 'bash .claude/hooks/x.sh' 와 'bash "$CLAUDE_PROJECT_DIR/.claude/hooks/x.sh"' 는 같다."""
+    m = re.findall(r"[\w.-]+\.(?:sh|py)", cmd or "")
+    return m[-1] if m else (cmd or "")
+
+
+def _template_hooks(template):
+    s = read_json(os.path.join(template, ".claude", "settings.json"), {}) or {}
+    out = [(ev, e.get("matcher", ""), h.get("command"), h.get("timeout", 15))
+           for ev, entries in (s.get("hooks") or {}).items() for e in entries for h in e.get("hooks", [])]
+    return out + [(ev, m, cmd, 15) for ev, m, cmd in STUDIO_HOOKS]
+
+
+def _settings_patch(st, template=None):
+    """프로젝트 settings.json 에 빠진 훅 등록 · deny 권한, 사라진 훅의 등록 — 프로젝트 값은 지우지 않는다."""
+    settings = read_json(os.path.join(st.root, ".claude", "settings.json"), {}) or {}
+    hooks = settings.get("hooks") or {}
+    have = {(ev, _hook_key(h.get("command"))) for ev, entries in hooks.items() for e in entries for h in e.get("hooks", [])}
+    obsolete = {os.path.basename(f) for f in OBSOLETE if f.startswith(".claude/hooks/")}
+    add, seen = [], set()
+    for ev, m, cmd, timeout in (_template_hooks(template) if template else
+                                [(ev, m, cmd, 15) for ev, m, cmd in STUDIO_HOOKS]):
+        key = (ev, _hook_key(cmd))
+        if key not in have and key not in seen and key[1] not in obsolete:
+            seen.add(key)
+            add.append((ev, m, cmd, timeout))
+    remove = sorted({f"{ev} {h.get('command')}" for ev, entries in hooks.items() for e in entries
+                     for h in e.get("hooks", []) if _hook_key(h.get("command")) in obsolete})
+    deny_add = []
+    if template:
+        tpl_deny = ((read_json(os.path.join(template, ".claude", "settings.json"), {}) or {}).get("permissions") or {}).get("deny", [])
+        mine = set((settings.get("permissions") or {}).get("deny", []))
+        deny_add = [d for d in tpl_deny if d not in mine]
+    return {"add": add, "remove": remove, "denyAdd": deny_add}
 
 
 def _missing_hooks(st):
-    settings = read_json(os.path.join(st.root, ".claude", "settings.json"), {}) or {}
-    hooks = settings.get("hooks") or {}
-    have = {(ev, h.get("command")) for ev, entries in hooks.items() for e in entries for h in e.get("hooks", [])}
-    return [(ev, m, cmd) for ev, m, cmd in STUDIO_HOOKS if (ev, cmd) not in have]
+    """(호환) 스튜디오 훅만 — 예전 호출부용."""
+    return [(ev, m, cmd) for ev, m, cmd, _t in _settings_patch(st)["add"]]
 
 
-def _add_hooks(st, missing):
+def _apply_settings_patch(st, patch):
     path = os.path.join(st.root, ".claude", "settings.json")
     settings = read_json(path, {}) or {}
     hooks = settings.setdefault("hooks", {})
-    for ev, matcher, cmd in missing:
-        hooks.setdefault(ev, []).append({"matcher": matcher, "hooks": [{"type": "command", "command": cmd, "timeout": 15}]})
+    obsolete = {os.path.basename(f) for f in OBSOLETE if f.startswith(".claude/hooks/")}
+    for ev in list(hooks):
+        kept = []
+        for e in hooks[ev]:
+            e = dict(e, hooks=[h for h in e.get("hooks", []) if _hook_key(h.get("command")) not in obsolete])
+            if e["hooks"]:
+                kept.append(e)
+        if kept:
+            hooks[ev] = kept
+        else:
+            del hooks[ev]
+    for ev, matcher, cmd, timeout in patch["add"]:
+        hooks.setdefault(ev, []).append({"matcher": matcher, "hooks": [{"type": "command", "command": cmd, "timeout": timeout}]})
+    if patch["denyAdd"]:
+        perms = settings.setdefault("permissions", {})
+        perms["deny"] = list(perms.get("deny", [])) + patch["denyAdd"]
     write_json(path, settings)
+
+
+def _add_hooks(st, missing):
+    """(호환) 예전 호출부용."""
+    _apply_settings_patch(st, {"add": [(ev, m, cmd, 15) for ev, m, cmd in missing], "remove": [], "denyAdd": []})
 
 
 def _section(text, head):
@@ -189,7 +291,7 @@ def _missing_sections(st, template):
     return out
 
 
-def _insert_section(st, rel, block):
+def _insert_section(st, rel, block, engine=None):
     path = os.path.join(st.root, rel)
     with open(path, encoding="utf-8") as f:
         mine = f.read()
@@ -198,6 +300,8 @@ def _insert_section(st, rel, block):
             i = mine.find("\n" + before) + 1
             mine = mine[:i] + block + mine[i:]
             break
+    if engine and "@docs/engine-reference/" in block:
+        mine = re.sub(r"(?m)^@docs/engine-reference/[a-z]+/VERSION\.md", f"@docs/engine-reference/{engine}/VERSION.md", mine)
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(mine)
 
@@ -208,10 +312,31 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
         raise StudioError(f"템플릿 저장소가 아님 (.agent/tools/studio/studio.py 없음): {template}")
     if os.path.samefile(template, st.root):
         raise StudioError("템플릿과 대상이 같은 폴더")
-    plan = {"replace": [], "add": [], "merge": [], "unchanged": 0}
+    engine, guessed = _engine_of(st)
+    version = ""
+    try:
+        with open(os.path.join(template, ".agent", "VERSION"), encoding="utf-8") as f:
+            version = f.read().strip()
+    except OSError:
+        pass
+    plan = {"replace": [], "add": [], "merge": [], "unchanged": 0, "seed": [], "manual": [], "kept": [],
+            "obsolete": [], "skippedByEngine": [], "engine": engine, "templateVersion": version or "unknown"}
+    if guessed:
+        plan["engineNote"] = "엔진 표지 파일 · project.yaml engine.name 이 없어 Unity 로 보고 진행"
     merged = {}
     for rel in _template_files(template):
         src, dst = os.path.join(template, rel), os.path.join(st.root, rel)
+        if _engine_skip(rel, engine):
+            plan["skippedByEngine"].append(rel)
+            continue
+        if rel in PROJECT_OWNED and os.path.isfile(dst):
+            if PROJECT_OWNED[rel] == "kept":
+                plan["kept"].append(rel)
+            elif _hash(src) != _hash(dst):
+                plan["manual"].append(rel)
+            else:
+                plan["unchanged"] += 1
+            continue
         if rel in MERGE_JSON and os.path.isfile(dst):
             tpl, mine = read_json(src), read_json(dst)
             result = deep_merge(tpl, mine)  # 템플릿 기반 + 프로젝트 값 우선 → 디렉터 결정 보존, 새 키만 추가
@@ -232,40 +357,52 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
             plan["replace"].append(rel)
         else:
             plan["unchanged"] += 1
-    hooks_patch = _missing_hooks(st)
-    if hooks_patch:
+    seeds_tracked = _template_tracked(template, SEED_FILES)
+    for rel in (seeds_tracked if seeds_tracked is not None else
+                [f for f in SEED_FILES if os.path.isfile(os.path.join(template, f))]):
+        if not os.path.exists(os.path.join(st.root, rel)):
+            plan["seed"].append(rel)
+    tpl_files = set(_template_files(template))
+    plan["obsolete"] = [f for f in OBSOLETE if f not in tpl_files and os.path.isfile(os.path.join(st.root, f))]
+    settings_patch = _settings_patch(st, template)
+    if settings_patch["add"] or settings_patch["remove"] or settings_patch["denyAdd"]:
         plan["merge"].append({"file": ".claude/settings.json", "newTopLevelKeys": [],
-                              "hooks": [f"{ev} {cmd}" for ev, _m, cmd in hooks_patch]})
+                              "hooks": [f"{ev} {cmd}" for ev, _m, cmd, _t in settings_patch["add"]],
+                              "hooksRemoved": settings_patch["remove"], "denyAdded": settings_patch["denyAdd"]})
     sections = _missing_sections(st, template)
     for rel, _text, head_line in sections:
         plan["merge"].append({"file": rel, "newTopLevelKeys": [], "section": head_line})
     head = subprocess.run(["git", "-C", template, "rev-parse", "--short", "HEAD"], capture_output=True, text=True)
     plan["templateRev"] = head.stdout.strip() or "unknown"
-    dirty = subprocess.run(["git", "-C", template, "status", "--porcelain", "--", *UPGRADE_TREES, *UPGRADE_FILES],
-                           capture_output=True, text=True)
+    dirty = subprocess.run(["git", "-C", template, "status", "--porcelain", "--", *UPGRADE_TREES, *UPGRADE_FILES,
+                            *FRAMEWORK_TREES, *FRAMEWORK_FILES], capture_output=True, text=True)
     if dirty.stdout.strip():
         plan["templateRev"] += "+uncommitted"  # 커밋 전 템플릿에서 가져왔음을 기록 (출처 추적)
     plan["dryRun"] = dry_run
-    touched = plan["replace"] + plan["add"] + [m["file"] for m in plan["merge"]]
+    touched = plan["replace"] + plan["add"] + plan["seed"] + plan["obsolete"] + [m["file"] for m in plan["merge"]]
     if dry_run or not touched:
         return plan
 
-    for rel in plan["replace"] + plan["add"]:
+    for rel in plan["replace"] + plan["add"] + plan["seed"]:
         dst = os.path.join(st.root, rel)
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(os.path.join(template, rel), dst)
+    for rel in plan["obsolete"]:
+        os.remove(os.path.join(st.root, rel))
     for rel, data in merged.items():
         write_json(os.path.join(st.root, rel), data)
-    if hooks_patch:
-        _add_hooks(st, hooks_patch)
+    if settings_patch["add"] or settings_patch["remove"] or settings_patch["denyAdd"]:
+        _apply_settings_patch(st, settings_patch)
     for rel, text, _head in sections:
-        _insert_section(st, rel, text)
+        _insert_section(st, rel, text, engine)
 
-    note = f"템플릿 업그레이드 {plan['templateRev']} — 교체 {len(plan['replace'])} · 추가 {len(plan['add'])} · 병합 {len(plan['merge'])}"
+    note = (f"템플릿 업그레이드 {plan['templateVersion']} ({plan['templateRev']}) — 교체 {len(plan['replace'])} · "
+            f"추가 {len(plan['add'])} · 씨앗 {len(plan['seed'])} · 병합 {len(plan['merge'])} · 정리 {len(plan['obsolete'])}")
     protocol_ack(st, by, note)
     body = (f"{note}\n\n바뀐 파일:\n" + "\n".join(f"- {f}" for f in touched)
-            + "\n\n**할 일:** 역할 헌장 · README · 업무 루프 프롬프트를 다시 읽고 이어서 일한다. "
-              "이 변경은 디렉터가 upgrade 로 적용한 것이다 (수상한 변경이 아님).")
+            + ("\n\n**직접 병합 필요 (덮어쓰지 않음):** " + ", ".join(plan["manual"]) if plan["manual"] else "")
+            + "\n\n**할 일:** 역할 헌장 · README · 업무 루프 프롬프트를 다시 읽고 이어서 일한다. 훅 등록이 바뀌었으면 "
+              "세션을 다시 띄워야 적용된다. 이 변경은 디렉터가 upgrade 로 적용한 것이다 (수상한 변경이 아님).")
     plan["tickets"] = [st.new_ticket(by, role, "info", f"프로토콜 갱신 ({plan['templateRev']})", body, priority="P2")["id"]
                        for role in st.roles]
     st.log("upgrade", template=template, rev=plan["templateRev"], files=len(touched))

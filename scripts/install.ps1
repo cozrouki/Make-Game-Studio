@@ -134,7 +134,7 @@ if ($DryRun) { Write-Info "DryRun — 파일을 쓰지 않습니다" }
 Write-Step "[1/6] 자산 복사"
 
 # 저장소 운영 전용 파일은 대상에 복사하지 않는다
-$excludeExact = @("README.md", "LICENSE", "THIRD_PARTY_LICENSES.md", ".gitattributes", ".gitignore",
+$excludeExact = @("README.md", "LICENSE", "THIRD_PARTY_LICENSES.md", "COMMERCIAL-LICENSE.md", "CHANGELOG.md", ".gitattributes", ".gitignore",
                   "skills-index.json", ".mcp.json.template", "production/session-state/.gitkeep")
 # studio-tests/ 는 상류 스킬 · 에이전트 자체 시험(템플릿 유지보수용)이라 게임 프로젝트에 넣지 않는다
 $excludePrefix = @("i18n/", "scripts/", "studio-tests/")
@@ -241,11 +241,12 @@ if (-not $DryRun) {
         if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
         Copy-Item -Path $src -Destination $dst -Force
     }
-    # MIT 고지 유지 — 원본 라이선스를 함께 둔다
+    # 라이선스 고지 유지 — 이 템플릿(PolyForm NC) · 상업 이용 안내 · 제3자(MIT · Apache) 고지를 함께 둔다
     $lic = Join-Path $Target ".agent\licenses"
     New-Item -ItemType Directory -Force -Path $lic | Out-Null
     Copy-Item (Join-Path $pkg "LICENSE") $lic -Force
     Copy-Item (Join-Path $pkg "THIRD_PARTY_LICENSES.md") $lic -Force
+    Copy-Item (Join-Path $pkg "COMMERCIAL-LICENSE.md") $lic -Force
     New-Item -ItemType Directory -Force -Path (Join-Path $Target "production\session-state") | Out-Null
 }
 Write-Ok "복사 완료 (+ .agent/licenses, production/session-state/)"

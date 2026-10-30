@@ -1,0 +1,64 @@
+# 템플릿 자체 검사 — 이 저장소(템플릿)만의 CI. 게임 프로젝트로 설치되지 않는다 (install.ps1 은 .github/workflows 를 복사하지 않음).
+# 도구 테스트(pytest) · 훅 bash 문법 · 도구별 미러가 정본과 같은지.
+name: template-tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    # 개발 환경이 Windows 이고 일부 테스트 · 도구가 Windows 경로를 전제한다
+    runs-on: windows-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: git 사용자 (스튜디오 테스트가 임시 저장소에 커밋한다)
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "ci"
+          git config --global core.autocrlf false
+
+      - name: pytest 설치
+        run: python -m pip install --upgrade pip pytest
+
+      - name: 도구 테스트
+        run: >
+          python -m pytest -q
+          .agent/tools/studio/tests .agent/tools/lint/tests .agent/tools/setup/tests
+          .agent/tools/artgen/tests .agent/tools/design/tests
+
+      - name: 훅 bash 문법
+        run: |
+          fail=0
+          for f in .claude/hooks/*.sh .claude/skills/ko-setup-engine/*.sh; do
+            bash -n "$f" || { echo "문법 오류: $f"; fail=1; }
+          done
+          exit $fail
+
+      - name: 도구별 룰 · 워크플로 미러가 정본과 같은지
+        run: |
+          python scripts/gen-rule-mirrors.py
+          if ! git diff --quiet; then
+            echo "미러가 정본(.claude/rules · .agent/workflows)과 다르다 — python scripts/gen-rule-mirrors.py 를 돌리고 커밋한다"
+            git --no-pager diff --stat
+            exit 1
+          fi
+
+      - name: 버전 · 변경 이력
+        run: |
+          v=$(tr -d '\r\n' < .agent/VERSION)
+          grep -q "^## $v " CHANGELOG.md || { echo "CHANGELOG.md 에 '## $v' 절이 없다"; exit 1; }

@@ -139,7 +139,7 @@
   - Game-Studios (L1): MIT — 고지 포함 ✅
   - SkillForge (L2): MIT — 고지 포함 ✅
 - **미재배포(설치/참조만)**: MCPForUnity(UPM 설치, 패키지 내부 라이선스), Besty0728(미설치), sickn33(포맷만) — 재배포 의무 없음, 크레딧만 표기.
-- 저장소 자체 원저작물(통합 레이어·wrapper·스크립트·문서)은 루트 `LICENSE`(MIT).
+- 저장소 자체 원저작물(통합 레이어·wrapper·스크립트·문서)은 루트 `LICENSE` — **2026-10-30 부터 PolyForm Noncommercial 1.0.0** (비상업 자유 · 상업은 저작권자 허락, `COMMERCIAL-LICENSE.md`). 그 이전 판(커밋 `2721499` 까지)은 MIT. 포함된 제3자 구성 요소는 각자의 라이선스(MIT · Apache-2.0)를 유지한다 — MIT · Apache-2.0 은 비상업 라이선스 저작물과 함께 배포하는 것을 허용하고, 그 부분의 고지는 `THIRD_PARTY_LICENSES.md` 에 그대로 둔다.
 
 ## 변경 이력
 
@@ -147,6 +147,7 @@
 |---|---|---|
 | 2026-05-13 | 최초 통합 — 4개 저장소 흡수, 5 Phase 완료 | Phase 1-5 모두 적용 |
 | 2026-07-20 | 라이선스 4종 GitHub API 확인(전부 MIT), 루트 `LICENSE` + `THIRD_PARTY_LICENSES.md` 신설, 영문 README 헤더 추가 | 공개 준비 |
+| 2026-10-30 | 템플릿 원저작물 라이선스 MIT → **PolyForm Noncommercial 1.0.0** (`LICENSE` · `COMMERCIAL-LICENSE.md`). 제3자 구성 요소 라이선스는 그대로 | 저작권자 단독(cozrouki) 결정 |
 | 2026-10-30 | 기획 스킬 6종 + `.agent/tools/design/` (game-design-ai-practice 방법론 참고, 원문 미포함) + 외부 카탈로그 `gdpractice` (CC BY-NC-SA, 선택 설치) | 도구 테스트 111개 |
 | 2026-10-30 | Game-Studios v1.2.0 동기화 + 엔진 중립 재편 (Unity · Godot · Unreal): 에이전트 49 · 스킬 74 · scripts · 엔진 레퍼런스 · `project.yaml`, `gs-*` 문서 폐지, `engine-layers.md` · `validate-lint.sh` · Godot/Unreal 측정 스크립트 · 엔진별 prereq · artgen 승격 · 스튜디오 쓰기 영역 | `scripts/sync-upstream.ps1` 갱신 |
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
