@@ -62,6 +62,9 @@ SOFTWARE.
 - Bundled here: 102 skills under `.agent/skills/` (SKILL.md + templates/) and
   `skills-index.json`, mirrored offline. The mirror is not modified in place;
   Korean customization lives in `.claude/skills/ko-*` / `sf-*`.
+- Adapted here: the architect persona from the upstream `AGENT.md`, translated
+  into Korean and rewritten as the persona and standards of `AGENTS.md`
+  (summarized at the top of `CLAUDE.md`).
 
 ```
 Copyright (c) 2025 AntiGravity Contributors

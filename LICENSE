@@ -8,12 +8,14 @@ Required Notice: Copyright (c) 2026 cozrouki (https://github.com/cozrouki/Make-G
   - 상업 목적의 사용은 저작권자의 허락(별도 상업 라이선스)이 필요하다 — COMMERCIAL-LICENSE.md.
   - 이 저장소에 포함된 제3자 구성 요소(Claude-Code-Game-Studios · Unity-SkillForge · mattpocock/skills · marketingskills = MIT,
     awesome-gamedev-agent-skills · android/skills = Apache-2.0)는 각자의 라이선스를 따른다 — THIRD_PARTY_LICENSES.md.
+    AGENTS.md 의 페르소나는 Unity-SkillForge(MIT)의 AGENT.md 를 옮겨 고쳐 쓴 것이다 — 그 부분의 MIT 고지도 함께 유지한다.
   - 2026-10-30 이전에 MIT 로 배포된 판(커밋 2721499 까지)은 그 판을 받은 사람에게 MIT 로 남는다.
   - 원문(영어)이 정본이다. 위 요약은 이해를 돕는 설명일 뿐이다.
 
 The original work in this repository is licensed under the PolyForm Noncommercial License 1.0.0 below.
 Commercial use requires a separate license from the copyright holder (see COMMERCIAL-LICENSE.md).
-Third-party components keep their own licenses (see THIRD_PARTY_LICENSES.md). Versions published under
+Third-party components keep their own licenses (see THIRD_PARTY_LICENSES.md); the persona in AGENTS.md
+is adapted from Unity-SkillForge's AGENT.md (MIT), whose notice is kept. Versions published under
 the MIT License before 2026-10-30 (up to commit 2721499) remain MIT-licensed for their recipients.
 
 ---

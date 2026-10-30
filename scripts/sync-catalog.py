@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """외부 스킬 카탈로그 동기화 — 업스트림 저장소를 .agent/<카탈로그>/ 로 미러하고 한국어 카탈로그(catalog.json)를 만든다.
 
-카탈로그 (진입 스킬 /mk · /gd 가 필요할 때만 읽는다 — .claude/skills/ 에 넣지 않아 세션 상시 비용이 없다):
+카탈로그 (진입 스킬 /ext 가 필요할 때만 읽는다 — .claude/skills/ 에 넣지 않아 세션 상시 비용이 없다):
   marketing   coreyhaines31/marketingskills        MIT — 템플릿에 포함 (git 추적)
   gamedev     gamedev-skills/awesome-gamedev-agent-skills  Apache-2.0 — 템플릿에 포함 (Unity · 분야 · 장르 · 워크플로만,
-              Godot · Unreal · Roblox · 웹 엔진 전용은 제외 — 이 템플릿은 Unity 전용)
+              Godot · Unreal · Roblox · 웹 엔진 전용은 아직 들이지 않음 — Unity 전용 시절의 범위.
+              Godot · Unreal 프로젝트는 엔진 무관 항목만 쓴다 — .claude/docs/engine-layers.md)
   android     android/skills                       Apache-2.0 — 템플릿에 포함 (기기 프로파일링 · Play 정책 · ANR · R8 4개만,
               Compose · Wear · TV 등 네이티브 앱 전용은 제외)
   gamedesign  Stanestane/game-design-skills-bundle PolyForm Noncommercial 1.0.0 — 템플릿에 포함하지 않음 (git 무시).
@@ -57,6 +58,7 @@ CATALOGS = {
         "skillsDir": "skills",
         "license": "Apache-2.0",
         "vendored": True,
+        # 엔진 전용 묶음은 skills/unity 만 — Godot · Unreal 전용 묶음은 아직 들이지 않았다 (위 docstring)
         "include": ["skills/disciplines/*/**", "skills/genres/*/**", "skills/unity/*/**", "skills/workflows/*/**",
                     "LICENSE", "NOTICE"],
         "exclude": ["*/agents/openai.yaml"],

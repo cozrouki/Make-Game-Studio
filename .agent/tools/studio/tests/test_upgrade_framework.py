@@ -182,3 +182,24 @@ def test_unity_project_keeps_unity_layers(tmp_path, template):
     assert "docs/engine-reference/unity/VERSION.md" in plan["add"]
     assert "src/CLAUDE.md" not in plan["add"]
     assert "@docs/engine-reference/unity/VERSION.md" in _read(st.root, "CLAUDE.md")
+
+
+def test_project_tuned_tool_configs_are_merged_not_replaced(tmp_path, template):
+    # standard.json · lint.config.json 은 "프로젝트가 고쳐 쓴다" 고 안내한 파일 — 교체하면 프로젝트 기준값 · 차단 규칙이 사라진다
+    _touch(template, ".agent/tools/design/standard.json", json.dumps({"staleDays": 90, "hubInbound": 8}))
+    _touch(template, ".agent/tools/lint/lint.config.json", json.dumps({"blocking": [], "exclude": ["Editor/"]}))
+    _git(template, "add", "-A")
+    _git(template, "commit", "-q", "-m", "tool configs")
+    st = _project(tmp_path, "unity", ("ProjectSettings/ProjectVersion.txt", "m_EditorVersion: 6000.3.1f1\n"))
+    _touch(st.root, ".agent/tools/design/standard.json", json.dumps({"staleDays": 30}))
+    _touch(st.root, ".agent/tools/lint/lint.config.json", json.dumps({"blocking": ["UL001"]}))
+
+    plan = M.upgrade(st, template)
+
+    standard = json.loads(_read(st.root, ".agent/tools/design/standard.json"))
+    lint = json.loads(_read(st.root, ".agent/tools/lint/lint.config.json"))
+    assert standard == {"staleDays": 30, "hubInbound": 8}              # 프로젝트 값 보존 + 템플릿 새 키
+    assert lint == {"blocking": ["UL001"], "exclude": ["Editor/"]}      # 디렉터가 더한 차단 규칙 보존
+    merged = {m["file"] for m in plan["merge"]}
+    assert {".agent/tools/design/standard.json", ".agent/tools/lint/lint.config.json"} <= merged
+    assert ".agent/tools/design/standard.json" not in plan["replace"]

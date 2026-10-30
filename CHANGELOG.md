@@ -12,6 +12,15 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.0.2 — 2026-10-30
+
+**고침 (수)**
+- `studio.py upgrade` 가 프로젝트가 고쳐 쓰는 설정 `.agent/tools/design/standard.json`(기획 검증 기준값) ·
+  `.agent/tools/lint/lint.config.json`(차단 규칙)을 템플릿 판으로 교체하던 것 — 이제 깊은 병합(프로젝트 값 우선, 새 키만 추가)
+- 출처 표시: `AGENTS.md` 의 아키텍트 페르소나는 Unity-SkillForge(MIT)의 `AGENT.md` 를 옮겨 고쳐 쓴 것이다 —
+  `ATTRIBUTION.md` §2 · `THIRD_PARTY_LICENSES.md` §2 · `LICENSE` 머리말에 적음 (이전 기록은 원저작물로 분류했었다. MIT 고지는 이미 보존돼 있었다)
+- `scripts/sync-catalog.py` 설명의 옛 진입 명령(`/mk` · `/gd` → `/ext`)과 "Unity 전용" 문구
+
 ## 2.0.1 — 2026-10-30
 
 **고침 (수)** — 영어 Windows(cp1252)에서 드러난 인코딩 문제 (템플릿 CI 첫 실행 실패로 발견)

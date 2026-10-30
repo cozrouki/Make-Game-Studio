@@ -31,6 +31,7 @@
 - **차용 자산**:
   - `.agent/skills/` 하위 102개 SKILL.md + templates/ — **직접 미러**
   - `skills-index.json` — **직접 복사**
+  - `AGENT.md` 의 아키텍트 페르소나 — **번역 · 재작성**: 한국어로 옮기고 이 템플릿 구조에 맞게 고쳐 `AGENTS.md` §1 이하 페르소나 · 표준의 바탕으로 썼다 (`CLAUDE.md` 상단 요약도 여기서 나옴). 2026-10-30 출처 확인 — 이전 기록은 페르소나를 원저작물로 분류했었다
 - **분기 정책**: 미러 디렉토리(`.agent/skills/`) **수정 금지**. 한국어 customization은 `.claude/skills/ko-*/` 또는 `.claude/skills/sf-*/` 에. 동기화 절차는 `.agent/skills/README-sync.md` 참조.
 
 ## 3. Unity-Skills / Besty0728 (L3 보조 카탈로그 — 옵션)
