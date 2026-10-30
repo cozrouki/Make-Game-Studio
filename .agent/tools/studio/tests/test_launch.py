@@ -13,7 +13,11 @@ import studio_launch as L  # noqa: E402
 
 
 @pytest.fixture
-def st(tmp_path):
+def st(tmp_path, monkeypatch):
+    # 사전 점검은 claude 실행 파일을 PATH 에서 찾는다 — 설치 여부에 기대지 않게 '있음' 으로 고정한다
+    # (CI 러너에는 Claude Code 가 없다. '없음' 동작은 test_launch_reports_missing_claude 가 따로 본다)
+    real_which = L.shutil.which
+    monkeypatch.setattr(L.shutil, "which", lambda name, *a, **kw: "/fake/bin/claude" if name == "claude" else real_which(name, *a, **kw))
     s = S.Studio(str(tmp_path), S.load_config())
     os.makedirs(s.dir)
     return s
@@ -154,3 +158,10 @@ def test_launch_cli_dry_run(st, capsys):
     assert S.main(["--root", st.root, "launch", "--dry-run", "--only", "planning"]) == 0
     out = capsys.readouterr().out
     assert "[dry-run]" in out and "/studio-join planning" in out
+
+
+def test_launch_reports_missing_claude(st, monkeypatch):
+    _team(st)
+    monkeypatch.setattr(L.shutil, "which", lambda name, *a, **kw: None)
+    r = L.launch(st, dry_run=True, probe=False)
+    assert any(i["level"] == "error" and "claude" in i["msg"] for i in r["issues"])

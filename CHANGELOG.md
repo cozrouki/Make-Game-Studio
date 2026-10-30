@@ -18,6 +18,7 @@
 - 외부 명령 출력을 읽는 곳에 `encoding="utf-8"` · `errors="replace"` 지정 (artgen `command` 어댑터 · prereq · 스튜디오 git · tasklist · 테스트)
 - `audio_post.py` 표준 입출력을 UTF-8 로 고정 — 부모(store · library)와 인코딩이 어긋나 한글 파일 이름에서 깨질 수 있었다 (한국어 Windows 포함)
 - `gen-rule-mirrors.py` 표준 출력 UTF-8 고정
+- 스튜디오 launch 테스트가 개발 PC 의 `claude` 설치에 기대던 것 — 픽스처에서 '있음' 으로 고정하고, '없으면 막는다' 는 테스트를 따로 둠 (CI 러너에는 Claude Code 가 없다)
 - CI: 실패한 테스트 · 오류 줄을 주석(annotation)으로 남김, 테스트가 실패해도 나머지 검사 실행, `actions/checkout@v5` · `setup-python@v6`
 
 ## 2.0.0 — 2026-10-30
