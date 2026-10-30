@@ -251,7 +251,7 @@ Names follow the engine's language (`.claude/rules/test-standards.md`):
 
 ## CI
 
-Tests run automatically on every push to `main` and on every pull request.
+Tests run automatically on every push to `master` and on every pull request.
 A failed test suite blocks merging.
 TPL_README_GODOT
 }
@@ -330,7 +330,7 @@ Names follow the engine's language (`.claude/rules/test-standards.md`):
 
 ## CI
 
-Tests run automatically on every push to `main` and on every pull request.
+Tests run automatically on every push to `master` and on every pull request.
 A failed test suite blocks merging. Unity CI needs the `UNITY_LICENSE`
 repository secret.
 TPL_README_UNITY
@@ -396,7 +396,7 @@ Names follow the engine's language (`.claude/rules/test-standards.md`):
 
 ## CI
 
-Tests run automatically on every push to `main` and on every pull request.
+Tests run automatically on every push to `master` and on every pull request.
 A failed test suite blocks merging. Unreal CI needs a self-hosted Windows
 runner with Unreal Editor installed and `UE_ROOT` set.
 TPL_README_UNREAL
@@ -408,9 +408,9 @@ name: Automated Tests
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
@@ -418,7 +418,7 @@ jobs:
     runs-on: ubuntu-latest
     # The action publishes its results as a check run. A new repository's
     # token is read-only, and without checks: write the job fails even when
-    # every test passes. If you protect main, require the `Run GdUnit4 Tests` job
+    # every test passes. If you protect master, require the `Run GdUnit4 Tests` job
     # check, not `test-results`: that check run concludes success even when a
     # test fails.
     permissions:
@@ -460,9 +460,9 @@ name: Automated Tests
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
@@ -506,9 +506,9 @@ name: Automated Tests
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:

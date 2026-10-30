@@ -19,7 +19,8 @@
   - `session-start.sh`, `session-stop.sh` — **로컬 fork** (한국어 출력 · STATUS 블록 + 상류 판정 · 해시 중복 방지 병합)
   - `gameplay-code.md` — **로컬 fork** (한국어 공통 규칙 + Unity · Godot · Unreal 절)
   - `settings.json` · `statusline.sh` — **로컬 fork** (권한 + 상류 v1.2.0 훅 등록 병합 + 스튜디오 · validate-lint)
-- **분기 정책**: fork 5개(`scripts/sync-upstream.ps1` `$forkFiles`)는 상류 `CHANGELOG.md` · `UPGRADING.md` 를 보고 손으로 반영. 나머지는 `sync-upstream.ps1 -GameStudiosOnly` 로 미러. unity_lint 연동은 상류 `validate-commit.sh` 를 고치지 않고 자체 훅 `validate-lint.sh` 로 분리했다.
+  - `.claude/scripts/test-scaffold.sh` — **로컬 fork** (생성 CI 기본 브랜치 `main` → `master`)
+- **분기 정책**: fork 6개(`scripts/sync-upstream.ps1` `$forkFiles`)는 상류 `CHANGELOG.md` · `UPGRADING.md` 를 보고 손으로 반영. 나머지는 `sync-upstream.ps1 -GameStudiosOnly` 로 미러. unity_lint 연동은 상류 `validate-commit.sh` 를 고치지 않고 자체 훅 `validate-lint.sh` 로 분리했다.
 
 ## 2. Unity-SkillForge / Unity3D-AntiGravitySkills (L2 C# 코드 패턴)
 

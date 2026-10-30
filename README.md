@@ -547,7 +547,7 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unit
 
 ### 자동 갱신 안 되는 fork 영역
 
-다음 5개 파일은 한국어 톤·로컬 컨텍스트가 머지되어 있어 **수동 검토**가 필요합니다 (스크립트의 `$forkFiles` 목록):
+다음 6개 파일은 한국어 톤·로컬 컨텍스트가 머지되어 있어 **수동 검토**가 필요합니다 (스크립트의 `$forkFiles` 목록):
 
 | 파일 | 설명 |
 |---|---|
@@ -556,6 +556,7 @@ git clone https://github.com/nlelouche/Unity-SkillForge.git        <PARENT>\Unit
 | `.claude/rules/gameplay-code.md` | 공통 규칙 + Unity · Godot · Unreal 절 |
 | `.claude/settings.json` | 권한 머지 + 훅 등록 19개 (상류 v1.2.0 등록 + 스튜디오 · validate-lint) |
 | `.claude/statusline.sh` | 한국어 상태줄 |
+| `.claude/scripts/test-scaffold.sh` | `/test-setup` 이 만드는 CI 의 기본 브랜치를 `main` → `master` (10곳) |
 
 엔진별 정적 검사(unity_lint)는 상류 `validate-commit.sh` 를 고치지 않고 자체 훅 `validate-lint.sh` 로 분리했다 — `validate-commit.sh` 는 미러로 그대로 갱신된다.
 
