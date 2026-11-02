@@ -8,7 +8,7 @@
 
 | 계층 | 무엇 | 어디 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 | `.claude/skills/` (Game-Studios 72 + ko-* 5 + master 1) | `/ko-sprint-plan`, `/ko-code-review`, `/unity-fullstack process` |
+| **L1 프로세스** | 스프린트·리뷰·게이트·릴리스 | `.claude/skills/` (101 — Game-Studios 74 + ko-* 18 + studio-* 4 + sf-* 3 + ext 1 + master 1) | `/ko-sprint-plan`, `/ko-code-review`, `/unity-fullstack process` |
 | **L2 C# 패턴** | FSM·인벤토리·능력·Job System 등 102개 | `.agent/skills/<카테고리>/<스킬>/` (SkillForge 미러) | `/sf-list`, `/sf-info`, `/sf-add` |
 | **L3 Editor 자동화** | 씬·프리팹·빌드·콘솔 등 실시간 조작 | MCPForUnity (35+ 도구) | `mcp__UnityMCP__*` |
 | **L3 보조 카탈로그** | Cinemachine/ShaderGraph/XR 등 도메인 지식 (옵션) | `.claude/docs/unity-skills-catalog/` (미설치) | 외부 URL: github.com/Besty0728/Unity-Skills |
