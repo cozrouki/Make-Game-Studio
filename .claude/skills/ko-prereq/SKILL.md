@@ -23,7 +23,7 @@ allowed-tools: Read, Bash, AskUserQuestion
 2. **보고** — 묶음(기본 · Unity · Godot · Unreal · Android · 생성 · 사용자 결정)별 표로 보여 준다. 엔진 묶음은 프로젝트 엔진 것만 점검되고, 나머지는 `skip` 과 이유("Unity 전용 — godot 프로젝트")가 붙는다 — 표에 그 이유를 그대로 적는다: 상태 · 내용 · 해결 방법. 상태 기호: ✔ ok · ✖ missing · ! warn · ? 사용자 결정 · · 사용 안 함.
    - `auto: true` 인 missing 은 자동 설치 후보다. 용량(`size`) · 라이선스(`license`)를 함께 적는다.
    - 제목이 `(선택)` 인 항목(VS Code · pytest · graphify · adb 기기 · protobuf)은 없어도 실패가 아니고, `install` 을 항목 없이 실행하면 설치하지 않는다. 사용자가 원할 때만 `install <항목>` 으로 설치한다 (graphify 는 dev 가 기존 C# 코드 구조를 파악할 때 — 실행은 항상 `GRAPHIFY_BACKEND=none`)
-   - 자동 설치가 안 되는 missing 은 `manual` 안내를 그대로 보여 준다 (Unity 에디터는 `unityhub://` 링크, Godot 은 다운로드 페이지와 PATH 안내, Unreal 은 Epic Games Launcher, ComfyUI 본체는 릴리스 페이지).
+   - 자동 설치가 안 되는 missing 은 `manual` 안내를 그대로 보여 준다 (Unity 에디터는 `unityhub://` 링크, Godot 은 다운로드 페이지와 PATH 안내 · Godot MCP 는 `.claude/docs/mcp-godot-guide.md` — .NET 판 프로젝트만이고 모두 선택 항목, Unreal 은 Epic Games Launcher, ComfyUI 본체는 릴리스 페이지).
 3. **확인** — 자동 설치 후보가 있으면 `AskUserQuestion` 으로 묻는다:
    - `[A] 모두 설치 (Recommended)` / `[B] 일부만` (항목을 다시 물음) / `[C] 설치 안 함`
    - 대용량 모델(GB 단위)이 있으면 질문에 총 용량과 저장 위치(ComfyUI models 폴더)를 적는다.

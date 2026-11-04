@@ -146,7 +146,11 @@ if (-not $isUnity) {
     $excludeExact += @(".claude/docs/mcp-unity-guide.md", ".claude/docs/editor-automation-decision.md")
 }
 # Godot 전용 — src/ 가 Godot 코드 루트다 (다른 엔진에 src/ 를 만들면 코드 루트 판정이 모호해진다)
-if ($Engine -ne "Godot") { $excludeExact += @("src/CLAUDE.md", "src/.gitkeep", "production/.gdignore") }
+# Godot 전용 도구 — 문서 주석 · 공식 문서 근거 · 라이선스 고지 스킬(/ko-godot-*) · Godot MCP 가이드
+if ($Engine -ne "Godot") {
+    $excludeExact += @("src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", ".claude/docs/mcp-godot-guide.md")
+    $excludePrefix += @(".agent/tools/godot/", ".claude/skills/ko-godot-doc/", ".claude/skills/ko-godot-ref/", ".claude/skills/ko-godot-license/")
+}
 
 $toolPrefixes = @("AGENTS.md", ".agent/")   # 공통
 # Claude: 상류 GS 스킬이 읽는 루트 자산 (project.yaml · docs/ · design/ · src/CLAUDE.md)

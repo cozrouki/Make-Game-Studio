@@ -122,6 +122,21 @@
   - **외부 카탈로그 `gdpractice` (선택 설치)**: 원고를 템플릿에 넣지 않는다. 사용자가 `scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>` 로 직접 받고, `.agent/gdpractice/` 는 git 무시 대상이다. `/ext gdpractice <장>` 이 장 하나만 읽고, 산출물에 원문을 옮기지 않고 출처만 남긴다
 - **로컬 추가**: `.agent/catalogs/gdpractice.ko.json` — 부(部)마다 이 템플릿에서의 쓰임과 기획 단계를 짧게 적은 것 (원고 번역 · 요약 아님)
 
+## 7-6. Godot-MCP · GameDev-MCP-Server / IvanMurzak (Godot .NET 판 L3 백엔드 — **미포함**)
+
+- **저장소**: https://github.com/IvanMurzak/Godot-MCP (애드온 · `godot-cli`) · https://github.com/IvanMurzak/GameDev-MCP-Server (서버)
+- **라이선스**: 둘 다 **Apache-2.0** (2026-11-04 GitHub API 확인)
+- **사용 유형**: **재배포하지 않음.** `prereq.py install godot-mcp-addon` 이 사용자 확인 뒤 `npx godot-cli@<고정 버전> install-plugin` 을 실행해 대상 프로젝트에 애드온을 받는다(애드온의 라이선스는 애드온과 함께 들어간다). 서버 실행 파일은 애드온이 GitHub 릴리스에서 받는다. 템플릿에는 점검 코드(`prereq.py` 의 Godot MCP 항목)와 사용 안내(`.claude/docs/mcp-godot-guide.md`, 자체 작성)만 있다
+- **템플릿의 선택**: 상류 기본값인 ai-game.dev 클라우드 대신 **로컬 서버(Custom 모드)** 를 안내한다. 실제 Godot 에디터에서의 연결은 검증하지 않았다 (가이드에 명시)
+
+## 7-7. Godot 문서 · 기여 문서 / Godot Engine 커뮤니티 (`ko-godot-doc` 작성 원칙 — 옮겨 고쳐 씀)
+
+- **원문**: godotengine/godot-contributing-docs — "Contribute documentation"(ways_to_contribute/development) · "Writing guidelines"(development/documentation/docs_writing_guidelines). 문서 주석 문법은 Godot 4.7 문서 "GDScript documentation comments" (docs.godotengine.org)
+- **라이선스**: **CC BY 3.0** — 저작자 "Juan Linietsky, Ariel Manzur, and the Godot Engine community" (https://creativecommons.org/licenses/by/3.0/)
+- **사용 유형**: **번역 · 개작** — 문서 작성 원칙(아는 것만 쓴다 · 모르면 비워 두고 표시 · 능동태 · 정확한 동사 · 금지어 · "Returns" · "if true" · 명시적 참조 · 실제 예)을 한국어 게임 코드 문서 주석에 맞게 옮기고 고쳤다 → `.claude/skills/ko-godot-doc/SKILL.md`. 예문은 게임 코드용으로 새로 썼다. 원문의 동적 타입 예시 원칙은 이 템플릿의 정적 타입 규칙과 달라 따르지 않는다(스킬에 명시). 검사 도구 `.agent/tools/godot/godot_doc_audit.py` 는 자체 작성
+- **근거로만 참조(옮기지 않음)**: Godot 4.7 문서의 소개 "문서의 구성" · 명령줄 문서(`--doctool` · `--gdscript-docs`) · "Complying with licenses" · 클래스 참조 `Engine` → `ko-godot-ref` · `ko-godot-license` 의 절차와 `.agent/tools/godot/godot_license_check.py`(자체 작성)의 판정 기준. 각 스킬 머리에 페이지 · 확인 날짜를 적었다
+- 고지는 `THIRD_PARTY_LICENSES.md` §11
+
 ## 8. game-design-skills-bundle / Stanestane (외부 카탈로그 `gamedesign` — **미포함**)
 
 - **저장소**: https://github.com/Stanestane/game-design-skills-bundle
@@ -152,4 +167,5 @@
 | 2026-10-30 | 기획 스킬 6종 + `.agent/tools/design/` (game-design-ai-practice 방법론 참고, 원문 미포함) + 외부 카탈로그 `gdpractice` (CC BY-NC-SA, 선택 설치) | 도구 테스트 111개 |
 | 2026-10-30 | Game-Studios v1.2.0 동기화 + 엔진 중립 재편 (Unity · Godot · Unreal): 에이전트 49 · 스킬 74 · scripts · 엔진 레퍼런스 · `project.yaml`, `gs-*` 문서 폐지, `engine-layers.md` · `validate-lint.sh` · Godot/Unreal 측정 스크립트 · 엔진별 prereq · artgen 승격 · 스튜디오 쓰기 영역 | `scripts/sync-upstream.ps1` 갱신 |
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
+| 2026-11-04 | Godot .NET 판 L3: Godot-MCP (Apache-2.0, 미포함 — prereq 가 사용자 확인 후 설치, 로컬 서버 기본) · `ko-godot-doc` (godot-contributing-docs CC BY 3.0 원칙 개작) · `ko-godot-ref` · `ko-godot-license` (Godot 4.7 문서 근거) + `.agent/tools/godot/` | 2.2.0 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

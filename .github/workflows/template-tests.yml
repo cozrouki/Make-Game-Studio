@@ -41,7 +41,7 @@ jobs:
           set +e
           python -m pytest -q -rfE --tb=short \
             .agent/tools/studio/tests .agent/tools/lint/tests .agent/tools/setup/tests \
-            .agent/tools/artgen/tests .agent/tools/design/tests > pytest.log 2>&1
+            .agent/tools/artgen/tests .agent/tools/design/tests .agent/tools/godot/tests > pytest.log 2>&1
           code=$?
           cat pytest.log
           if [ $code -ne 0 ]; then

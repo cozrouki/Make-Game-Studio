@@ -35,7 +35,7 @@ cd Make-Game-Studio
    cd D:\Projects\MyGame
    claude
    ```
-5. **`/ko-prereq`** — 최초 1회 (PC 마다). 자동화에 필요한 것(Git · Claude Code · uv · 엔진 에디터(Unity · Godot · Unreal 중 프로젝트 엔진) · MCP(Unity) · gdUnit4(Godot) · GPU · ComfyUI · 생성 모델 · 효과음 라이브러리 · 로컬 설정)을 점검하고, 자동으로 고칠 수 있는 것은 확인 후 설치합니다. Claude Code 밖에서는 `python .agent/tools/setup/prereq.py check` → `install`.
+5. **`/ko-prereq`** — 최초 1회 (PC 마다). 자동화에 필요한 것(Git · Claude Code · uv · 엔진 에디터(Unity · Godot · Unreal 중 프로젝트 엔진) · MCP(Unity · Godot .NET 판은 선택) · gdUnit4(Godot) · GPU · ComfyUI · 생성 모델 · 효과음 라이브러리 · 로컬 설정)을 점검하고, 자동으로 고칠 수 있는 것은 확인 후 설치합니다. Claude Code 밖에서는 `python .agent/tools/setup/prereq.py check` → `install`.
 6. **`/ko-setup-engine`** — 최초 1회. 엔진(Unity · Godot · Unreal)·패키지·입력·명명 규칙을 실측하고 플랫폼·목표 fps 두 가지만 물은 뒤 `project.yaml`(정본) · `technical-preferences.md` · `CLAUDE.md` Technology Stack을 씁니다. 엔진·패키지를 업그레이드할 때마다 다시 실행합니다.
 7. **`/unity-fullstack`** — 이후 작업 메뉴 (스프린트·스토리·리뷰·코드 패턴·에디터 자동화·그래픽 생성).
 8. 진행 방식을 고릅니다.
@@ -65,9 +65,9 @@ git checkout -- .claude/hooks
 
 | 계층 | 무엇 | 위치 | 진입 |
 |---|---|---|---|
-| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (101 skills — Game-Studios v1.2.0 74 포함) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
+| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (104 skills — Game-Studios v1.2.0 74 포함) | `.claude/skills/` | `/unity-fullstack`, `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, `/studio-*` 등 |
 | **L2 C# 코드 패턴** (Unity 전용) | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `.agent/skills/` | `/sf-list`, `/sf-info`, `/sf-add` |
-| **L3 Editor 자동화** (Unity 전용 — Godot · Unreal 은 명령줄 경로) | MCPForUnity 35+ 도구 사용 가이드 | `.claude/docs/mcp-unity-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) |
+| **L3 Editor 자동화** (Unity · Godot .NET 판 — 그 밖은 명령줄 경로) | MCPForUnity 35+ 도구 사용 가이드 · Godot MCP 설치 · 연결 가이드 (로컬 서버, 선택 설치) | `.claude/docs/mcp-unity-guide.md` · `.claude/docs/mcp-godot-guide.md` | `mcp__UnityMCP__*` (별도 MCPForUnity 설치 필요) · Godot MCP (`/ko-prereq` 로 설치) |
 | **L4 패키징** | 번들·워크플로 정의 | `.claude/data/bundles.json`, `workflows.json` | JSON 직접 참조 |
 | **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악 생성 / 효과음 라이브러리 → 검수 → 엔진 승격 (Unity 는 임포트 설정까지 · Godot · Unreal 은 파일까지, 백엔드 중립, 로컬 ComfyUI) | `.agent/tools/artgen/` | `/ko-art-gen` · [도구 문서](.agent/tools/artgen/README.md) |
 | **기획 검증** (모든 엔진) | 기획 문서 프런트매터 · 관계 그래프 검사와 영향 범위, 기획 결정 카드(이유 · 대안 · 영향 등급 · 사후 확인), 결정론 밸런스 · 경제 시뮬레이션, 데이터 스키마 우선 설계, 대사 일관성, 레벨 룸 그래프 · 콘텐츠 패턴. 계산 · 검사는 코드, 판정은 사람 | `.agent/tools/design/` | `/ko-design-graph` · `/ko-design-decision` · `/ko-balance-sim` · `/ko-data-schema` · `/ko-narrative-lint` · `/ko-content-pattern` |
@@ -86,11 +86,14 @@ git checkout -- .claude/hooks
 | 엔진 레퍼런스 (`docs/engine-reference/`) | ✅ Unity 6.3 LTS | ✅ Godot 4.7 | ✅ UE 5.8 |
 | `/ko-setup-engine` 실측 | ✅ `measure.sh` | ✅ `measure-godot.sh` | ✅ `measure-unreal.sh` |
 | 테스트 실행 (`.claude/scripts/test-run.sh`) · `/ko-tdd` · `/ko-diagnose` | ✅ NUnit | ✅ gdUnit4 | ✅ Automation |
-| `/ko-prereq` 엔진 점검 | ✅ 에디터 · MCP · 분석기 | ✅ 실행 파일 · gdUnit4 | ✅ 에디터 |
+| `/ko-prereq` 엔진 점검 | ✅ 에디터 · MCP · 분석기 | ✅ 실행 파일 · gdUnit4 (+ .NET 판: .NET SDK · Godot MCP) | ✅ 에디터 |
 | 그래픽 · 사운드 승격 (`/ko-art-gen`) | ✅ 임포트 설정까지 | 파일까지 (임포트 수동) | 파일까지 (임포트 수동) |
 | 스튜디오 모드 쓰기 영역 | ✅ | ✅ | ✅ |
 | L2 코드 패턴 카탈로그 (SkillForge) | ✅ | — | — |
-| L3 에디터 자동화 (MCP) | ✅ | — (명령줄) | — (명령줄) |
+| L3 에디터 자동화 (MCP) | ✅ | ✅ .NET 판만 · 선택 설치 (GDScript 전용은 명령줄) | — (명령줄) |
+| 문서 주석 검사 · 작성 (`/ko-godot-doc`) | — | ✅ GDScript `##` | — |
+| 공식 문서 근거 찾기 (`/ko-godot-ref`) | — | ✅ 고정 버전 문서 · `--doctool` | — |
+| 출시 라이선스 고지 점검 (`/ko-godot-license`) | (`/release-checklist`) | ✅ 엔진 MIT · 제3자 | (`/release-checklist`) |
 | 정적 검사 (커밋 훅) | ✅ unity_lint + UNT | — ("검사 안 함" 알림) | — ("검사 안 함" 알림) |
 
 ## 그래픽 생성 — `/ko-art-gen`
@@ -234,7 +237,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 - **Agents**: 49개 (Tier 1-3, 엔진 전문가 Unity 5 · Godot 5 · Unreal 5 포함)
 - **Rules**: 15개 (fork 2 — 엔진별 gameplay-code · doc-writing, GS 13)
 - **Hooks**: 21개 (등록 19 · 라이브러리 2 — 세션 시작/종료, validate-commit/push/lint/read/write/registry/assets, notify, log-agent, 스튜디오 가드 · 정지 알림 등)
-- **Docs**: `.claude/docs/` — 자체 4개(엔진 계층 표 · MCP 가이드 · 결정 매트릭스 · 출처) + GS 문서 · 템플릿 · 디렉터 게이트 (상류 이름 그대로) · `docs/engine-reference/` (Unity · Godot · Unreal)
+- **Docs**: `.claude/docs/` — 자체 5개(엔진 계층 표 · MCP 가이드 Unity · Godot · 결정 매트릭스 · 출처) + GS 문서 · 템플릿 · 디렉터 게이트 (상류 이름 그대로) · `docs/engine-reference/` (Unity · Godot · Unreal)
 - **Scripts**: 35개 (`.claude/scripts/` — GS 도우미: 스토리 · ADR · 레지스트리 · 테스트 실행 · 설정 쓰기)
 - **설정**: `project.yaml` (엔진 · 전문가 · 명명 · 모드 · 단계 정본), `project.local.yaml` (개인 · git 무시) — `/settings`
 - **Data**: 2개 (bundles.json 6개 번들, workflows.json 5개 워크플로)
@@ -333,7 +336,7 @@ python scripts/gen-rule-mirrors.py
 
 | 단계 | 하는 일 |
 |---|---|
-| 엔진 판정 | `ProjectSettings/ProjectVersion.txt` → Unity · `project.godot` → Godot · `*.uproject` → Unreal (`-Engine` 으로 지정 가능). Unity 전용 계층(SkillForge · unity_lint · MCP 가이드 · `sf-*`)은 Unity 일 때만, 엔진 레퍼런스는 그 엔진 것만, `src/CLAUDE.md` 는 Godot 일 때만 복사한다 |
+| 엔진 판정 | `ProjectSettings/ProjectVersion.txt` → Unity · `project.godot` → Godot · `*.uproject` → Unreal (`-Engine` 으로 지정 가능). Unity 전용 계층(SkillForge · unity_lint · MCP 가이드 · `sf-*`)은 Unity 일 때만, Godot 전용(`ko-godot-doc` · `ko-godot-ref` · `ko-godot-license` · `.agent/tools/godot/` · Godot MCP 가이드)은 Godot 일 때만, 엔진 레퍼런스는 그 엔진 것만, `src/CLAUDE.md` 는 Godot 일 때만 복사한다 |
 | 복사 | 이 저장소의 **git 추적 파일만** 복사 (로컬 잔재 · `studio-tests/` 제외). `project.yaml` · `docs/registry/` 등 프로젝트 데이터는 대상에 없을 때만 넣는다. `-Tools Claude,Codex,Copilot,Cursor,Gemini,OpenCode,Windsurf,Antigravity` 또는 `All` 로 선택, 공통(`AGENTS.md`·`.agent/`)은 항상. 라이선스 고지(`LICENSE` · `COMMERCIAL-LICENSE.md` · `THIRD_PARTY_LICENSES.md`)는 `.agent/licenses/`, 출처 지문(어느 템플릿 · 버전 · 커밋에서 왔는지 — 외부 전송 없음, 지워도 됨)은 `.agent/PROVENANCE.md`. 대상에 이미 있는 `.github/` · `docs/` · `design/` · `src/` · `production/` 은 **파일 단위로 병합**(CI 워크플로 등 보존, 겹치는 파일만 `-Force` 시 백업 후 교체) |
 | 자리표시자 | `AGENTS.md` §6 게임 폴더 매핑 표, `<SharedModule>`(룰 glob 포함), 네임스페이스 예시, 태그 예시를 실제 값으로 — `.claude`·`.agent`·`.cursor` 룰 미러까지. `CLAUDE.md` 엔진 레퍼런스 import 줄을 대상 엔진으로 |
 | 권한 (Unity) | `.claude/settings.local.json` 생성, 이미 있으면 **병합**(기존 권한 보존) |
@@ -504,6 +507,8 @@ L1 스킬 대부분(`code-review`·`dev-story`·`smoke-check`·`test-setup`·`te
 3. **Besty0728/Unity-Skills** — L3 보조 카탈로그 (현재 미설치, 외부 URL 참조)
 4. **sickn33/antigravity-awesome-skills** — L4 패키징 포맷 차용
 5. **CoplayDev/unity-mcp (MCPForUnity)** — L3 Editor 실행 백엔드
+5-1. **IvanMurzak/Godot-MCP** · **GameDev-MCP-Server** — Godot .NET 판 L3 백엔드 (Apache-2.0, **미포함** — `/ko-prereq` 가 사용자 확인 후 `godot-cli` 로 설치)
+5-2. **godotengine/godot-contributing-docs** — `ko-godot-doc` 의 문서 작성 원칙 (CC BY 3.0, 한국어로 옮기고 고쳐 씀)
 6. **coreyhaines31/marketingskills** — 외부 카탈로그 `marketing` (MIT, 포함)
 7. **gamedev-skills/awesome-gamedev-agent-skills** — 외부 카탈로그 `gamedev` (Apache-2.0, 포함 — LICENSE · NOTICE 동봉)
 7-1. **android/skills** (Google) — 외부 카탈로그 `android` (Apache-2.0, 포함 — 기기 · 스토어 단 4개만, LICENSE 동봉)
@@ -658,6 +663,9 @@ scripts/
 │   ├── ko-data-schema/
 │   ├── ko-narrative-lint/
 │   ├── ko-content-pattern/
+│   ├── ko-godot-doc/            Godot 전용 3종 — 문서 주석 검사 · 작성 (godot-contributing-docs 원칙, CC BY 3.0)
+│   ├── ko-godot-ref/            · 공식 문서 근거 찾기
+│   ├── ko-godot-license/        · 출시 라이선스 고지 점검
 │   ├── studio-join/             스튜디오 모드 4종 (역할 등록·업무 루프 / 디렉터 세션 / 디렉터 지시 / 디렉터 콘솔)
 │   ├── studio-director/
 │   ├── studio-ticket/
@@ -670,6 +678,7 @@ scripts/
 ├── docs/
 │   ├── engine-layers.md         ★ 엔진 계층 표 (Unity · Godot · Unreal — 엔진별 차이의 정본)
 │   ├── mcp-unity-guide.md       MCPForUnity 35 도구 한국어 가이드 (Unity)
+│   ├── mcp-godot-guide.md       Godot MCP 설치 · 로컬 연결 가이드 (Godot .NET 판, 선택)
 │   ├── editor-automation-decision.md  L1/L2/L3 결정 매트릭스 (Unity)
 │   ├── ATTRIBUTION.md           출처·라이선스
 │   └── <GS 문서>                coding-standards · coordination-rules · config-resolution · technical-preferences · templates/ · director-gates/ 등 (상류 이름 그대로)
@@ -751,7 +760,7 @@ Unity-only for now.
 |---|---|---|
 | **L1 — Process** (all engines) | 95 workflow slash-command skills (sprint / review / gate / release / debug · TDD), incl. Claude-Code-Game-Studios v1.2.0 | `/unity-fullstack`, `/sprint-plan`, `/code-review`, … |
 | **L2 — C# code patterns** (Unity) | 102 SkillForge skills (FSM, inventory, abilities, Jobs/Burst — 14 categories) | `/sf-list`, `/sf-info`, `/sf-add` |
-| **L3 — Editor automation** (Unity) | MCPForUnity (35+ Editor tools) + usage guide | `mcp__UnityMCP__*` |
+| **L3 — Editor automation** (Unity · Godot .NET) | MCPForUnity (35+ Editor tools) + usage guide · Godot-MCP install/connect guide (local server, optional) | `mcp__UnityMCP__*` · Godot MCP |
 | **L4 — Packaging** | bundle / workflow definitions | `.claude/data/` |
 
 Plus 21 hooks, 15 rules, 49 agents (Unity · Godot · Unreal specialists), 35 helper scripts, `project.yaml` config — all auto-applied.
@@ -815,6 +824,8 @@ and studio docs are Korean only.
 - [mattpocock/skills](https://github.com/mattpocock/skills) — source of `ko-diagnose` · `ko-tdd` · `ko-grill` · `ko-agent-retro` (MIT, Korean adaptations)
 - [Unity-SkillForge](https://github.com/nlelouche/Unity-SkillForge) — L2 code-pattern skills
 - [unity-mcp / MCPForUnity](https://github.com/CoplayDev/unity-mcp) — L3 Editor backend (installed as a UPM package)
+- [Godot-MCP](https://github.com/IvanMurzak/Godot-MCP) — optional L3 backend for Godot .NET projects (Apache-2.0, not bundled; installed on request by `/ko-prereq`)
+- [godot-contributing-docs](https://github.com/godotengine/godot-contributing-docs) — writing principles adapted in `ko-godot-doc` (CC BY 3.0)
 - antigravity-awesome-skills — L4 packaging format (format only)
 - [marketingskills](https://github.com/coreyhaines31/marketingskills) — `marketing` catalog (MIT, bundled)
 - [awesome-gamedev-agent-skills](https://github.com/gamedev-skills/awesome-gamedev-agent-skills) — `gamedev` catalog (Apache-2.0, bundled with LICENSE + NOTICE; Unity / discipline / genre / workflow skills only)

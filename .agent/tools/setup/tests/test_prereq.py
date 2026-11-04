@@ -344,3 +344,64 @@ def test_prereq_unreal_engine_path_root_is_used(unreal_project, tmp_path, monkey
     (unreal_project / "project.yaml").write_text(f'engine:\n  name: "Unreal"\n  path: "{root.as_posix()}"\n', encoding="utf-8")
     row = {r["id"]: r for r in prereq.run_checks(_ctx(unreal_project, roles=["dev"]))}["unreal-editor"]
     assert row["status"] == "ok"
+
+
+# ---- Godot MCP (선택 — .NET 판 프로젝트만) ----
+def _godot_rows(root):
+    return {r["id"]: r for r in prereq.run_checks(_ctx(root, roles=["dev"]))}
+
+
+def test_prereq_godot_mcp_skips_gdscript_only_project_with_reason(godot_project):
+    rows = _godot_rows(godot_project)
+    for i in ("dotnet-sdk", "godot-mcp-addon", "godot-mcp-json"):
+        assert rows[i]["status"] == "skip"
+        assert "GDScript 전용" in rows[i]["detail"]
+
+
+def test_prereq_godot_mcp_skips_other_engines_with_reason(project):
+    rows = {r["id"]: r for r in prereq.run_checks(_ctx(project, roles=["dev"]))}
+    assert rows["godot-mcp-addon"]["status"] == "skip"
+    assert "Godot 전용" in rows["godot-mcp-addon"]["detail"]
+
+
+@pytest.fixture
+def godot_dotnet_project(godot_project):
+    (godot_project / "GodotGame.csproj").write_text('<Project Sdk="Godot.NET.Sdk/4.7.0">\n</Project>\n', encoding="utf-8")
+    return godot_project
+
+
+def test_prereq_godot_mcp_addon_missing_then_disabled_then_ok(godot_dotnet_project):
+    assert _godot_rows(godot_dotnet_project)["godot-mcp-addon"]["status"] == "missing"
+    (godot_dotnet_project / "addons" / "godot_mcp").mkdir(parents=True)
+    assert _godot_rows(godot_dotnet_project)["godot-mcp-addon"]["status"] == "warn"
+    with open(godot_dotnet_project / "project.godot", "a", encoding="utf-8") as f:
+        f.write('\n[editor_plugins]\nenabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")\n')
+    assert _godot_rows(godot_dotnet_project)["godot-mcp-addon"]["status"] == "ok"
+
+
+def test_prereq_godot_mcp_json_local_ok_cloud_warns(godot_dotnet_project, tmp_path, monkeypatch):
+    monkeypatch.setattr(prereq.os.path, "expanduser", lambda p: str(tmp_path / "home"))
+    mcp = godot_dotnet_project / ".mcp.json"
+    assert _godot_rows(godot_dotnet_project)["godot-mcp-json"]["status"] == "missing"
+    mcp.write_text(json.dumps({"mcpServers": {"ai-game-developer": {"type": "http", "url": "https://ai-game.dev/mcp/p/abc"}}}),
+                   encoding="utf-8")
+    row = _godot_rows(godot_dotnet_project)["godot-mcp-json"]
+    assert row["status"] == "warn" and "클라우드" in row["detail"]
+    mcp.write_text(json.dumps({"mcpServers": {"ai-game-developer": {"type": "http", "url": "http://localhost:21088/mcp/p/abc"}}}),
+                   encoding="utf-8")
+    assert _godot_rows(godot_dotnet_project)["godot-mcp-json"]["status"] == "ok"
+
+
+def test_prereq_dotnet_sdk_needs_8_or_newer(godot_dotnet_project, monkeypatch):
+    monkeypatch.setattr(prereq.shutil, "which", lambda n: "dotnet" if n == "dotnet" else None)
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (0, "6.0.400 [C:/dotnet/sdk]\n"))
+    assert _godot_rows(godot_dotnet_project)["dotnet-sdk"]["status"] == "missing"
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (0, "8.0.404 [C:/dotnet/sdk]\n"))
+    assert _godot_rows(godot_dotnet_project)["dotnet-sdk"]["status"] == "ok"
+
+
+def test_prereq_godot_mcp_install_dry_run_pins_version(godot_dotnet_project, monkeypatch):
+    monkeypatch.setattr(prereq.shutil, "which", lambda n: "/usr/bin/npx" if n == "npx" else None)
+    cmd = prereq.i_godot_mcp_addon(_ctx(godot_dotnet_project), dry=True)
+    # 버전은 CLI 고정으로 — install-plugin --version 은 전역 --version 에 가로채여 설치하지 않는다
+    assert f"godot-cli@{prereq.GODOT_MCP_VERSION}" in cmd and "--version" not in cmd and "--path" in cmd

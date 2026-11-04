@@ -60,15 +60,15 @@ Persona 요약(상세는 AGENTS.md): 당신은 AAA 스튜디오의 Distinguished
 
 ## §8. 게임 개발 풀스택 통합 환경
 
-이 프로젝트의 `.claude/` 와 `.agent/` 는 외부 저장소(Donchitos/Claude-Code-Game-Studios v1.2.0, nlelouche/Unity-SkillForge, CoplayDev/unity-mcp, sickn33/antigravity-awesome-skills, mattpocock/skills)를 통합한 **엔진 중립 4계층 스킬 셋**이다 (Unity · Godot · Unreal). L2 코드 패턴 · L3 에디터 자동화는 아직 Unity 전용이다 — 엔진별 칸은 `.claude/docs/engine-layers.md`. 마스터 진입은 `/unity-fullstack`.
+이 프로젝트의 `.claude/` 와 `.agent/` 는 외부 저장소(Donchitos/Claude-Code-Game-Studios v1.2.0, nlelouche/Unity-SkillForge, CoplayDev/unity-mcp, sickn33/antigravity-awesome-skills, mattpocock/skills)를 통합한 **엔진 중립 4계층 스킬 셋**이다 (Unity · Godot · Unreal). L2 코드 패턴은 아직 Unity 전용, L3 에디터 자동화는 Unity 와 Godot .NET 판(선택 설치)에 있다 — 엔진별 칸은 `.claude/docs/engine-layers.md`. 마스터 진입은 `/unity-fullstack`.
 
 ### 4계층 매핑
 
 | 계층 | 무엇 | 진입 |
 |---|---|---|
-| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (101 skills, GS 74 + ko-* 18 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, 기획 검증 `/ko-design-graph` · `/ko-design-decision` · `/ko-balance-sim` · `/ko-data-schema` · `/ko-narrative-lint` · `/ko-content-pattern`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
+| **L1 프로세스** (모든 엔진) | 스프린트·리뷰·게이트·릴리스 워크플로 (104 skills, GS 74 + ko-* 21 + studio-* 4 + master 1 + sf-* 3 + ext 1) | `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-art-gen`, `/ko-diagnose`, `/ko-tdd`, `/ko-grill`, `/ko-agent-retro`, 기획 검증 `/ko-design-graph` · `/ko-design-decision` · `/ko-balance-sim` · `/ko-data-schema` · `/ko-narrative-lint` · `/ko-content-pattern`, Godot 전용 `/ko-godot-doc` · `/ko-godot-ref` · `/ko-godot-license`, `/studio-*`, 그 외 `/code-review`, `/sprint-plan`, `/gate-check` 등 영어 GS skill |
 | **L2 C# 코드 패턴** (Unity 전용) | SkillForge 102 skills (FSM, 인벤토리, 능력, Jobs/Burst 등 14 카테고리) | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill> [경로]` |
-| **L3 Editor 자동화** (Unity 전용 — Godot · Unreal 은 명령줄 경로) | MCPForUnity 35+ 도구 + 한국어 사용 가이드 | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
+| **L3 Editor 자동화** (Unity · Godot .NET 판 — 그 밖은 명령줄 경로) | MCPForUnity 35+ 도구 + 한국어 사용 가이드 · Godot MCP (로컬 서버, 선택 설치) | `mcp__UnityMCP__*` 도구 / `.claude/docs/mcp-unity-guide.md` / `.claude/docs/mcp-godot-guide.md` / 결정 매트릭스 `.claude/docs/editor-automation-decision.md` |
 | **L4 패키징** | 번들·워크플로 정의 (antigravity 포맷 차용) | `.claude/data/bundles.json` (6 번들), `.claude/data/workflows.json` (5 워크플로) |
 | **그래픽 · 사운드 생성** | 기획 → 이미지 · 음악(로컬 ComfyUI) · 효과음(CC0 라이브러리) → 엔진 에셋 (백엔드 중립 artgen CLI + 어댑터 — Unity 는 임포트 설정까지, Godot · Unreal 은 파일 승격까지) | `/ko-art-gen`, `.agent/tools/artgen/README.md` |
 | **사전 설치** | 자동화 실행 전 도구 · 모델 · 라이브러리 · 설정 점검 · 자동 설치 | `/ko-prereq`, `.agent/tools/setup/prereq.py` |

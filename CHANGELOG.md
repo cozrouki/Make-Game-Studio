@@ -12,6 +12,28 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.2.0 — 2026-11-04
+
+**새 기능 (부)**
+- **Godot MCP (Godot .NET 판 L3 에디터 자동화, 선택 설치)** — IvanMurzak/Godot-MCP (Apache-2.0)를 템플릿에 넣지 않고 점검 · 안내로 붙였다.
+  `/ko-prereq` 의 Godot 묶음에 선택 항목 3개: `dotnet-sdk`(.NET 8+) · `godot-mcp-addon`(확인 후 `npx godot-cli@0.34.0 install-plugin --path`) ·
+  `godot-mcp-json`(Claude Code 등록). GDScript 전용 프로젝트에서는 "GDScript 전용 — 하지 않음" 으로 이유를 밝히고 건너뛴다.
+  **로컬 서버(Custom 모드)가 기본** — 상류 기본값인 ai-game.dev 클라우드 등록은 실패가 아니라 경고로 알린다. 안내: `.claude/docs/mcp-godot-guide.md`.
+  실제 Godot 에디터 연결은 검증하지 않았다 (가이드에 명시)
+- **`/ko-godot-doc`** — Godot 게임 코드 문서화. Godot 기여 문서(CC BY 3.0)의 원칙(아는 것만 쓴다 · 모르면 비워 두고 표시 · 이름 되풀이 금지 ·
+  금지어)과 GDScript 문서 주석(`##`) 문법으로 설명을 쓰고, `.agent/tools/godot/godot_doc_audit.py` 가 빠진 공개 멤버(GD001) ·
+  `class_name` 스크립트 설명(GD002) · 무효 태그(GD003) 등을 찾는다. 판정 PASS · CONCERNS · NOT ASSESSED, C# 은 "검사 안 함" 으로 보고
+- **`/ko-godot-ref`** — Godot 공식 문서 근거 찾기. 엔진 레퍼런스에 없는 API 질문을 고정 버전 문서(`/en/<버전>/`, `stable` · `latest` 는 출처로
+  쓰지 않음)에서 찾아 주장마다 URL 을 달고, 없으면 NOT SOURCEABLE. 설치된 에디터가 있으면 `godot --doctool` 덤프로 대조. 승인 후 레퍼런스에 보충
+- **`/ko-godot-license`** — 출시 전 라이선스 고지 점검 (Godot 4.7 "Complying with licenses" 기준). `.agent/tools/godot/godot_license_check.py` 가
+  엔진 MIT 고지(GL001) · 제3자 구성 요소 고지(GL002) · iOS 인데 로그뿐(GL003) · 라이선스 없는 애드온(GL004) · 파일 배포뿐(GL005)을 찾는다.
+  `add` 는 `Engine.get_license_text()` · `get_copyright_info()` · `get_license_info()` 로 크레딧 화면 뼈대를 승인 후 넣는다 (반환 구조는 클래스 참조로 확인)
+- `/ko-godot-doc` 2-5: 에디터 없이 `godot --headless --gdscript-docs <경로>` 로 문서가 만들어지는지 확인하는 방법
+- `scene-files.md` Godot 절: Godot MCP 로 에디터가 연결돼 있으면 `.tscn` 을 손으로 고치지 않고 에디터를 거쳐 바꾼다
+
+**설치 · 업그레이드**
+- Godot 전용 자산(`.agent/tools/godot/` · `ko-godot-doc` · `ko-godot-ref` · `ko-godot-license` · `mcp-godot-guide.md`)은 Godot 프로젝트에만 설치 · `upgrade` 된다
+
 ## 2.1.0 — 2026-10-30
 
 **새 기능 (부)**

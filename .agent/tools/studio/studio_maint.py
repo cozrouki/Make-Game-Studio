@@ -33,6 +33,7 @@ DEFAULT_PROTOCOL_FILES = [
 # 비상업 번들(.agent/gamedesign · .agent/gdpractice)은 절대 넣지 않는다 (사용자가 직접 받음).
 # .agent/android 는 작아서(약 0.5MB) 넣는다 — prereq 의 Android 점검과 dev 스킬 맵이 이 미러를 본다
 UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/setup", ".agent/tools/lint", ".agent/tools/design",
+                 ".agent/tools/godot",
                  ".agent/android",
                  ".claude/skills/studio-join", ".claude/skills/studio-status", ".claude/skills/studio-ticket",
                  ".claude/skills/studio-director",
@@ -41,6 +42,7 @@ UPGRADE_TREES = [".agent/tools/studio", ".agent/tools/artgen", ".agent/tools/set
                  ".claude/skills/ko-agent-retro", ".claude/skills/ko-setup-engine",
                  ".claude/skills/ko-design-decision", ".claude/skills/ko-design-graph", ".claude/skills/ko-balance-sim",
                  ".claude/skills/ko-narrative-lint", ".claude/skills/ko-data-schema", ".claude/skills/ko-content-pattern",
+                 ".claude/skills/ko-godot-doc", ".claude/skills/ko-godot-ref", ".claude/skills/ko-godot-license",
                  ".claude/skills/ext", ".agent/catalogs"]
 UPGRADE_FILES = [".agent/workflows/studio-join.md", ".agent/workflows/ko-art-gen.md", ".agent/workflows/ext.md",
                  ".agent/workflows/ko-prereq.md",
@@ -64,7 +66,9 @@ PROJECT_OWNED = {".claude/docs/technical-preferences.md": "kept",
 ENGINE_ONLY = {
     "unity": [".claude/skills/sf-*", ".agent/skills/*", ".agent/tools/lint/*", ".claude/docs/mcp-unity-guide.md",
               ".claude/docs/editor-automation-decision.md", "docs/engine-reference/unity/*"],
-    "godot": ["src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", "docs/engine-reference/godot/*"],
+    "godot": ["src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", "docs/engine-reference/godot/*",
+              ".agent/tools/godot/*", ".claude/skills/ko-godot-doc/*", ".claude/skills/ko-godot-ref/*",
+              ".claude/skills/ko-godot-license/*", ".claude/docs/mcp-godot-guide.md"],
     "unreal": ["docs/engine-reference/unreal/*"],
 }
 # 템플릿에서 사라진 파일 — 프로젝트에 남아 있으면 지우고, 그 훅의 settings.json 등록도 지운다

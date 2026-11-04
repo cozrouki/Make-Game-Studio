@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 
 엔진 중립 4계층 스킬 셋입니다 (Unity · Godot · Unreal). 무엇을 할지 알려주시면 적절한 레이어로 안내합니다.
 
-먼저 프로젝트 엔진을 확인한다 (`project.yaml` `engine.name` → 표지 파일, `.claude/docs/engine-layers.md`). 미설정이면 `/ko-setup-engine` 부터 안내한다. L2 · L3 는 Unity 전용이다 — 다른 엔진이면 그 행을 "이 엔진에는 없음" 으로 보여 주고 대체 경로(엔진 레퍼런스 · 전문가 에이전트 · 명령줄 자동화)를 함께 적는다.
+먼저 프로젝트 엔진을 확인한다 (`project.yaml` `engine.name` → 표지 파일, `.claude/docs/engine-layers.md`). 미설정이면 `/ko-setup-engine` 부터 안내한다. L2 는 Unity 전용이다. L3 는 Unity(MCP for Unity)와 Godot **.NET 판**(Godot MCP, 선택 설치 — 프로젝트 루트에 `Godot.NET.Sdk` `.csproj` 가 있을 때)에 있다 — 해당하지 않는 엔진이면 그 행을 "이 엔진에는 없음" 으로 보여 주고 대체 경로(엔진 레퍼런스 · 전문가 에이전트 · 명령줄 자동화)를 함께 적는다.
 
 ## 레이어 선택
 
@@ -18,7 +18,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 |---|---|---|---|
 | `process` | **L1** 워크플로 (Game-Studios) | 스프린트·리뷰·게이트·릴리스 | `/ko-sprint-plan`, `/ko-code-review`, `/sprint-status` |
 | `code` | **L2** C# 코드 패턴 (SkillForge — Unity 전용) | FSM·인벤토리·능력·Job System | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill>` |
-| `editor` | **L3** Editor 자동화 | 씬·프리팹·빌드 자동 조작 | Unity: `mcp__UnityMCP__*` 도구, `.claude/docs/mcp-unity-guide.md` · Godot · Unreal: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
+| `editor` | **L3** Editor 자동화 | 씬·프리팹·빌드 자동 조작 | Unity: `mcp__UnityMCP__*` 도구, `.claude/docs/mcp-unity-guide.md` · Godot .NET 판: Godot MCP, `.claude/docs/mcp-godot-guide.md` (설치는 `/ko-prereq`) · GDScript 전용 Godot · Unreal: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
 | `bundle` | **L4** 번들·워크플로 | 카테고리화된 작업 묶음 안내 | `.claude/data/bundles.json`, `workflows.json` |
 
 ## 인수 없이 호출된 경우
@@ -42,6 +42,9 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 - **새 기능 구현 사이클**: `/ko-story-cycle <스토리-id>` (L1 process) + `/sf-info <관련-skill>` (L2 code 참조)
 - **구현 전 의도 맞추기**: `/ko-grill <계획>` — 결정 트리를 라운드 질문으로 정리 (추천 답 포함)
 - **테스트 먼저 구현**: `/ko-tdd <기능>` — 합의한 접점에서 red → green 수직 조각
+- **Godot 코드 문서화**: `/ko-godot-doc audit|write <경로>` — 문서 주석(`##`)이 빠진 공개 멤버 찾기 · 에디터 도움말에 뜨는 설명 쓰기 (Godot 전용)
+- **Godot API 근거**: `/ko-godot-ref <질문>` — 엔진 레퍼런스에 없는 API 를 고정 버전 공식 문서에서 찾아 출처를 단다 (Godot 전용)
+- **Godot 출시 라이선스 고지**: `/ko-godot-license check|add` — 엔진 MIT · 제3자 고지가 게임에 들어갔는지 (Godot 전용)
 - **어려운 버그 진단**: `/ko-diagnose <증상>` — 재현 루프 → 최소화 → 가설 → 계측 → 수정 + 회귀 테스트
 - **에이전트 작업 환경 회고**: `/ko-agent-retro` — 세션을 돌아보고 지침 · 자동 검사 · 도구 비용 개선점 제안 (스프린트 회고는 `/retrospective`)
 - **성능 문제 진단**: `/ko-perf-profile <범위>` + `.agent/skills/06-performance/` 카탈로그

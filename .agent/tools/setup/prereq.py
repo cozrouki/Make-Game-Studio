@@ -266,6 +266,121 @@ def c_gdunit4(ctx):
     return ("ok", "addons/gdUnit4") if os.path.isfile(p) else         ("missing", "gdUnit4 없음 — Godot 테스트 실행(.claude/scripts/test-run.sh godot)이 돌지 않는다")
 
 
+# ---------------------------------------------------------------- Godot MCP (선택 — .NET 판 프로젝트만)
+# IvanMurzak/Godot-MCP (Apache-2.0). 애드온 · godot-cli 버전을 함께 고정한다 — 2026-11-04 확인 (v0.34.0, 2026-10-31).
+# 요구: Godot 4.3+ .NET(mono) 판 · .NET 8 SDK. GDScript 전용 Godot 은 애드온을 컴파일하지 못한다.
+# 템플릿 기본은 로컬 서버(Custom 모드) — 상류 기본값인 ai-game.dev 클라우드는 계정 로그인 · 외부 경유라 쓰지 않는다.
+GODOT_MCP_VERSION = "0.34.0"
+GODOT_MCP_GUIDE = ".claude/docs/mcp-godot-guide.md"
+
+
+def _godot_csproj(ctx):
+    """루트의 Godot .NET 프로젝트 파일 (Godot.NET.Sdk). 없으면 None — GDScript 전용 프로젝트."""
+    try:
+        names = sorted(n for n in os.listdir(ctx.root) if n.endswith(".csproj"))
+    except OSError:
+        return None
+    for n in names:
+        try:
+            with open(os.path.join(ctx.root, n), encoding="utf-8", errors="replace") as f:
+                if "Godot.NET.Sdk" in f.read():
+                    return n
+        except OSError:
+            pass
+    return None
+
+
+def godot_dotnet_only(check):
+    """Godot .NET 프로젝트에서만. 아니면 왜 하지 않는지 밝힌다 (조용한 skip 금지)."""
+    def wrapped(ctx):
+        if ctx.engine != "godot":
+            why = f"{ctx.engine} 프로젝트" if ctx.engine else "엔진 미설정"
+            return "skip", f"Godot 전용 — {why}"
+        if not _godot_csproj(ctx):
+            return "skip", "GDScript 전용 프로젝트 (Godot.NET.Sdk .csproj 없음) — Godot MCP 는 .NET(C#) 판만 지원해 하지 않음"
+        return check(ctx)
+    return wrapped
+
+
+def c_dotnet_sdk(ctx):
+    exe = shutil.which("dotnet")
+    if not exe:
+        return "missing", ".NET SDK 없음 — Godot MCP 애드온 빌드에 .NET 8 이상 필요"
+    code, out = _run([exe, "--list-sdks"])
+    majors = [int(m) for m in re.findall(r"^(\d+)\.\d+\.\d+", out or "", re.M)]
+    if code != 0 or not majors:
+        return "missing", f"dotnet --list-sdks 에 SDK 없음 ({(out or '').strip()[:80]})"
+    if max(majors) < 8:
+        return "missing", f".NET SDK {max(majors)} — 8 이상 필요"
+    note = " · .NET 10 은 어셈블리 리로드 때 에디터가 멈출 수 있음(상류 안내: DOTNET_ThreadPool_ThreadsToKeepAlive=-1)" \
+        if 10 in majors and 8 not in majors and 9 not in majors else ""
+    return "ok", f".NET SDK {', '.join(str(m) for m in sorted(set(majors)))}{note}"
+
+
+def c_godot_mcp_addon(ctx):
+    addon = os.path.join(ctx.root, "addons", "godot_mcp")
+    if not os.path.isdir(addon):
+        return "missing", f"addons/godot_mcp 없음 — Godot MCP 애드온 미설치 (안내: {GODOT_MCP_GUIDE})"
+    try:
+        with open(os.path.join(ctx.root, "project.godot"), encoding="utf-8", errors="replace") as f:
+            text = f.read()
+    except OSError:
+        text = ""
+    plugins = re.search(r"\[editor_plugins\][^\[]*", text)
+    if not plugins or "godot_mcp" not in plugins.group(0):
+        return "warn", "addons/godot_mcp 는 있으나 project.godot [editor_plugins] 에서 꺼져 있음"
+    return "ok", "addons/godot_mcp (플러그인 켜짐)"
+
+
+def i_godot_mcp_addon(ctx, dry):
+    npx = shutil.which("npx")
+    if not npx:
+        raise RuntimeError("Node.js(npx) 없음 — https://nodejs.org 설치 후 다시 실행")
+    # 애드온 버전은 CLI 버전을 따른다 — CLI 를 고정하면 애드온도 고정된다. `install-plugin --version x` 는 0.34.0 에서
+    # 전역 --version(버전 출력)에 가로채여 설치 없이 0 으로 끝난다 (2026-11-04 실측) — 쓰지 않는다
+    argv = [npx, "-y", f"godot-cli@{GODOT_MCP_VERSION}", "install-plugin", "--path", ctx.root]
+    if dry:
+        return " ".join(argv[1:])
+    code, out = _run(argv, timeout=900)
+    if code != 0:
+        raise RuntimeError(out[-400:])
+    return (f"Godot MCP 애드온 {GODOT_MCP_VERSION} — addons/godot_mcp · .csproj NuGet 참조 · 플러그인 켜기. "
+            f"다음: 에디터 독에서 Custom 모드 + Start Server, 그 뒤 MCP 등록 ({GODOT_MCP_GUIDE})")
+
+
+def _godot_mcp_servers(servers):
+    """Godot MCP 로 보이는 등록 — 로컬 gamedev-mcp-server 이거나 ai-game.dev / localhost 의 /mcp 주소. (이름은 도구마다 달라 주소로 본다)"""
+    found = []
+    for name, s in (servers or {}).items():
+        if not isinstance(s, dict) or "unity" in name.lower():
+            continue
+        url = str(s.get("url", ""))
+        cmd = " ".join([str(s.get("command", ""))] + [str(a) for a in s.get("args", [])])
+        if "ai-game.dev" in url:
+            found.append((name, "cloud"))
+        elif "gamedev-mcp-server" in cmd or re.match(r"https?://(localhost|127\.0\.0\.1)(:\d+)?/mcp", url):
+            found.append((name, "local"))
+    return found
+
+
+def c_godot_mcp_json(ctx):
+    sources = [(".mcp.json", (_read_json(os.path.join(ctx.root, ".mcp.json"), {}) or {}).get("mcpServers"))]
+    user = _read_json(os.path.join(os.path.expanduser("~"), ".claude.json"), {}) or {}
+    sources.append(("Claude Code 사용자 설정", user.get("mcpServers")))
+    key = ctx.root.replace("\\", "/").lower()
+    for path, proj in (user.get("projects") or {}).items():
+        if path.replace("\\", "/").lower() == key:
+            sources.append(("Claude Code 프로젝트 로컬 설정", proj.get("mcpServers")))
+    found = [(where, name, kind) for where, servers in sources for name, kind in _godot_mcp_servers(servers)]
+    local = [f for f in found if f[2] == "local"]
+    if local:
+        return "ok", f"{local[0][0]} {local[0][1]} (로컬)"
+    if found:
+        return "warn", (f"{found[0][0]} {found[0][1]} 이 ai-game.dev 클라우드로 연결됨 — 템플릿 기본은 로컬 서버. "
+                        f"의도한 것이면 그대로 둔다 ({GODOT_MCP_GUIDE})")
+    return "missing", "Godot MCP 서버 등록 없음 (.mcp.json · ~/.claude.json)"
+
+
 def _project_unreal_version(ctx):
     for n in sorted(os.listdir(ctx.root)):
         if n.endswith(".uproject"):
@@ -746,6 +861,15 @@ ITEMS = [
          None, "https://godotengine.org/download — 실행 파일을 PATH 에 두거나 project.yaml engine.path"),
     Item("gdunit4", "Godot", {"dev"}, "gdUnit4 테스트 프레임워크 (addons/gdUnit4)", engine_only("godot", c_gdunit4), None,
          "에디터 AssetLib 에서 gdUnit4 설치 후 플러그인 활성화 (/test-setup)"),
+    Item("dotnet-sdk", "Godot", {"dev"}, "(선택) .NET 8+ SDK — Godot MCP (.NET 판 프로젝트만)",
+         godot_dotnet_only(c_dotnet_sdk), None, "https://dotnet.microsoft.com/download (.NET 8 SDK)"),
+    Item("godot-mcp-addon", "Godot", {"dev"}, f"(선택) Godot MCP 애드온 {GODOT_MCP_VERSION} (addons/godot_mcp)",
+         godot_dotnet_only(c_godot_mcp_addon), i_godot_mcp_addon,
+         f"npx -y godot-cli@{GODOT_MCP_VERSION} install-plugin --path <프로젝트> ({GODOT_MCP_GUIDE})",
+         license="Apache-2.0"),
+    Item("godot-mcp-json", "Godot", {"dev"}, "(선택) Godot MCP 서버 등록 (로컬)", godot_dotnet_only(c_godot_mcp_json), None,
+         f"에디터 Godot MCP 독: Custom 모드 → Start Server, 그 뒤 npx -y godot-cli@{GODOT_MCP_VERSION} setup-mcp "
+         f"claude-code <프로젝트> --url <독의 Server URL> ({GODOT_MCP_GUIDE})"),
     Item("unreal-editor", "Unreal", {"dev"}, "프로젝트 EngineAssociation 과 같은 Unreal 에디터",
          engine_only("unreal", c_unreal_editor), None, "Epic Games Launcher > Unreal Engine > 라이브러리에서 설치"),
     Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈",
@@ -780,7 +904,7 @@ ITEMS = [
          None, "python scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>"),
 ]
 REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "gdpractice", "pytest", "adb-device", "protobuf",
-                 "graphify"}
+                 "graphify", "dotnet-sdk", "godot-mcp-addon", "godot-mcp-json"}
 # 선택 항목은 missing 이어도 실패로 보지 않고, install 을 항목 없이 실행할 때도 설치하지 않는다 (이름을 줘야 설치)  # missing 이어도 실패로 보지 않음
 
 

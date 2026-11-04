@@ -193,7 +193,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+### 11. Godot contributing docs — writing principles adapted in `ko-godot-doc`
+
+- Source: https://github.com/godotengine/godot-contributing-docs ("Contribute
+  documentation", "Writing guidelines") and the Godot 4.7 manual page "GDScript
+  documentation comments" (https://docs.godotengine.org).
+- License: **Creative Commons Attribution 3.0 Unported (CC BY 3.0)** —
+  https://creativecommons.org/licenses/by/3.0/
+- Attribution: Juan Linietsky, Ariel Manzur, and the Godot Engine community.
+- Changes: translated into Korean and adapted for game-project doc comments in
+  `.claude/skills/ko-godot-doc/SKILL.md` (new examples; the upstream rule to write
+  examples with dynamic typing is replaced by this template's static-typing rule).
+  No upstream text is reproduced verbatim beyond short rule names.
+- Also consulted (facts and procedures only, not reproduced): the Godot 4.7
+  manual pages "Introduction", "Command line tutorial", "Complying with licenses"
+  and the `Engine` class reference — cited by URL in `ko-godot-ref` and
+  `ko-godot-license`.
+
 ## Referenced / separately installed (NOT bundled — no redistribution)
+
+### 12. Godot-MCP and GameDev-MCP-Server — optional L3 backend for Godot .NET projects
+
+- Source: https://github.com/IvanMurzak/Godot-MCP and
+  https://github.com/IvanMurzak/GameDev-MCP-Server — License: **Apache-2.0**
+- Not redistributed here. On the user's confirmation, `prereq.py` runs
+  `npx godot-cli@<pinned> install-plugin`, which downloads the addon (with its own
+  license) into the user's project; the addon downloads the server binary from
+  GitHub releases. This repo only adds checks in `prereq.py` and a usage guide
+  (`.claude/docs/mcp-godot-guide.md`).
 
 ### 3. MCPForUnity (unity-mcp) — L3 Editor automation backend
 

@@ -22,14 +22,17 @@
 | 테스트 프레임워크 | Unity Test Framework (NUnit) — EditMode / PlayMode | gdUnit4 (`addons/gdUnit4/`) | Automation (Spec / `IMPLEMENT_SIMPLE_AUTOMATION_TEST`) |
 | 테스트 실행 (공통 진입점) | `bash .claude/scripts/test-run.sh unity [--platform playmode]` | `bash .claude/scripts/test-run.sh godot` | `bash .claude/scripts/test-run.sh unreal [--filter <루트>]` |
 | 테스트 실행 (에디터가 열려 있을 때) | MCP `mcp__UnityMCP__run_tests` | — | — |
-| 콘솔 · 로그 | MCP `read_console` · `Editor.log` · `Player.log` | 에디터 출력 · `user://logs/godot.log` | `Saved/Logs/<프로젝트>.log` |
+| 콘솔 · 로그 | MCP `read_console` · `Editor.log` · `Player.log` | 에디터 출력 · `user://logs/godot.log` (Godot MCP 가 있으면 RQL `console`) | `Saved/Logs/<프로젝트>.log` |
 | 프로파일러 | MCP `manage_profiler` · Profiler 창 | Debugger > Profiler · Monitors | Unreal Insights · `stat unit` / `stat game` |
-| 에디터 자동화 | MCP for Unity (`.claude/docs/mcp-unity-guide.md`) | `godot --headless --script` · `@tool` 스크립트 | 에디터 Python (`-ExecutePythonScript`) · 커맨드렛 |
+| 에디터 자동화 | MCP for Unity (`.claude/docs/mcp-unity-guide.md`) | **.NET 판**: Godot MCP (선택 설치, `.claude/docs/mcp-godot-guide.md`) · **모든 판**: `godot --headless --script` · `@tool` 스크립트 | 에디터 Python (`-ExecutePythonScript`) · 커맨드렛 |
 | 정적 검사 (커밋 훅 `validate-lint.sh`) | `unity_lint.py` (UL001~) + Unity 공식 분석기(UNT) | **없음** — 리뷰에서 `gameplay-code.md` Godot 절 확인 | **없음** — 리뷰에서 `gameplay-code.md` Unreal 절 확인 |
+| 문서 주석 (에디터 도움말) | — (C# XML 주석은 IDE 몫) | `/ko-godot-doc` — `godot_doc_audit.py` (GD001~, GDScript `##`) | — |
+| 엔진 레퍼런스 밖 API 근거 찾기 | — (`docs/engine-reference/unity/` + `/setup-engine`) | `/ko-godot-ref` — 고정 버전 공식 문서(`/en/<버전>/`) · `--doctool` 설치본 대조 | — (`docs/engine-reference/unreal/` + `/setup-engine`) |
+| 출시 전 엔진 라이선스 고지 | `/release-checklist` | `/ko-godot-license` — `godot_license_check.py` (GL001~, 엔진 MIT · 제3자 고지) | `/release-checklist` |
 | 코드 패턴 카탈로그 (L2) | SkillForge `.agent/skills/` (`/sf-list` · `/sf-add`) | **없음** — 엔진 레퍼런스 + 전문가 에이전트 | **없음** — 엔진 레퍼런스 + 전문가 에이전트 |
 | 장르 · 분야 실무 카탈로그 | `/ext list gamedev` (Unity 6.3 기능 포함) | `/ext list gamedev` 의 엔진 무관 항목만 | `/ext list gamedev` 의 엔진 무관 항목만 |
 | 그래픽 · 사운드 생성 승격 (`/ko-art-gen`) | Unity 임포트 설정까지 자동 (`unity-import-setup`) | 파일 승격까지 — 임포트 설정은 수동 | 파일 승격까지 — 임포트(.uasset 변환)는 수동 |
-| 사전 설치 점검 (`/ko-prereq`) | Unity 에디터 · MCP · 분석기 점검 | Godot 실행 파일 점검 | Unreal 에디터 점검 |
+| 사전 설치 점검 (`/ko-prereq`) | Unity 에디터 · MCP · 분석기 점검 | Godot 실행 파일 · gdUnit4 점검 + .NET 판이면 (선택) .NET SDK · Godot MCP | Unreal 에디터 점검 |
 | 씬 · 에셋 파일 (`scene-files.md`) | `.unity` · `.prefab` · `.asset` — 에디터로 수정 | `.tscn` · `.tres` — `uid://` 를 지어내지 않는다 | `.uasset` · `.umap` — 수정 금지(설정 deny) |
 
 **없음** 칸은 이 템플릿이 아직 그 엔진용 도구를 갖추지 못했다는 뜻이다. 그 단계는 "엔진에 도구 없음 — 하지 않음" 으로 보고하고, 같은 일을 사람이 할 방법(리뷰 · 수동 임포트)을 적는다.
