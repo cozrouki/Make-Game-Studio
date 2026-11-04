@@ -12,6 +12,21 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.3.0 — 2026-11-04
+
+**새 기능 (부)**
+- **Unreal MCP (UE 5.8+ L3 에디터 자동화, 선택 설치)** — 엔진 플러그인 `ModelContextProtocol` · `AllToolsets`(UE 5.8 Experimental)와
+  Epic 공식 Claude Code 플러그인 `unreal-engine-skills-for-claude-code`(MIT, 공식 마켓)를 템플릿에 넣지 않고 점검 · 안내로 붙였다.
+  `/ko-prereq` 의 Unreal 묶음에 선택 항목 3개: `ue-mcp-plugins`(확인 후 `.uproject` 에 두 플러그인 켜기) · `ue-mcp-json` · `ue-claude-plugin`.
+  5.7 이하는 "UE 5.8 부터 — 하지 않음". 안내: `.claude/docs/mcp-unreal-guide.md`. UE 5.8.4 에서 빈 프로젝트로 서버 기동 · 도구 묶음 67개 · MCP 호출까지 실측 확인(Claude Code
+  플러그인 · 에셋 편집은 미검증). 실측에서 찾은 것: 서버가 로그에 남기는 UE EULA 6(e) 경고(LLM 학습 사용 책임) · 엔진 분석 연결 ·
+  프로젝트가 엔진과 다른 드라이브면 시작 직후 죽는 함정 — 가이드에 적었다
+- **스튜디오 모드 장치 — 에디터 MCP + 승인 없는 실행 차단**: Unreal `ModelContextProtocol` 이나 Godot `godot_mcp` 가 켜진 프로젝트에서
+  `dispatch` 프리셋이 `--dangerously-skip-permissions` · `--yolo` · `--force` · `--full-auto` 를 쓰거나 `team.json` `permissionMode` 가
+  `bypassPermissions` 면 `dispatch` · `launch` 가 거부한다 (두 MCP 모두 에디터 안 임의 코드 실행 도구가 있다). 대화형 `/studio-join` 은 그대로.
+  사람이 `studio.config.local.json` `guards.allowUnattendedEditorMcp: true` 로 열 수 있다
+- `scene-files.md` 에 Unreal 절 (`.uasset` · `.umap` 은 손 편집 금지, 5.8+ 는 MCP 경로)
+
 ## 2.2.0 — 2026-11-04
 
 **새 기능 (부)**

@@ -159,6 +159,8 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 | `opencode` | `opencode run …` | 미확인 (권한 설정은 opencode 쪽 설정) |
 | `antigravity` · `windsurf` | (헤드리스 없음) | manual 참여 |
 
+**에디터 MCP 장치** — 프로젝트에 에디터 안 임의 코드 실행이 되는 MCP(Unreal `ModelContextProtocol` · Godot `godot_mcp`)가 켜져 있으면, 승인 없이 도는 실행을 `dispatch` · `launch` 가 막는다: 프리셋 인자에 `--dangerously-skip-permissions` · `--yolo` · `--force` · `--full-auto` 가 있거나 `team.json` `permissionMode` 가 `bypassPermissions` 일 때. 열려면 사람이 `studio.config.local.json` 에 `{"guards": {"allowUnattendedEditorMcp": true}}` (`.claude/docs/mcp-unreal-guide.md`).
+
 **주의**
 - 헤드리스 실행은 **사람의 승인 없이 파일을 고치고 명령을 실행한다.** 신뢰할 수 있는 프로젝트에서만 쓰고, 쓰기 영역과 역할별 커밋으로 범위를 제한한다.
 - Windows 에서 npm 으로 설치한 CLI(`.cmd`)는 cmd.exe 를 거친다. 그래서 인자에 `& | < > ^ % " !` 가 있으면 실행을 거부한다. 기본 프롬프트에는 이 문자가 없다.

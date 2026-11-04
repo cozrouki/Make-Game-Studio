@@ -32,6 +32,52 @@ PROMPT_FILE = os.path.join(TOOL_DIR, "prompts", "agent-loop.md")
 # Windows 의 .cmd/.bat 실행 파일(npm 전역 설치 CLI)은 cmd.exe 를 거친다 — 인자에 이 문자가 있으면 해석될 수 있다
 CMD_METACHARS = set('&|<>^%"!')
 
+# ---------------------------------------------------------------- 에디터 MCP + 승인 없는 실행 차단
+# Unreal 공식 MCP(ModelContextProtocol)와 Godot MCP 는 에디터 안에서 임의 코드를 실행하는 도구를 준다
+# (Unreal ProgrammaticToolset.execute_tool_script = Python, Godot script-execute = C#). 승인 없이 도는 세션이
+# 그 도구를 부르면 프로젝트 전체를 확인 없이 바꿀 수 있다 — Epic 플러그인 README 도 권한 생략과 함께 쓰지 말라고 한다.
+# 그래서 그 에디터 MCP 가 켜진 프로젝트에서는 승인 없는 실행을 막는다. 의도한 것이면 studio.config.local.json 에
+# {"guards": {"allowUnattendedEditorMcp": true}} 로 연다 (이유와 함께, 사람만).
+UNATTENDED_FLAGS = {"--dangerously-skip-permissions", "--yolo", "--force", "--full-auto"}
+UNATTENDED_MODES = {"bypassPermissions"}
+
+
+def editor_mcp_enabled(root):
+    """켜져 있는 '임의 코드 실행이 되는 에디터 MCP' 목록 — Unreal ModelContextProtocol · Godot godot_mcp."""
+    found = []
+    try:
+        names = os.listdir(root)
+    except OSError:
+        return found
+    for n in names:
+        if n.endswith(".uproject"):
+            data = read_json(os.path.join(root, n), {}) or {}
+            for p in data.get("Plugins", []) or []:
+                if isinstance(p, dict) and p.get("Name") == "ModelContextProtocol" and p.get("Enabled"):
+                    found.append(f"Unreal MCP ({n} 의 ModelContextProtocol)")
+    try:
+        with open(os.path.join(root, "project.godot"), encoding="utf-8", errors="replace") as f:
+            text = f.read()
+        sec = text.split("[editor_plugins]", 1)
+        if len(sec) == 2 and "godot_mcp" in sec[1].split("\n[", 1)[0]:
+            found.append("Godot MCP (project.godot 의 godot_mcp 플러그인)")
+    except OSError:
+        pass
+    return found
+
+
+def check_unattended_editor_mcp(st, unattended_marks, who):
+    """승인 없는 실행 표시(unattended_marks)가 있고 에디터 MCP 가 켜져 있으면 StudioError. 열어 둔 설정이면 통과."""
+    if not unattended_marks:
+        return
+    mcps = editor_mcp_enabled(st.root)
+    if not mcps or (st.cfg.get("guards") or {}).get("allowUnattendedEditorMcp"):
+        return
+    raise StudioError(
+        f"{who}: 승인 없이 도는 실행({', '.join(sorted(unattended_marks))})을 막음 — 이 프로젝트에 에디터 안에서 임의 코드를 "
+        f"실행하는 MCP 가 켜져 있다: {'; '.join(mcps)}. 대화형 세션(/studio-join)으로 돌리거나, 의도한 것이면 사람이 "
+        f".agent/tools/studio/studio.config.local.json 에 {{\"guards\": {{\"allowUnattendedEditorMcp\": true}}}} 를 넣는다")
+
 
 def settings(st):
     s = dict(DISPATCH_DEFAULTS)
@@ -201,6 +247,7 @@ def dispatch(st, role, agent_name, max_runs=0, once=False, dry_run=False, force_
         raise StudioError("director 는 헤드리스로 돌리지 않는다 — 사용자와 대화하는 /studio-director 세션이 맡는다")
     st.check_role(role)
     argv, exe, env, preset = build_command(st, role, agent_name)
+    check_unattended_editor_mcp(st, UNATTENDED_FLAGS & set(argv), f"{role} ← {agent_name}")
     s = settings(st)
     if dry_run:
         emit(f"[dry-run] {role} ← {agent_name}: {argv!r}" + ("" if exe else "  (실행 파일 미설치)"))

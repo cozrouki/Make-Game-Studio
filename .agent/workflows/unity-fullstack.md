@@ -13,7 +13,7 @@ description: 게임 개발 풀스택 통합 진입점 (Unity · Godot · Unreal)
 |---|---|---|
 | **L1 프로세스** | 스프린트·스토리·리뷰·성능·프로토타입 | 워크플로 슬래시: `/ko-sprint-plan`, `/ko-story-cycle`, `/ko-code-review`, `/ko-perf-profile`, `/ko-prototype`, `/ko-setup-engine`, `/ko-art-gen` |
 | **L2 C# 코드 패턴** (Unity 전용) | FSM·인벤토리·능력·Jobs/Burst 등 102개 | `.agent/skills/<카테고리>/<skill>/SKILL.md` 읽고 `templates/` 복사·주입 |
-| **L3 Editor 자동화** | 씬·프리팹·빌드 조작 | Unity: MCP for Unity 도구 (`.mcp.json` 설정 시) · Godot .NET 판: Godot MCP (`.claude/docs/mcp-godot-guide.md`) · 그 밖: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
+| **L3 Editor 자동화** | 씬·프리팹·빌드 조작 | Unity: MCP for Unity 도구 (`.mcp.json` 설정 시) · Godot .NET 판: Godot MCP (`.claude/docs/mcp-godot-guide.md`) · Unreal 5.8+: Unreal MCP (`.claude/docs/mcp-unreal-guide.md`) · 그 밖: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
 | **L4 룰/표준** | 자동 적용 코딩 규칙 | `.agent/rules/*.md` (glob 자동적용) |
 
 ## 인수 없이 호출된 경우 — 사용자에게 질문

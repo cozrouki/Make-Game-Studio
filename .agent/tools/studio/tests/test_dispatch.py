@@ -162,3 +162,40 @@ def test_cli_new_skips_notify_for_dispatch_role(st, capsys):
 def test_list_agents_reports_presets(st):
     names = {r["name"] for r in D.list_agents(st)}
     assert {"claude", "codex", "gemini", "cursor", "copilot", "opencode", "antigravity"} <= names
+
+
+# ---- 에디터 MCP 가 켜진 프로젝트에서 승인 없는 실행 차단 ----
+def _enable_unreal_mcp(root):
+    with open(os.path.join(root, "Game.uproject"), "w", encoding="utf-8") as f:
+        json.dump({"FileVersion": 3, "Plugins": [{"Name": "ModelContextProtocol", "Enabled": True},
+                                                 {"Name": "AllToolsets", "Enabled": True}]}, f)
+
+
+def test_dispatch_blocks_unattended_run_when_unreal_mcp_enabled(st):
+    st.cfg["agents"]["yolo"] = {"argv": [sys.executable, "-c", "pass", "--dangerously-skip-permissions"], "note": "t"}
+    D.dispatch(st, "dev", "yolo", dry_run=True, emit=lambda m: None)   # 에디터 MCP 없음 — 통과
+    _enable_unreal_mcp(st.root)
+    with pytest.raises(S.StudioError, match="승인 없이 도는 실행"):
+        D.dispatch(st, "dev", "yolo", dry_run=True, emit=lambda m: None)
+    D.dispatch(st, "dev", "idle", dry_run=True, emit=lambda m: None)   # 승인 생략 표시가 없으면 통과
+
+
+def test_dispatch_blocks_unattended_run_when_godot_mcp_enabled(st):
+    st.cfg["agents"]["yolo"] = {"argv": [sys.executable, "-c", "pass", "--yolo"], "note": "t"}
+    with open(os.path.join(st.root, "project.godot"), "w", encoding="utf-8") as f:
+        f.write('config_version=5\n\n[editor_plugins]\n\nenabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")\n')
+    with pytest.raises(S.StudioError, match="Godot MCP"):
+        D.dispatch(st, "dev", "yolo", dry_run=True, emit=lambda m: None)
+
+
+def test_dispatch_guard_can_be_opened_explicitly(st):
+    st.cfg["agents"]["yolo"] = {"argv": [sys.executable, "-c", "pass", "--dangerously-skip-permissions"], "note": "t"}
+    _enable_unreal_mcp(st.root)
+    st.cfg["guards"] = {"allowUnattendedEditorMcp": True}
+    D.dispatch(st, "dev", "yolo", dry_run=True, emit=lambda m: None)
+
+
+def test_editor_mcp_disabled_plugin_is_not_counted(st):
+    with open(os.path.join(st.root, "Game.uproject"), "w", encoding="utf-8") as f:
+        json.dump({"Plugins": [{"Name": "ModelContextProtocol", "Enabled": False}]}, f)
+    assert D.editor_mcp_enabled(st.root) == []

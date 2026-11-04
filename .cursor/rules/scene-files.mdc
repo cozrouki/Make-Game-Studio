@@ -38,3 +38,9 @@ When you edit the text by hand:
 - With no Editor reachable, keep every `fileID` and `guid` reference intact,
   never invent a GUID, never edit or delete a `.meta` file, and open the scene
   in the Editor afterwards to confirm it loads.
+
+## Unreal (`.uasset`, `.umap`)
+
+- They are binary and never hand-edited (the settings deny them). On UE 5.8+ with the
+  engine MCP plugin connected (`.claude/docs/mcp-unreal-guide.md`), change them through
+  its tools; otherwise use the editor or editor Python.

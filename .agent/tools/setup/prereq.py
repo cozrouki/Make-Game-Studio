@@ -409,6 +409,108 @@ def c_unreal_editor(ctx):
                        "소스 빌드 · 다른 위치면 project.yaml engine.path")
 
 
+# ---------------------------------------------------------------- Unreal MCP (선택 — UE 5.8+ 엔진 플러그인 + Epic 공식 Claude Code 플러그인)
+# 엔진: ModelContextProtocol(서버) + AllToolsets(도구) — UE 5.8 에서 Experimental (docs/engine-reference/unreal/PLUGINS.md).
+# Claude Code 쪽: EpicGames/unreal-engine-skills-for-claude-code-plugin (MIT) — 공식 플러그인 마켓 claude-plugins-official.
+# 2026-11-04 확인. 연결은 로컬(기본 127.0.0.1:8000/mcp). 안내: .claude/docs/mcp-unreal-guide.md
+UE_MCP_PLUGINS = ("ModelContextProtocol", "AllToolsets")
+UE_CLAUDE_PLUGIN = "unreal-engine-skills-for-claude-code@claude-plugins-official"
+UE_MCP_GUIDE = ".claude/docs/mcp-unreal-guide.md"
+
+
+def _uproject(ctx):
+    for n in sorted(os.listdir(ctx.root)):
+        if n.endswith(".uproject"):
+            return os.path.join(ctx.root, n)
+    return None
+
+
+def _ue_version_tuple(ctx):
+    m = re.match(r"^(\d+)\.(\d+)", str(_project_unreal_version(ctx) or ""))
+    return (int(m.group(1)), int(m.group(2))) if m else None  # 소스 빌드(GUID) · 없음 → None
+
+
+def c_ue_mcp_plugins(ctx):
+    path = _uproject(ctx)
+    data = _read_json(path, None) if path else None
+    if data is None:
+        return "warn", ".uproject 를 읽지 못함"
+    ver = _ue_version_tuple(ctx)
+    if ver and ver < (5, 8):
+        return "skip", f"UE {ver[0]}.{ver[1]} — MCP Server 플러그인은 UE 5.8 부터 (Experimental). 하지 않음"
+    enabled = {p.get("Name") for p in data.get("Plugins", []) or [] if isinstance(p, dict) and p.get("Enabled")}
+    missing = [p for p in UE_MCP_PLUGINS if p not in enabled]
+    note = "" if ver else " (엔진 버전 미상 — 소스 빌드면 5.8+ 인지 직접 확인)"
+    if missing:
+        return "missing", f"{os.path.basename(path)} 에서 꺼짐: {', '.join(missing)}{note} (안내: {UE_MCP_GUIDE})"
+    return "ok", f"{os.path.basename(path)} — {' · '.join(UE_MCP_PLUGINS)} 켜짐{note}"
+
+
+def i_ue_mcp_plugins(ctx, dry):
+    path = _uproject(ctx)
+    data = _read_json(path, None) if path else None
+    if data is None:
+        raise RuntimeError(".uproject 를 읽지 못함")
+    ver = _ue_version_tuple(ctx)
+    if ver and ver < (5, 8):
+        raise RuntimeError(f"UE {ver[0]}.{ver[1]} — MCP Server 플러그인이 없는 버전 (5.8+)")
+    plugins = data.setdefault("Plugins", [])
+    changed = []
+    for name in UE_MCP_PLUGINS:
+        entry = next((p for p in plugins if isinstance(p, dict) and p.get("Name") == name), None)
+        if entry is None:
+            plugins.append({"Name": name, "Enabled": True})
+            changed.append(f"{name} 추가")
+        elif not entry.get("Enabled"):
+            entry["Enabled"] = True
+            changed.append(f"{name} 켬")
+    if dry:
+        return f"{os.path.basename(path)}: " + (", ".join(changed) or "바꿀 것 없음")
+    if changed:
+        with open(path, "w", encoding="utf-8", newline="\n") as f:  # 에디터가 쓰는 형식(탭 들여쓰기)
+            json.dump(data, f, indent="\t", ensure_ascii=False)
+            f.write("\n")
+    return (f"{os.path.basename(path)}: {', '.join(changed) or '바꿀 것 없음'} — 에디터를 다시 열고 "
+            f"ModelContextProtocol.StartServer, 그 뒤 ModelContextProtocol.GenerateClientConfig ClaudeCode ({UE_MCP_GUIDE})")
+
+
+def _ue_mcp_servers(servers):
+    out = []
+    for name, s in (servers or {}).items():
+        if not isinstance(s, dict):
+            continue
+        url = str(s.get("url", ""))
+        cmd = " ".join([str(s.get("command", ""))] + [str(a) for a in s.get("args", [])])
+        if "unreal" in name.lower() and (re.match(r"https?://(localhost|127\.0\.0\.1)(:\d+)?/", url) or s.get("command")) \
+                or "unreal_mcp_proxy" in cmd:
+            out.append(name)
+    return out
+
+
+def c_ue_mcp_json(ctx):
+    found = _ue_mcp_servers((_read_json(os.path.join(ctx.root, ".mcp.json"), {}) or {}).get("mcpServers"))
+    if found:
+        return "ok", f".mcp.json {found[0]}"
+    user = _read_json(os.path.join(os.path.expanduser("~"), ".claude.json"), {}) or {}
+    found = _ue_mcp_servers(user.get("mcpServers"))
+    if found:
+        return "ok", f"Claude Code 사용자 설정 {found[0]}"
+    key = ctx.root.replace("\\", "/").lower()
+    for path, proj in (user.get("projects") or {}).items():
+        if path.replace("\\", "/").lower() == key and _ue_mcp_servers(proj.get("mcpServers")):
+            return "ok", f"Claude Code 프로젝트 로컬 설정 {_ue_mcp_servers(proj['mcpServers'])[0]}"
+    return "missing", "Unreal MCP 서버 등록 없음 (.mcp.json · ~/.claude.json)"
+
+
+def c_ue_claude_plugin(ctx):
+    files = [os.path.join(ctx.root, ".claude", "settings.json"), os.path.join(ctx.root, ".claude", "settings.local.json"),
+             os.path.join(os.path.expanduser("~"), ".claude", "settings.json")]
+    for f in files:
+        if ((_read_json(f, {}) or {}).get("enabledPlugins") or {}).get(UE_CLAUDE_PLUGIN):
+            return "ok", f"{UE_CLAUDE_PLUGIN} 켜짐 ({os.path.basename(os.path.dirname(f))}/{os.path.basename(f)})"
+    return "missing", "Epic 공식 Claude Code 플러그인 꺼짐 — MCP 는 없이도 되지만 사용 규칙(스킬)과 세션 안내가 빠진다"
+
+
 def unity_editor_dirs():
     dirs = [r"C:\Program Files\Unity\Hub\Editor"]
     sec = _read_json(os.path.join(os.environ.get("APPDATA", ""), "UnityHub", "secondaryInstallPath.json"))
@@ -872,6 +974,14 @@ ITEMS = [
          f"claude-code <프로젝트> --url <독의 Server URL> ({GODOT_MCP_GUIDE})"),
     Item("unreal-editor", "Unreal", {"dev"}, "프로젝트 EngineAssociation 과 같은 Unreal 에디터",
          engine_only("unreal", c_unreal_editor), None, "Epic Games Launcher > Unreal Engine > 라이브러리에서 설치"),
+    Item("ue-mcp-plugins", "Unreal", {"dev"}, "(선택) Unreal MCP 엔진 플러그인 (.uproject — ModelContextProtocol · AllToolsets, UE 5.8+)",
+         engine_only("unreal", c_ue_mcp_plugins), i_ue_mcp_plugins, f"prereq.py install ue-mcp-plugins ({UE_MCP_GUIDE})",
+         license="Unreal Engine EULA (엔진 플러그인)"),
+    Item("ue-mcp-json", "Unreal", {"dev"}, "(선택) Unreal MCP 서버 등록 (로컬)", engine_only("unreal", c_ue_mcp_json), None,
+         f"에디터 콘솔: ModelContextProtocol.StartServer → ModelContextProtocol.GenerateClientConfig ClaudeCode ({UE_MCP_GUIDE})"),
+    Item("ue-claude-plugin", "Unreal", {"dev"}, "(선택) Epic 공식 Claude Code 플러그인 (unreal-engine-skills-for-claude-code)",
+         engine_only("unreal", c_ue_claude_plugin), None,
+         f"Claude Code 에서 /plugin install {UE_CLAUDE_PLUGIN} ({UE_MCP_GUIDE})"),
     Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈",
          android_only(engine_only("unity", c_android_module)), None, m_android_module),
     Item("adb", "Android", {"dev"}, "adb (Android 플랫폼 도구)", android_only(c_adb), None,
@@ -904,7 +1014,8 @@ ITEMS = [
          None, "python scripts/sync-catalog.py gdpractice --fetch --accept-license <noncommercial|commercial>"),
 ]
 REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "gdpractice", "pytest", "adb-device", "protobuf",
-                 "graphify", "dotnet-sdk", "godot-mcp-addon", "godot-mcp-json"}
+                 "graphify", "dotnet-sdk", "godot-mcp-addon", "godot-mcp-json",
+                 "ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"}
 # 선택 항목은 missing 이어도 실패로 보지 않고, install 을 항목 없이 실행할 때도 설치하지 않는다 (이름을 줘야 설치)  # missing 이어도 실패로 보지 않음
 
 

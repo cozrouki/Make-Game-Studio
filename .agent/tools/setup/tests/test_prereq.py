@@ -405,3 +405,53 @@ def test_prereq_godot_mcp_install_dry_run_pins_version(godot_dotnet_project, mon
     cmd = prereq.i_godot_mcp_addon(_ctx(godot_dotnet_project), dry=True)
     # 버전은 CLI 고정으로 — install-plugin --version 은 전역 --version 에 가로채여 설치하지 않는다
     assert f"godot-cli@{prereq.GODOT_MCP_VERSION}" in cmd and "--version" not in cmd and "--path" in cmd
+
+
+# ---- Unreal MCP (선택 — UE 5.8+) ----
+def _ue_rows(root):
+    return {r["id"]: r for r in prereq.run_checks(_ctx(root, roles=["dev"]))}
+
+
+def test_prereq_ue_mcp_plugins_missing_then_installed(unreal_project):
+    row = _ue_rows(unreal_project)["ue-mcp-plugins"]
+    assert row["status"] == "missing" and "ModelContextProtocol" in row["detail"]
+    msg = prereq.i_ue_mcp_plugins(_ctx(unreal_project), dry=False)
+    assert "ModelContextProtocol 추가" in msg and "AllToolsets 추가" in msg
+    data = json.loads((unreal_project / "UeGame.uproject").read_text(encoding="utf-8"))
+    assert data["EngineAssociation"] == "5.8"   # 다른 키는 그대로
+    assert {p["Name"] for p in data["Plugins"] if p["Enabled"]} == {"ModelContextProtocol", "AllToolsets"}
+    assert _ue_rows(unreal_project)["ue-mcp-plugins"]["status"] == "ok"
+    assert "바꿀 것 없음" in prereq.i_ue_mcp_plugins(_ctx(unreal_project), dry=True)
+
+
+def test_prereq_ue_mcp_plugins_flips_disabled_entry(unreal_project):
+    (unreal_project / "UeGame.uproject").write_text(json.dumps(
+        {"EngineAssociation": "5.8", "Plugins": [{"Name": "AllToolsets", "Enabled": False}]}), encoding="utf-8")
+    assert "AllToolsets 켬" in prereq.i_ue_mcp_plugins(_ctx(unreal_project), dry=True)
+
+
+def test_prereq_ue_mcp_skips_old_engine_with_reason(unreal_project):
+    (unreal_project / "UeGame.uproject").write_text('{"EngineAssociation": "5.7"}', encoding="utf-8")
+    row = _ue_rows(unreal_project)["ue-mcp-plugins"]
+    assert row["status"] == "skip" and "5.8" in row["detail"]
+    with pytest.raises(RuntimeError, match="5.8"):
+        prereq.i_ue_mcp_plugins(_ctx(unreal_project), dry=True)
+
+
+def test_prereq_ue_mcp_json_and_claude_plugin(unreal_project, tmp_path, monkeypatch):
+    monkeypatch.setattr(prereq.os.path, "expanduser", lambda p: str(tmp_path / "home"))
+    rows = _ue_rows(unreal_project)
+    assert rows["ue-mcp-json"]["status"] == "missing" and rows["ue-claude-plugin"]["status"] == "missing"
+    (unreal_project / ".mcp.json").write_text(json.dumps(
+        {"mcpServers": {"unreal-mcp": {"type": "http", "url": "http://127.0.0.1:8000/mcp"}}}), encoding="utf-8")
+    (unreal_project / ".claude").mkdir()
+    (unreal_project / ".claude" / "settings.json").write_text(json.dumps(
+        {"enabledPlugins": {prereq.UE_CLAUDE_PLUGIN: True}}), encoding="utf-8")
+    rows = _ue_rows(unreal_project)
+    assert rows["ue-mcp-json"]["status"] == "ok" and rows["ue-claude-plugin"]["status"] == "ok"
+
+
+def test_prereq_ue_mcp_items_skip_on_other_engines(godot_project):
+    rows = _ue_rows(godot_project)
+    for i in ("ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"):
+        assert rows[i]["status"] == "skip" and "Unreal 전용" in rows[i]["detail"]

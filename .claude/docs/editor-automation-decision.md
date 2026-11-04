@@ -1,6 +1,6 @@
 # Editor 자동화 / 코드 패턴 / 문서 — 결정 매트릭스
 
-> **Unity 기준.** L2(SkillForge)는 Unity 전용, L3(MCP)는 Unity 와 Godot .NET 판(Godot MCP — `.claude/docs/mcp-godot-guide.md`)에 있다. Godot 에서 "L3 MCPForUnity" 행은 Godot MCP 의 `rql-query` · `rql-mutate` · `screenshot-*` 로 읽는다. Godot · Unreal 은 `.claude/docs/engine-layers.md` 의 엔진 칸을 쓴다.
+> **Unity 기준.** L2(SkillForge)는 Unity 전용, L3(MCP)는 Unity 와 Godot .NET 판(Godot MCP — `.claude/docs/mcp-godot-guide.md`)에 있다. Godot 에서 "L3 MCPForUnity" 행은 Godot MCP 의 `rql-query` · `rql-mutate` · `screenshot-*` 로, Unreal 5.8+ 에서는 엔진 MCP 의 도구 묶음(`list_toolsets` → `call_tool`, `.claude/docs/mcp-unreal-guide.md`)으로 읽는다. Godot · Unreal 은 `.claude/docs/engine-layers.md` 의 엔진 칸을 쓴다.
 
 작업을 하려고 할 때 **어느 백엔드를 써야 할지** 빠르게 결정하는 가이드.
 

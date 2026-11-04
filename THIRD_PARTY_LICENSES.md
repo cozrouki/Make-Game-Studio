@@ -212,6 +212,14 @@ SOFTWARE.
 
 ## Referenced / separately installed (NOT bundled — no redistribution)
 
+### 13. unreal-engine-skills-for-claude-code-plugin — Claude Code plugin for the UE 5.8+ engine MCP server
+
+- Source: https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin — License: **MIT**
+- Not redistributed here. The user installs it from Claude Code's official plugin
+  marketplace (`claude-plugins-official`). The editor tools come from the engine's own
+  `ModelContextProtocol` and `AllToolsets` plugins (Unreal Engine EULA). This repo only adds
+  checks in `prereq.py` and a usage guide (`.claude/docs/mcp-unreal-guide.md`).
+
 ### 12. Godot-MCP and GameDev-MCP-Server — optional L3 backend for Godot .NET projects
 
 - Source: https://github.com/IvanMurzak/Godot-MCP and

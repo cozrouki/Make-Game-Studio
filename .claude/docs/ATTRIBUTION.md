@@ -129,6 +129,14 @@
 - **사용 유형**: **재배포하지 않음.** `prereq.py install godot-mcp-addon` 이 사용자 확인 뒤 `npx godot-cli@<고정 버전> install-plugin` 을 실행해 대상 프로젝트에 애드온을 받는다(애드온의 라이선스는 애드온과 함께 들어간다). 서버 실행 파일은 애드온이 GitHub 릴리스에서 받는다. 템플릿에는 점검 코드(`prereq.py` 의 Godot MCP 항목)와 사용 안내(`.claude/docs/mcp-godot-guide.md`, 자체 작성)만 있다
 - **템플릿의 선택**: 상류 기본값인 ai-game.dev 클라우드 대신 **로컬 서버(Custom 모드)** 를 안내한다. 실제 Godot 에디터에서의 연결은 검증하지 않았다 (가이드에 명시)
 
+## 7-8. unreal-engine-skills-for-claude-code-plugin / Epic Games (Unreal 5.8+ L3 — **미포함**)
+
+- **저장소**: https://github.com/EpicGames/unreal-engine-skills-for-claude-code-plugin — Claude Code 공식 플러그인 마켓 `claude-plugins-official` 에 등록 (플러그인 3.1.2, 2026-11-04 확인)
+- **라이선스**: **MIT**
+- **사용 유형**: **재배포하지 않음.** 사용자가 `/plugin install` 로 설치한다. 실제 도구는 엔진 플러그인 `ModelContextProtocol` · `AllToolsets`(UE 5.8, Experimental — 엔진에 포함)가 낸다. 템플릿에는 점검(`prereq.py` 의 `ue-mcp-*` · `ue-claude-plugin`)과 안내(`.claude/docs/mcp-unreal-guide.md`, 자체 작성 — 상류 문장 미인용)만 있다. `.uproject` 에 두 엔진 플러그인을 켜는 것은 사용자 확인 후 `prereq.py install ue-mcp-plugins`
+- **이 통합으로 생긴 장치**: 상류 README 의 경고(에디터 안 Python 실행 · 권한 생략 금지)를 받아, 에디터 MCP 가 켜진 프로젝트에서 스튜디오 모드의 승인 없는 실행을 막는다 (`studio_dispatch.check_unattended_editor_mcp`). Godot MCP 에도 같이 적용
+- 2026-11-04 UE 5.8.4 런처 설치본에서 빈 프로젝트로 서버 기동 · MCP 호출(도구 묶음 67개)까지 실측. Claude Code 플러그인 · 에셋 편집은 미검증 (가이드에 명시)
+
 ## 7-7. Godot 문서 · 기여 문서 / Godot Engine 커뮤니티 (`ko-godot-doc` 작성 원칙 — 옮겨 고쳐 씀)
 
 - **원문**: godotengine/godot-contributing-docs — "Contribute documentation"(ways_to_contribute/development) · "Writing guidelines"(development/documentation/docs_writing_guidelines). 문서 주석 문법은 Godot 4.7 문서 "GDScript documentation comments" (docs.godotengine.org)
@@ -168,4 +176,5 @@
 | 2026-10-30 | Game-Studios v1.2.0 동기화 + 엔진 중립 재편 (Unity · Godot · Unreal): 에이전트 49 · 스킬 74 · scripts · 엔진 레퍼런스 · `project.yaml`, `gs-*` 문서 폐지, `engine-layers.md` · `validate-lint.sh` · Godot/Unreal 측정 스크립트 · 엔진별 prereq · artgen 승격 · 스튜디오 쓰기 영역 | `scripts/sync-upstream.ps1` 갱신 |
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
 | 2026-11-04 | Godot .NET 판 L3: Godot-MCP (Apache-2.0, 미포함 — prereq 가 사용자 확인 후 설치, 로컬 서버 기본) · `ko-godot-doc` (godot-contributing-docs CC BY 3.0 원칙 개작) · `ko-godot-ref` · `ko-godot-license` (Godot 4.7 문서 근거) + `.agent/tools/godot/` | 2.2.0 |
+| 2026-11-04 | Unreal 5.8+ L3: 엔진 MCP 플러그인 + Epic 공식 Claude Code 플러그인 (MIT, 미포함 — 마켓 설치) 점검 · 안내, 에디터 MCP + 승인 없는 실행 차단 장치 | 2.3.0 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

@@ -98,11 +98,16 @@ def launch_state(st):
 # ---------------------------------------------------------------- 명령
 def build_commands(st, team, roles, resume=False):
     """역할마다 {role, kind, argv, sessionId, title} — 실제 실행은 backend 가 한다."""
+    import studio_dispatch
     prev = launch_state(st).get("roles", {})
     out = []
     for role in roles:
         spec = team["roles"][role]
         tool = spec.get("tool", "claude")
+        # 에디터 MCP 가 켜진 프로젝트에서 승인 없이 도는 세션은 띄우지 않는다 (studio_dispatch 의 설명)
+        marks = ({team["permissionMode"]} & studio_dispatch.UNATTENDED_MODES) if tool == "claude" else \
+            (studio_dispatch.UNATTENDED_FLAGS & set(st.cfg["agents"][tool].get("argv", [])))
+        studio_dispatch.check_unattended_editor_mcp(st, marks, f"{role} ({tool})")
         title = f"studio-{role}"
         if tool == "claude":
             argv = ["claude", "--name", title, "--permission-mode", team["permissionMode"]]

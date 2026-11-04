@@ -10,7 +10,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 
 엔진 중립 4계층 스킬 셋입니다 (Unity · Godot · Unreal). 무엇을 할지 알려주시면 적절한 레이어로 안내합니다.
 
-먼저 프로젝트 엔진을 확인한다 (`project.yaml` `engine.name` → 표지 파일, `.claude/docs/engine-layers.md`). 미설정이면 `/ko-setup-engine` 부터 안내한다. L2 는 Unity 전용이다. L3 는 Unity(MCP for Unity)와 Godot **.NET 판**(Godot MCP, 선택 설치 — 프로젝트 루트에 `Godot.NET.Sdk` `.csproj` 가 있을 때)에 있다 — 해당하지 않는 엔진이면 그 행을 "이 엔진에는 없음" 으로 보여 주고 대체 경로(엔진 레퍼런스 · 전문가 에이전트 · 명령줄 자동화)를 함께 적는다.
+먼저 프로젝트 엔진을 확인한다 (`project.yaml` `engine.name` → 표지 파일, `.claude/docs/engine-layers.md`). 미설정이면 `/ko-setup-engine` 부터 안내한다. L2 는 Unity 전용이다. L3 는 Unity(MCP for Unity), Godot **.NET 판**(Godot MCP, 선택 설치 — 프로젝트 루트에 `Godot.NET.Sdk` `.csproj` 가 있을 때), Unreal **5.8+**(엔진 MCP 플러그인, 선택 설치)에 있다 — 해당하지 않는 엔진이면 그 행을 "이 엔진에는 없음" 으로 보여 주고 대체 경로(엔진 레퍼런스 · 전문가 에이전트 · 명령줄 자동화)를 함께 적는다.
 
 ## 레이어 선택
 
@@ -18,7 +18,7 @@ allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
 |---|---|---|---|
 | `process` | **L1** 워크플로 (Game-Studios) | 스프린트·리뷰·게이트·릴리스 | `/ko-sprint-plan`, `/ko-code-review`, `/sprint-status` |
 | `code` | **L2** C# 코드 패턴 (SkillForge — Unity 전용) | FSM·인벤토리·능력·Job System | `/sf-list <카테고리>`, `/sf-info <skill>`, `/sf-add <skill>` |
-| `editor` | **L3** Editor 자동화 | 씬·프리팹·빌드 자동 조작 | Unity: `mcp__UnityMCP__*` 도구, `.claude/docs/mcp-unity-guide.md` · Godot .NET 판: Godot MCP, `.claude/docs/mcp-godot-guide.md` (설치는 `/ko-prereq`) · GDScript 전용 Godot · Unreal: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
+| `editor` | **L3** Editor 자동화 | 씬·프리팹·빌드 자동 조작 | Unity: `mcp__UnityMCP__*` 도구, `.claude/docs/mcp-unity-guide.md` · Godot .NET 판: Godot MCP, `.claude/docs/mcp-godot-guide.md` · Unreal 5.8+: Unreal MCP, `.claude/docs/mcp-unreal-guide.md` (설치 · 점검은 `/ko-prereq`) · 그 밖: `.claude/docs/engine-layers.md` 의 명령줄 경로 |
 | `bundle` | **L4** 번들·워크플로 | 카테고리화된 작업 묶음 안내 | `.claude/data/bundles.json`, `workflows.json` |
 
 ## 인수 없이 호출된 경우

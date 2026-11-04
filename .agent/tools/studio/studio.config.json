@@ -70,6 +70,10 @@
       }
     }
   },
+  "guards": {
+    "allowUnattendedEditorMcp": false,
+    "//": "에디터 MCP(Unreal ModelContextProtocol · Godot godot_mcp)가 켜진 프로젝트에서 승인 없는 실행(dispatch 의 --dangerously-skip-permissions 등 · permissionMode bypassPermissions)을 허용할지. 사람만 local 에서 켠다"
+  },
   "dispatch": {
     "pollSec": 3,
     "runTimeoutSec": 3600,

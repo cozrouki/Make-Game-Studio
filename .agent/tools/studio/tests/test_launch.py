@@ -165,3 +165,22 @@ def test_launch_reports_missing_claude(st, monkeypatch):
     monkeypatch.setattr(L.shutil, "which", lambda name, *a, **kw: None)
     r = L.launch(st, dry_run=True, probe=False)
     assert any(i["level"] == "error" and "claude" in i["msg"] for i in r["issues"])
+
+
+def test_launch_refuses_bypass_permissions_when_editor_mcp_enabled(st):
+    json.dump({"Plugins": [{"Name": "ModelContextProtocol", "Enabled": True}]},
+              open(os.path.join(st.root, "Game.uproject"), "w", encoding="utf-8"))
+    team = _team(st, permissionMode="bypassPermissions")
+    with pytest.raises(S.StudioError, match="승인 없이 도는 실행"):
+        L.build_commands(st, team, ["dev"])
+    team = _team(st, permissionMode="acceptEdits")
+    assert L.build_commands(st, team, ["dev"])[0]["kind"] == "claude"
+
+
+def test_launch_refuses_unattended_dispatch_preset_when_editor_mcp_enabled(st):
+    json.dump({"Plugins": [{"Name": "ModelContextProtocol", "Enabled": True}]},
+              open(os.path.join(st.root, "Game.uproject"), "w", encoding="utf-8"))
+    team = L.default_team(st)
+    team["roles"]["dev"] = {"tool": "gemini"}   # 프리셋 argv 에 --yolo
+    with pytest.raises(S.StudioError, match="--yolo"):
+        L.build_commands(st, team, ["dev"])

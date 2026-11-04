@@ -69,7 +69,7 @@ ENGINE_ONLY = {
     "godot": ["src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", "docs/engine-reference/godot/*",
               ".agent/tools/godot/*", ".claude/skills/ko-godot-doc/*", ".claude/skills/ko-godot-ref/*",
               ".claude/skills/ko-godot-license/*", ".claude/docs/mcp-godot-guide.md"],
-    "unreal": ["docs/engine-reference/unreal/*"],
+    "unreal": ["docs/engine-reference/unreal/*", ".claude/docs/mcp-unreal-guide.md"],
 }
 # 템플릿에서 사라진 파일 — 프로젝트에 남아 있으면 지우고, 그 훅의 settings.json 등록도 지운다
 OBSOLETE = [".claude/docs/gs-agent-roster.md", ".claude/docs/gs-coding-standards.md", ".claude/docs/gs-coordination-rules.md",

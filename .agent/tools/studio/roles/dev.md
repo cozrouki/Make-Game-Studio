@@ -65,7 +65,7 @@ GDD 와 스펙은 **읽기만** 한다. 해석이 갈리면 planning `question` 
 | 이 헌장의 Unity 항목 | Godot | Unreal |
 |---|---|---|
 | 쓰기 영역 `Assets/**` · `Packages` · `ProjectSettings` | `src/` · `scenes/` · `assets/`(아트 폴더 제외) · `addons/` · `project.godot` (`studio.config.json` `ownsByEngine`) | `Source/` · `Config/` · `Plugins/` · `Content/`(`Content/Import` 제외) · `*.uproject` |
-| L3 Unity MCP (씬 · 에셋 refresh · 테스트) | .NET 판에 Godot MCP 가 설치돼 있으면 그것으로 씬 조작 · 화면 확인 (`.claude/docs/mcp-godot-guide.md`). 없으면 에디터를 사람이 조작하거나 `godot --headless` 스크립트. 테스트는 MCP 가 아니라 `bash .claude/scripts/test-run.sh godot` | 에디터 Python · 커맨드렛. 테스트는 `bash .claude/scripts/test-run.sh unreal --filter <루트>` |
+| L3 Unity MCP (씬 · 에셋 refresh · 테스트) | .NET 판에 Godot MCP 가 설치돼 있으면 그것으로 씬 조작 · 화면 확인 (`.claude/docs/mcp-godot-guide.md`). 없으면 에디터를 사람이 조작하거나 `godot --headless` 스크립트. 테스트는 MCP 가 아니라 `bash .claude/scripts/test-run.sh godot` | UE 5.8+ 에서 엔진 MCP 플러그인이 켜져 있으면 그것으로 에디터 조작 · 화면 확인 (`.claude/docs/mcp-unreal-guide.md`). 없으면 에디터 Python · 커맨드렛. 테스트는 `bash .claude/scripts/test-run.sh unreal --filter <루트>` |
 | L2 SkillForge (`/sf-*`) | 없음 — `docs/engine-reference/godot/` + `godot-*-specialist` | 없음 — `docs/engine-reference/unreal/` + `unreal-specialist` · `ue-*-specialist` |
 | 정적 검사 `unity_lint.py` · UNT 분석기 | 없음 — `studio.py commit` 이 "정적 검사 안 함" 을 경고로 남긴다. 리뷰에서 `gameplay-code.md` Godot 절 확인 | 없음 — 같은 방식, Unreal 절 확인 |
 | 에셋 임포트 확인 · `.meta` | 에디터가 만든 `.import` 를 art 가 다음 커밋 때 함께 커밋 | Import 로 만든 `.uasset` 은 `Content/Import` 아래 — art 가 커밋 |

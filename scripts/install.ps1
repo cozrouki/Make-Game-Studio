@@ -146,6 +146,8 @@ if (-not $isUnity) {
     $excludeExact += @(".claude/docs/mcp-unity-guide.md", ".claude/docs/editor-automation-decision.md")
 }
 # Godot 전용 — src/ 가 Godot 코드 루트다 (다른 엔진에 src/ 를 만들면 코드 루트 판정이 모호해진다)
+# Unreal 전용 — Unreal MCP 가이드
+if ($Engine -ne "Unreal") { $excludeExact += @(".claude/docs/mcp-unreal-guide.md") }
 # Godot 전용 도구 — 문서 주석 · 공식 문서 근거 · 라이선스 고지 스킬(/ko-godot-*) · Godot MCP 가이드
 if ($Engine -ne "Godot") {
     $excludeExact += @("src/CLAUDE.md", "src/.gitkeep", "production/.gdignore", ".claude/docs/mcp-godot-guide.md")
