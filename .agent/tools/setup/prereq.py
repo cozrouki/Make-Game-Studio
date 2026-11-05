@@ -430,20 +430,30 @@ def _ue_version_tuple(ctx):
     return (int(m.group(1)), int(m.group(2))) if m else None  # 소스 빌드(GUID) · 없음 → None
 
 
+def ue_mcp_only(check):
+    """Unreal MCP 세 항목 공통 — 5.7 이하는 엔진에 MCP 서버가 없으니 '빠짐' 이 아니라 '하지 않음' 으로 밝힌다.
+    버전을 모르면(소스 빌드 GUID) 막지 않고 점검하되 직접 확인하라는 메모를 붙인다."""
+    def wrapped(ctx):
+        ver = _ue_version_tuple(ctx)
+        if ver and ver < (5, 8):
+            return "skip", f"UE {ver[0]}.{ver[1]} — Unreal MCP 는 UE 5.8 부터 (MCP Server 플러그인 Experimental). 하지 않음"
+        status, detail = check(ctx)
+        if not ver and status != "skip":
+            detail += " (엔진 버전 미상 — 소스 빌드면 5.8+ 인지 직접 확인)"
+        return status, detail
+    return wrapped
+
+
 def c_ue_mcp_plugins(ctx):
     path = _uproject(ctx)
     data = _read_json(path, None) if path else None
     if data is None:
         return "warn", ".uproject 를 읽지 못함"
-    ver = _ue_version_tuple(ctx)
-    if ver and ver < (5, 8):
-        return "skip", f"UE {ver[0]}.{ver[1]} — MCP Server 플러그인은 UE 5.8 부터 (Experimental). 하지 않음"
     enabled = {p.get("Name") for p in data.get("Plugins", []) or [] if isinstance(p, dict) and p.get("Enabled")}
     missing = [p for p in UE_MCP_PLUGINS if p not in enabled]
-    note = "" if ver else " (엔진 버전 미상 — 소스 빌드면 5.8+ 인지 직접 확인)"
     if missing:
-        return "missing", f"{os.path.basename(path)} 에서 꺼짐: {', '.join(missing)}{note} (안내: {UE_MCP_GUIDE})"
-    return "ok", f"{os.path.basename(path)} — {' · '.join(UE_MCP_PLUGINS)} 켜짐{note}"
+        return "missing", f"{os.path.basename(path)} 에서 꺼짐: {', '.join(missing)} (안내: {UE_MCP_GUIDE})"
+    return "ok", f"{os.path.basename(path)} — {' · '.join(UE_MCP_PLUGINS)} 켜짐"
 
 
 def i_ue_mcp_plugins(ctx, dry):
@@ -975,12 +985,12 @@ ITEMS = [
     Item("unreal-editor", "Unreal", {"dev"}, "프로젝트 EngineAssociation 과 같은 Unreal 에디터",
          engine_only("unreal", c_unreal_editor), None, "Epic Games Launcher > Unreal Engine > 라이브러리에서 설치"),
     Item("ue-mcp-plugins", "Unreal", {"dev"}, "(선택) Unreal MCP 엔진 플러그인 (.uproject — ModelContextProtocol · AllToolsets, UE 5.8+)",
-         engine_only("unreal", c_ue_mcp_plugins), i_ue_mcp_plugins, f"prereq.py install ue-mcp-plugins ({UE_MCP_GUIDE})",
+         engine_only("unreal", ue_mcp_only(c_ue_mcp_plugins)), i_ue_mcp_plugins, f"prereq.py install ue-mcp-plugins ({UE_MCP_GUIDE})",
          license="Unreal Engine EULA (엔진 플러그인)"),
-    Item("ue-mcp-json", "Unreal", {"dev"}, "(선택) Unreal MCP 서버 등록 (로컬)", engine_only("unreal", c_ue_mcp_json), None,
+    Item("ue-mcp-json", "Unreal", {"dev"}, "(선택) Unreal MCP 서버 등록 (로컬)", engine_only("unreal", ue_mcp_only(c_ue_mcp_json)), None,
          f"에디터 콘솔: ModelContextProtocol.StartServer → ModelContextProtocol.GenerateClientConfig ClaudeCode ({UE_MCP_GUIDE})"),
     Item("ue-claude-plugin", "Unreal", {"dev"}, "(선택) Epic 공식 Claude Code 플러그인 (unreal-engine-skills-for-claude-code)",
-         engine_only("unreal", c_ue_claude_plugin), None,
+         engine_only("unreal", ue_mcp_only(c_ue_claude_plugin)), None,
          f"Claude Code 에서 /plugin install {UE_CLAUDE_PLUGIN} ({UE_MCP_GUIDE})"),
     Item("android-module", "Android", {"dev"}, "Unity Android Build Support 모듈",
          android_only(engine_only("unity", c_android_module)), None, m_android_module),

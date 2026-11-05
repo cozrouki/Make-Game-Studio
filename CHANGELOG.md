@@ -12,6 +12,14 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.3.1 — 2026-11-05
+
+**고침 (수)**
+- `/ko-prereq` Unreal MCP: UE 5.7 이하 프로젝트에서 `ue-mcp-json`(서버 등록) · `ue-claude-plugin`(Epic 공식 Claude Code 플러그인)이
+  쓸 수 없는데도 `missing` 으로 뜨던 것 → 세 항목 모두 "UE 5.8 부터 — 하지 않음"(`skip`). 엔진 버전을 모르는 소스 빌드(GUID)는
+  세 항목 모두 막지 않고 점검하되 "5.8+ 인지 직접 확인" 메모를 붙인다 (전에는 `ue-mcp-plugins` 에만).
+  회귀 테스트 `test_prereq_ue_mcp_all_items_skip_old_engine_with_reason` · `test_prereq_ue_mcp_unknown_version_still_checked_with_note` (수정 전 실패 확인)
+
 ## 2.3.0 — 2026-11-04
 
 **새 기능 (부)**

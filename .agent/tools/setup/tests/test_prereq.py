@@ -438,6 +438,23 @@ def test_prereq_ue_mcp_skips_old_engine_with_reason(unreal_project):
         prereq.i_ue_mcp_plugins(_ctx(unreal_project), dry=True)
 
 
+def test_prereq_ue_mcp_all_items_skip_old_engine_with_reason(unreal_project):
+    # 5.7 이하에서 서버 등록 · Claude Code 플러그인도 '빠짐(missing)' 이 아니라 '하지 않음(skip)' 이어야 한다
+    (unreal_project / "UeGame.uproject").write_text('{"EngineAssociation": "5.7"}', encoding="utf-8")
+    rows = _ue_rows(unreal_project)
+    for i in ("ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"):
+        assert rows[i]["status"] == "skip" and "5.8" in rows[i]["detail"], i
+
+
+def test_prereq_ue_mcp_unknown_version_still_checked_with_note(unreal_project):
+    # 소스 빌드(GUID)는 버전을 모른다 — 막지 않고 점검하되 직접 확인하라고 알린다
+    (unreal_project / "UeGame.uproject").write_text(
+        '{"EngineAssociation": "{12345678-1234-1234-1234-123456789ABC}"}', encoding="utf-8")
+    rows = _ue_rows(unreal_project)
+    for i in ("ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"):
+        assert rows[i]["status"] == "missing" and "5.8+" in rows[i]["detail"], i
+
+
 def test_prereq_ue_mcp_json_and_claude_plugin(unreal_project, tmp_path, monkeypatch):
     monkeypatch.setattr(prereq.os.path, "expanduser", lambda p: str(tmp_path / "home"))
     rows = _ue_rows(unreal_project)

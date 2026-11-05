@@ -27,7 +27,7 @@ MCP 연결은 엔진 플러그인만으로도 된다. Claude Code 플러그인�
 
 ## 설치
 
-1. **점검** — `/ko-prereq` 의 Unreal 묶음에 선택 항목 셋이 보인다: `ue-mcp-plugins` · `ue-mcp-json` · `ue-claude-plugin`. 프로젝트 `.uproject` 의 `EngineAssociation` 이 5.7 이하면 "UE 5.8 부터 — 하지 않음" 으로 건너뛴다. 소스 빌드(값이 GUID)는 버전을 모르므로 직접 확인한다.
+1. **점검** — `/ko-prereq` 의 Unreal 묶음에 선택 항목 셋이 보인다: `ue-mcp-plugins` · `ue-mcp-json` · `ue-claude-plugin`. 프로젝트 `.uproject` 의 `EngineAssociation` 이 5.7 이하면 세 항목 모두 "UE 5.8 부터 — 하지 않음" 으로 건너뛴다. 소스 빌드(값이 GUID)는 버전을 모르므로 세 항목 모두 점검하되 "5.8+ 인지 직접 확인" 메모가 붙는다.
 2. **엔진 플러그인 켜기** — `.uproject` 의 `Plugins` 배열에 `ModelContextProtocol` · `AllToolsets` 를 `"Enabled": true` 로 넣는다. `/ko-prereq` 가 확인을 받고 고친다 (`prereq.py install ue-mcp-plugins`). `AllToolsets` 는 기본으로 꺼져 있다 — 이것 없이 서버만 켜면 도구가 하나도 없다.
 3. **서버 시작** — 에디터를 다시 열고 콘솔에서 `ModelContextProtocol.StartServer`. 매번 자동으로 켜려면 개인 설정 파일 `<프로젝트>/Saved/Config/<플랫폼>Editor/EditorPerProjectUserSettings.ini` 에:
 
