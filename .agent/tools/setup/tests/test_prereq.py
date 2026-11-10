@@ -559,3 +559,53 @@ def test_prereq_pixelfx_is_optional(project, monkeypatch, capsys):
     args.items = ["pixelfx"]
     prereq.cmd_install(ctx, args)
     assert "codeload.github.com/patch-gg/pixelfx" in capsys.readouterr().out
+
+
+# ---- ComfyUI 를 다른 PC 로 옮긴 경우 ----
+def _portable(root):
+    (root / "ComfyUI").mkdir(parents=True)
+    (root / "ComfyUI" / "main.py").write_text("", encoding="utf-8")
+    (root / "ComfyUI" / "comfyui_version.py").write_text('__version__ = "0.42.1"\n', encoding="utf-8")
+    (root / "python_embeded").mkdir()
+    (root / "python_embeded" / "python.exe").write_text("", encoding="utf-8")
+    return root
+
+
+def _local(project, data):
+    p = project / ".agent" / "tools" / "artgen"
+    p.mkdir(parents=True, exist_ok=True)
+    (p / "artgen.config.local.json").write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_prereq_stale_comfyui_home_is_missing_and_candidate_is_offered(project, tmp_path, monkeypatch):
+    # Arrange — 로컬 설정에 예전 PC 경로, 이 PC 에는 후보 위치에 포터블이 있다
+    found = _portable(tmp_path / "AI" / "ComfyUI_windows_portable")
+    monkeypatch.setattr(prereq, "COMFYUI_CANDIDATES", (str(found),))
+    _local(project, {"provider": "comfyui", "providers": {"comfyui": {"home": "Z:/old-pc/ComfyUI_windows_portable"}}})
+    # Act
+    status, detail = prereq.c_comfyui(_ctx(project, roles=["art"]))
+    # Assert
+    assert status == "missing" and "Z:/old-pc" in detail and str(found) in detail
+
+
+def test_prereq_audio_python_path_that_does_not_exist_says_so(project, monkeypatch):
+    _local(project, {"audio": {"python": "Z:/old-pc/python_embeded/python.exe"}})
+    monkeypatch.setattr(prereq, "_has_av", lambda py: pytest.fail("없는 파일은 실행하지 않는다"))
+    status, detail = prereq.c_audio_python(_ctx(project, roles=["art"]))
+    assert status == "missing" and "경로 없음" in detail
+
+
+@pytest.mark.parametrize("out, code, status, needle", [
+    ('{"cuda": true, "cap": [7, 5], "arch": ["sm_75", "sm_80"], "torch": "2.14.0+cu130", "cudaver": "13.0", "name": "RTX"}',
+     0, "ok", "2.14.0+cu130"),
+    ('{"cuda": false, "cap": null, "arch": ["sm_75"], "torch": "2.14.0+cu130", "cudaver": "13.0", "name": null}',
+     0, "missing", "드라이버"),
+    ('{"cuda": true, "cap": [6, 1], "arch": ["sm_75", "sm_80"], "torch": "2.14.0+cu130", "cudaver": "13.0", "name": "GTX 1080"}',
+     0, "missing", "sm_61"),
+    ("OSError: [WinError 126] Error loading c10.dll", 1, "missing", "vc_redist"),
+])
+def test_prereq_comfyui_torch_probe(project, tmp_path, monkeypatch, out, code, status, needle):
+    home = _portable(tmp_path / "Comfy")
+    monkeypatch.setattr(prereq, "_run", lambda argv, timeout=20: (code, out))
+    got, detail = prereq.c_comfyui_torch(_ctx(project, roles=["art"], comfyui_home=str(home)))
+    assert got == status and needle in detail

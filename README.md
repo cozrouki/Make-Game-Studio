@@ -257,7 +257,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | Python 3.8+ (`python` 이 PATH 에 있을 것) | artgen · studio CLI (표준 라이브러리만 사용). 테스트는 `pytest` 필요 |
 | (선택) Codex · Gemini · Cursor · Copilot · OpenCode CLI | 스튜디오 모드에서 역할을 다른 AI 도구에 맡길 때 (`studio.py dispatch`) |
 | uv (`uvx`) | Unity MCP 서버 실행 (`.mcp.json`) · 도구 테스트 |
-| (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다 |
+| (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다. 포터블 폴더는 통째로 다른 PC 로 옮겨도 된다 — 대상 PC 에 동봉 CUDA 를 지원하는 NVIDIA 드라이버 · 그 torch 빌드가 지원하는 GPU 세대 · VC++ 재배포 패키지가 필요하고, `/ko-prereq` 가 셋 다 실측한다 (`comfyui-torch`). 옮긴 뒤 예전 PC 경로가 남은 로컬 설정은 `prereq.py install local-config audio-python` 이 고친다 |
 | (Android 대상일 때) Unity Android Build Support 모듈 · adb | 기기 프로파일링 · Play 정책 점검 (`/ext` android 카탈로그). `technical-preferences.md` 의 Target Platforms 에 Android 가 있으면 `/ko-prereq` 가 점검 |
 | (선택) 효과음 라이브러리 | Kenney 오디오 팩 8종(CC0, 약 60MB) — `prereq.py install sound-library` 가 받아 색인 |
 | (선택) pixelfx + Node 18+ | 픽셀아트 VFX 244종을 스프라이트 시트로 굽기(MIT, 약 13MB, GPU 불필요) — `prereq.py install pixelfx`, artgen `pixelfx` 어댑터 |

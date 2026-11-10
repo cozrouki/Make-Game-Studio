@@ -84,6 +84,10 @@ def _run(argv, timeout=20):
         return -1, str(e)
 
 
+def _is_portable(home):
+    return bool(home) and os.path.isfile(os.path.join(home, "ComfyUI", "main.py"))
+
+
 def _read_json(path, default=None):
     try:
         with open(path, encoding="utf-8") as f:
@@ -108,8 +112,11 @@ class Ctx:
         self.local = _read_json(self.local_path, {}) or {}
         self.cfg = load_config(os.path.join(self.root, ".agent", "tools", "artgen")) \
             if os.path.isdir(os.path.join(self.root, ".agent", "tools", "artgen")) else load_config()
-        self.comfyui_home = comfyui_home or self.cfg.get("providers", {}).get("comfyui", {}).get("home") \
-            or next((c for c in COMFYUI_CANDIDATES if os.path.isfile(os.path.join(c, "ComfyUI", "main.py"))), None)
+        # 설정된 home 이 이 PC 에 없으면(다른 PC 에서 옮겨 온 설정) 옛 경로로 기록하고 후보 위치를 대신 쓴다
+        configured = self.cfg.get("providers", {}).get("comfyui", {}).get("home")
+        candidate = next((c for c in COMFYUI_CANDIDATES if _is_portable(c)), None)
+        self.comfyui_stale = configured if configured and not comfyui_home and not _is_portable(configured) else None
+        self.comfyui_home = comfyui_home or (configured if configured and not self.comfyui_stale else None) or candidate
         lib = library_dir or self.cfg.get("providers", {}).get("library", {}).get("dir", "art-source/sound-library")
         self.library_dir = os.path.normpath(lib if os.path.isabs(lib) else os.path.join(self.root, lib))
         self.library_dir_overridden = bool(library_dir)
@@ -762,6 +769,10 @@ def c_gpu(ctx):
 
 
 def c_comfyui(ctx):
+    if ctx.comfyui_stale:
+        found = (f" — 이 PC 에서 찾은 포터블: {ctx.comfyui_home} (prereq.py install local-config 가 설정을 고친다)"
+                 if ctx.comfyui_home else " — prereq.py --comfyui-home <폴더> install local-config 로 이 PC 경로를 지정")
+        return "missing", f"설정된 providers.comfyui.home 이 이 PC 에 없음: {ctx.comfyui_stale} (다른 PC 의 경로?){found}"
     if not ctx.comfyui_home:
         return "missing", "ComfyUI 포터블을 찾지 못함 (--comfyui-home 으로 지정 가능)"
     ver = None
@@ -773,6 +784,42 @@ def c_comfyui(ctx):
     if ver and ver < MIN_COMFYUI:
         return "missing", f"ComfyUI {ver} < {MIN_COMFYUI} — 오디오 · 배경 제거 코어 노드가 없다 (update/update_comfyui.bat)"
     return "ok", f"{ctx.comfyui_home} (v{ver[0]}.{ver[1]})" if ver else ctx.comfyui_home
+
+
+# 포터블에 딸린 torch 가 이 PC 의 GPU 를 실제로 쓸 수 있는지 — 폴더를 다른 PC 로 옮겼을 때의 함정(드라이버가 동봉 CUDA 보다
+# 오래됨 · torch 빌드가 지원하지 않는 GPU 세대 · VC++ 재배포 패키지 없음)을 생성 전에 잡는다. nvidia-smi 로는 알 수 없다
+TORCH_PROBE = "\n".join([
+    "import json, torch",
+    "d = {'torch': torch.__version__, 'cudaver': torch.version.cuda, 'cuda': torch.cuda.is_available(),",
+    "     'arch': torch.cuda.get_arch_list(), 'cap': None, 'name': None}",
+    "if d['cuda']:",
+    "    d['cap'] = list(torch.cuda.get_device_capability(0)); d['name'] = torch.cuda.get_device_name(0)",
+    "print(json.dumps(d))",
+])
+VC_REDIST = "https://aka.ms/vc14/vc_redist.x64.exe"
+
+
+def c_comfyui_torch(ctx):
+    py = ctx.comfy_python()
+    if not py:
+        return "skip", "ComfyUI 포터블(python_embeded)이 없어 확인하지 않음 — 위 ComfyUI 항목부터"
+    code, out = _run([py, "-s", "-c", TORCH_PROBE], timeout=180)
+    line = next((ln for ln in reversed(out.splitlines()) if ln.strip().startswith("{")), None)
+    if code != 0 or line is None:
+        if "c10.dll" in out or "WinError 126" in out:
+            return "missing", f"torch 를 불러오지 못함 (c10.dll) — VC++ 재배포 패키지 설치: {VC_REDIST}"
+        return "missing", f"torch 실행 실패: {out.strip()[-300:] or '출력 없음'}"
+    d = json.loads(line)
+    ver = f"torch {d['torch']} (CUDA {d['cudaver']})"
+    if not d["cuda"]:
+        return "missing", (f"{ver} 가 GPU 를 쓰지 못함 — NVIDIA 드라이버가 CUDA {d['cudaver']} 보다 오래됐거나 GPU 가 없다. "
+                           "드라이버를 최신으로 (https://www.nvidia.com/drivers)")
+    sm = f"sm_{d['cap'][0]}{d['cap'][1]}"
+    built = sorted(int(a[3:]) for a in d.get("arch") or [] if a.startswith("sm_") and a[3:].isdigit())
+    if built and d["cap"][0] * 10 + d["cap"][1] < built[0]:
+        return "missing", (f"{d['name']} ({sm}) 는 {ver} 빌드가 지원하지 않는 GPU 세대 (최소 sm_{built[0]}) — 더 새 GPU 가 "
+                           "필요하거나 이 GPU 를 지원하는 이전 CUDA 판 ComfyUI 포터블을 쓴다")
+    return "ok", f"{ver} · {d['name']} ({sm})"
 
 
 def _model_path(ctx, key):
@@ -816,6 +863,9 @@ def _has_av(python):
 
 def c_audio_python(ctx):
     exe = ctx.cfg.get("audio", {}).get("python")
+    if exe and not os.path.isfile(exe if os.path.isabs(exe) else os.path.join(ctx.root, exe)):
+        return "missing", (f"audio.python 경로 없음: {exe} (다른 PC 의 경로?) — prereq.py install audio-python 이 "
+                           "이 PC 의 ComfyUI python_embeded 로 다시 지정한다")
     if exe and _has_av(exe):
         return "ok", exe
     if exe:
@@ -833,12 +883,16 @@ def i_audio_python(ctx, dry):
 
 
 def c_local_config(ctx):
+    if ctx.local.get("provider") == "comfyui" and ctx.comfyui_stale:
+        return "missing", f"provider=comfyui 이지만 home 이 이 PC 에 없는 경로: {ctx.comfyui_stale}"
     if ctx.local.get("provider") == "comfyui":
         return "ok", "provider=comfyui"
     return "missing", f"artgen.config.local.json provider={ctx.local.get('provider', '(없음 → mock)')}"
 
 
 def i_local_config(ctx, dry):
+    if ctx.comfyui_stale and not ctx.comfyui_home:
+        raise RuntimeError("이 PC 에서 ComfyUI 포터블을 찾지 못함 — prereq.py --comfyui-home <폴더> install local-config")
     patch = {"provider": "comfyui"}
     if ctx.comfyui_home:
         patch["providers"] = {"comfyui": {"home": ctx.comfyui_home.replace("\\", "/")}}
@@ -1086,6 +1140,8 @@ ITEMS = [
          "pip install protobuf"),
     Item("gpu", "생성", {"art"}, "NVIDIA GPU · 드라이버 (VRAM 8GB+)", c_gpu, None, "https://www.nvidia.com/drivers"),
     Item("comfyui", "생성", {"art"}, "ComfyUI 포터블 0.42+", c_comfyui, None, COMFYUI_RELEASES),
+    Item("comfyui-torch", "생성", {"art"}, "ComfyUI torch 가 GPU 사용 가능 (드라이버 · GPU 세대 · VC++)", c_comfyui_torch, None,
+         f"NVIDIA 드라이버 최신화 · VC++ 재배포 패키지 {VC_REDIST}"),
     *[Item(f"model:{k}", "생성", {"art"}, f"모델 {MODELS[k]['file']}", c_model(k), i_model(k),
            f"https://huggingface.co/{MODELS[k]['repo']}", MODELS[k]["size"], MODELS[k]["license"]) for k in MODELS],
     Item("audio-python", "생성", {"art"}, "오디오 후처리 Python (PyAV · numpy)", c_audio_python, i_audio_python,

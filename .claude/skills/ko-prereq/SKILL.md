@@ -27,6 +27,7 @@ allowed-tools: Read, Bash, AskUserQuestion
 3. **확인** — 자동 설치 후보가 있으면 `AskUserQuestion` 으로 묻는다:
    - `[A] 모두 설치 (Recommended)` / `[B] 일부만` (항목을 다시 물음) / `[C] 설치 안 함`
    - 대용량 모델(GB 단위)이 있으면 질문에 총 용량과 저장 위치(ComfyUI models 폴더)를 적는다.
+   - ComfyUI 포터블을 다른 PC 에서 복사해 왔으면: `comfyui-torch`(포터블 torch 가 이 PC GPU 를 쓰는지 — 드라이버 · GPU 세대 · VC++)가 missing 이면 그 안내(드라이버 갱신 · vc_redist)를 사용자에게 그대로 전한다 — 자동 설치하지 않는다. `comfyui` · `local-config` · `audio-python` 이 "다른 PC 의 경로" 로 missing 이면 `install local-config audio-python` 이 이 PC 경로로 고친다.
 4. **설치** — `python .agent/tools/setup/prereq.py install <항목...> --yes` 를 백그라운드로 실행한다 (모델은 수 GB · 수십 분). 끝나면 출력의 ✖ 를 그대로 보고한다.
    - 다운로드가 끊겨도 `.part` 에서 이어받는다. 실패한 항목은 같은 명령으로 다시 실행하면 된다.
 5. **재점검** — `check` 를 다시 실행해 남은 항목을 보고한다. 필수 누락이 0 이면 다음 단계(`/studio-status launch` 또는 `/ko-setup-engine`)를 안내한다.

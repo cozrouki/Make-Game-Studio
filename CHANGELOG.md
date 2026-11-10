@@ -12,6 +12,19 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.5.1 — 2026-11-10
+
+**고침 (수)** — ComfyUI 포터블을 다른 PC 로 옮겼을 때 `/ko-prereq` 가 놓치던 것
+- 로컬 설정의 `providers.comfyui.home` 이 이 PC 에 없는 경로(예전 PC)여도 `comfyui` 가 "ok" 를 내고, 그 설정 때문에 후보 위치
+  (`D:\AI` 등)의 포터블도 찾지 않던 것 → "다른 PC 의 경로?" 로 missing + 이 PC 에서 찾은 포터블 안내, `local-config` 도 missing 이
+  되어 `install local-config` 가 이 PC 경로로 고친다
+- `audio.python` 파일이 아예 없을 때 "PyAV · numpy 없음" 으로 원인을 잘못 짚던 것 → "경로 없음 (다른 PC 의 경로?)",
+  `install audio-python` 이 이 PC 의 python_embeded 로 다시 지정
+- 새 항목 `comfyui-torch` — 포터블에 딸린 torch 가 이 PC GPU 를 실제로 쓰는지 실측 (`nvidia-smi` 로는 모름): 드라이버가 동봉
+  CUDA 보다 오래됨 · torch 빌드가 지원하지 않는 GPU 세대(최소 sm_) · VC++ 재배포 패키지 없음(c10.dll)을 각각 구별해 안내.
+  이 PC: `torch 2.14.0+cu130 (CUDA 13.0) · RTX 2070 SUPER (sm_75)` · 약 7초
+- 회귀 테스트 6개 (수정 전 실패 확인, GPU 세대 판정은 변이로 실패 확인), 예전 PC 경로 시나리오를 실제 `install` 로 복구까지 확인
+
 ## 2.5.0 — 2026-11-10
 
 GamePorject(이미 만들어진 Unity 게임, 네온 픽셀아트 전환 중)에 스튜디오 모드를 붙여 돌리며 찾은 보완.
