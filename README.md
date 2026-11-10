@@ -345,7 +345,7 @@ python scripts/gen-rule-mirrors.py
 | .gitignore | 백업 폴더 · 머신별 설정 · 런타임 파일 항목 추가 (artgen 생성 원본 · 받은함, 스튜디오 이벤트 로그 · 정지 표시 · 디스패치 로그 · 잠금 포함) |
 
 - `-Games`를 생략하면 엔진 코드 루트(Unity `Assets/` · Godot 프로젝트 루트 · Unreal `Source/`) 하위 후보(소스 파일 수)를 보여 주고 입력받습니다. 입력이 리다이렉트된 환경(CI)에서는 묻지 않고 자리표시자를 유지합니다.
-- 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다(`settings.local.json`은 보존).
+- 기존 `.claude`·`CLAUDE.md`·`AGENTS.md` 등이 있으면 **중단**합니다. `-Force`를 붙이면 `.claude.backup-<시각>/`에 백업한 뒤 덮어씁니다. 템플릿 git 이력에 있는 파일만 교체 · 정리하고, 프로젝트가 직접 만든 파일(예: `.agent/rules/<게임>.md` · `.claude/agent-memory/`)과 `*.local.json` 은 그대로 두며 보존 목록을 출력합니다(`-DryRun` 으로 미리 볼 수 있음).
 - 설치 후: (Unity) MCPForUnity 확인 → `claude` 실행 → **`/ko-setup-engine`**(6단계) → `/unity-fullstack`.
 
 ### 기존 설치 올리기 — 버전 · 업그레이드
@@ -353,7 +353,7 @@ python scripts/gen-rule-mirrors.py
 템플릿 버전은 `.agent/VERSION` 에 있고 설치된 프로젝트에도 복사됩니다. 버전별 변경과 올리는 방법은 [`CHANGELOG.md`](CHANGELOG.md) 에 있습니다.
 
 - 스튜디오 모드 프로젝트: `python <템플릿>/.agent/tools/studio/studio.py --root <프로젝트> upgrade --from <템플릿> --dry-run` 으로 미리 보고 실행 — 엔진 필터 · 씨앗(없을 때만) · 프로젝트가 고친 규칙은 "직접 병합 필요" 로 알림 · 사라진 파일 정리 · 훅 등록 병합
-- 그 밖의 프로젝트: `install.ps1 -Target <프로젝트> -Force` 로 다시 설치 (백업 · `*.local.json` · `project.yaml` · 레지스트리 보존)
+- 그 밖의 프로젝트: `install.ps1 -Target <프로젝트> -Force` 로 다시 설치 (백업 · 프로젝트가 만든 파일 · `*.local.json` · `project.yaml` · 레지스트리 보존)
 
 스크립트를 쓸 수 없는 환경이면 아래 수동 절차를 따르세요.
 

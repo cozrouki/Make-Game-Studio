@@ -221,20 +221,44 @@ if ($conflicts) {
     if (-not $DryRun) {
         New-Item -ItemType Directory -Force -Path $backup | Out-Null
         foreach ($c in $conflicts) { Copy-Item -Path (Join-Path $Target $c) -Destination $backup -Recurse -Force }
-        # 디렉터리는 비워서 템플릿과 정확히 같게 만든다.
-        # 단 머신별 설정 *.local.json (.claude/settings.local.json · artgen/studio config.local.json 등)은 보존한다
-        foreach ($c in $conflicts) {
-            $p = Join-Path $Target $c
-            if (Test-Path $p -PathType Container) {
-                $keeps = @(Get-ChildItem -Path $p -Recurse -File -Filter "*.local.json" -ErrorAction SilentlyContinue |
-                           ForEach-Object { @{ Path = $_.FullName; Text = (Read-TextFile $_.FullName) } })
-                Remove-Item $p -Recurse -Force
-                foreach ($k in $keeps) {
-                    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $k.Path) | Out-Null
-                    Write-TextFile $k.Path $k.Text
-                }
-                if ($keeps.Count) { Write-Info "보존: $($keeps.Count)개 *.local.json ($c)" }
-            }
+    }
+    # 템플릿 파일만 지워서 템플릿과 같게 만든다 — 지금 템플릿에서 빠진 옛 파일(폐지 · 이름 변경)도 정리된다.
+    # 템플릿 git 이력에 한 번도 없던 파일은 프로젝트가 만든 것(예: .agent/rules/<게임>.md)이라 보존하고,
+    # 머신별 설정 *.local.json (.claude/settings.local.json · artgen/studio config.local.json 등)도 보존한다.
+    # 템플릿이 git 저장소가 아니면 이력을 몰라서 지금 복사할 파일만 템플릿 파일로 본다 (옛 파일은 남는다).
+    $tplPaths = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+    if (Test-Path (Join-Path $pkg ".git")) {
+        $hist = & git -C $pkg -c core.quotePath=false log --all --format= --name-only
+        if ($LASTEXITCODE -ne 0) { throw "git log 실패 — 템플릿 파일 목록을 알 수 없어 중단 (백업: $backup)" }
+        foreach ($h in $hist) { if ($h) { [void]$tplPaths.Add($h) } }
+    }
+    foreach ($f in $files) { [void]$tplPaths.Add($f) }
+    foreach ($c in $conflicts) {
+        $p = Join-Path $Target $c
+        if (-not (Test-Path $p -PathType Container)) { continue }   # CLAUDE.md 같은 파일은 복사가 덮어쓴다
+        $kept = @(); $local = 0
+        # 기준은 Get-Item 의 FullName — 짧은 경로(UNITY0~1)로 받은 -Target 과 Get-ChildItem 의 긴 이름이 어긋나지 않게
+        $base = (Get-Item -LiteralPath $p -Force).FullName.TrimEnd('\', '/')
+        foreach ($it in @(Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+            if ($it.Name -like "*.local.json") { $local++; continue }
+            if (-not $it.FullName.StartsWith($base + '\', [StringComparison]::OrdinalIgnoreCase)) { $kept += $it.FullName; continue }
+            $rel = "$c/" + $it.FullName.Substring($base.Length + 1).Replace('\', '/')
+            # 설치가 다시 만드는 파일(라이선스 사본 · 출처 지문)과 Python 캐시는 템플릿 쪽으로 본다
+            $regen = ($rel -eq ".agent/PROVENANCE.md") -or $rel.StartsWith(".agent/licenses/") -or ($rel -match '(^|/)__pycache__/')
+            if (-not $regen -and -not $tplPaths.Contains($rel)) { $kept += $rel; continue }
+            if (-not $DryRun) { Remove-Item -LiteralPath $it.FullName -Force }
+        }
+        if (-not $DryRun) {
+            # 비게 된 폴더 정리 (깊은 것부터)
+            Get-ChildItem -LiteralPath $p -Recurse -Directory -Force -ErrorAction SilentlyContinue |
+                Sort-Object { $_.FullName.Length } -Descending |
+                Where-Object { -not (Get-ChildItem -LiteralPath $_.FullName -Force) } |
+                ForEach-Object { Remove-Item -LiteralPath $_.FullName -Force }
+        }
+        if ($local) { Write-Info "보존: $local 개 *.local.json ($c)" }
+        if ($kept.Count) {
+            Write-Info "보존: 템플릿에 없는 프로젝트 파일 $($kept.Count)개 ($c) — 필요 없으면 직접 지운다"
+            foreach ($k in $kept) { Write-Info "    $k" }
         }
     }
 }
