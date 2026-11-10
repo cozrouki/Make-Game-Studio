@@ -472,3 +472,90 @@ def test_prereq_ue_mcp_items_skip_on_other_engines(godot_project):
     rows = _ue_rows(godot_project)
     for i in ("ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"):
         assert rows[i]["status"] == "skip" and "Unreal 전용" in rows[i]["detail"]
+
+
+# ---- pixelfx ----
+def _pixelfx_root(project):
+    return project / "art-source" / "pixelfx"
+
+
+def _fake_pixelfx_zip(path, commit):
+    """codeload zip 모양 — 최상위 pixelfx-<커밋>/, 받지 않을 gallery/ 와 경로 탈출 항목 포함."""
+    import zipfile
+    prefix = f"pixelfx-{commit}/"
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr(prefix, "")
+        z.writestr(prefix + "tools/render.mjs", "// render")
+        z.writestr(prefix + "src/fx/ice/frost-nova.js", "// fx")
+        z.writestr(prefix + "LICENSE", "MIT License")
+        z.writestr(prefix + "gallery/fonts/patch.woff2", "font")
+        z.writestr(prefix + "src/../../escape.txt", "x")
+
+
+def test_prereq_pixelfx_states(project, monkeypatch):
+    # Arrange
+    ctx = _ctx(project, roles=["art"])
+    root = _pixelfx_root(project)
+    monkeypatch.setattr(prereq, "_node_ver", lambda ctx: (22, 14))
+    # Act · Assert — 없음
+    assert prereq.c_pixelfx(ctx)[0] == "missing"
+    (root / "tools").mkdir(parents=True)
+    (root / "tools" / "render.mjs").write_text("//", encoding="utf-8")
+    # 고정 커밋 표시가 없으면(직접 클론) 경고
+    status, detail = prereq.c_pixelfx(ctx)
+    assert status == "warn" and "고정 커밋" in detail
+    (root / ".pixelfx-commit").write_text(prereq.PIXELFX["commit"] + "\n", encoding="utf-8")
+    assert prereq.c_pixelfx(ctx)[0] == "ok"
+    # Node 가 낮으면 경고
+    monkeypatch.setattr(prereq, "_node_ver", lambda ctx: (16, 20))
+    status, detail = prereq.c_pixelfx(ctx)
+    assert status == "warn" and "Node 16.20" in detail
+
+
+def test_prereq_pixelfx_install_extracts_only_needed_files(project, monkeypatch, tmp_path):
+    # Arrange — 받은 zip 대신 로컬 zip 을 쓴다 (크기 · SHA 검증은 download 테스트가 맡는다)
+    commit = prereq.PIXELFX["commit"]
+    src_zip = tmp_path / "src.zip"
+    _fake_pixelfx_zip(src_zip, commit)
+    calls = []
+
+    def fake_download(url, dest, size=None, sha256=None):
+        calls.append((url, size, sha256))
+        import shutil as sh
+        sh.copyfile(src_zip, dest)
+    monkeypatch.setattr(prereq, "download", fake_download)
+    monkeypatch.setattr(prereq, "_node_ver", lambda ctx: (22, 14))
+    ctx = _ctx(project, roles=["art"])
+    # Act
+    msg = prereq.i_pixelfx(ctx, dry=False)
+    # Assert
+    root = _pixelfx_root(project)
+    assert calls == [(f"https://codeload.github.com/patch-gg/pixelfx/zip/{commit}", prereq.PIXELFX["size"],
+                      prereq.PIXELFX["sha256"])]
+    assert (root / "tools" / "render.mjs").is_file() and (root / "LICENSE").is_file()
+    assert not (root / "gallery").exists()                       # MIT 밖 폰트는 받지 않는다
+    assert not (project / "art-source" / "escape.txt").exists() and not (root / "escape.txt").exists()
+    assert (root / ".pixelfx-commit").read_text(encoding="utf-8").strip() == commit
+    assert not (project / "art-source" / "pixelfx.part").exists()
+    assert "044e12a" in msg and prereq.c_pixelfx(ctx)[0] == "ok"
+
+
+def test_prereq_pixelfx_install_refuses_non_empty_folder(project, monkeypatch):
+    root = _pixelfx_root(project)
+    root.mkdir(parents=True)
+    (root / "mine.txt").write_text("keep", encoding="utf-8")
+    monkeypatch.setattr(prereq, "download", lambda *a, **k: pytest.fail("받으면 안 된다"))
+    with pytest.raises(RuntimeError, match="비어 있지 않음"):
+        prereq.i_pixelfx(_ctx(project, roles=["art"]), dry=False)
+    assert (root / "mine.txt").read_text(encoding="utf-8") == "keep"
+
+
+def test_prereq_pixelfx_is_optional(project, monkeypatch, capsys):
+    monkeypatch.setattr(prereq, "_node_ver", lambda ctx: (22, 14))
+    ctx = _ctx(project, roles=["art"])
+    args = type("A", (), {"items": [], "yes": True, "dry_run": True})()
+    prereq.cmd_install(ctx, args)
+    assert "codeload.github.com/patch-gg/pixelfx" not in capsys.readouterr().out
+    args.items = ["pixelfx"]
+    prereq.cmd_install(ctx, args)
+    assert "codeload.github.com/patch-gg/pixelfx" in capsys.readouterr().out

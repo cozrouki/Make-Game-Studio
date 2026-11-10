@@ -31,6 +31,8 @@
 | `production/artgen/ASSET-NNN/state.json` · `review.md` | 상태 · 검수 기록 | 추적 |
 | `production/artgen/ASSET-NNN/v###/` · `replaced/` | 생성 원본 · 교체 백업 (용량 큼) | **무시** |
 | `production/artgen/import-map.json` | Unity 임포트 설정 (팀원 재임포트에 필요) | 추적 |
+| `production/artgen/credits.json` | 기성 소스(효과음 라이브러리 · pixelfx)의 출처 · 라이선스 | 추적 |
+| `art-source/pixelfx/` | pixelfx 설치본 (`prereq.py install pixelfx`) | **무시** |
 | `Assets/ArtGen/Editor/` | 임포트 후처리기 (최초 승격 시 설치) | 추적 |
 
 ## CLI
@@ -67,7 +69,7 @@ python .agent/tools/artgen/artgen.py status   [ASSET-001]
 | `output.width/height/transparent` | 에셋 스펙 Dimensions · 아트 바이블 §8 Asset Standards |
 | `unity.dest` | `technical-preferences.md` 네이밍 규칙 + 게임 폴더 (AGENTS.md §6) |
 | `unity.import` | 아트 바이블 §8 + 성능 예산 (maxSize·압축·PPU·필터) |
-| `providerOptions.<이름>` | 백엔드별 값 (워크플로 파일·모델·LoRA 등) — 백엔드 결정 후 |
+| `providerOptions.<이름>` | 백엔드별 값 (워크플로 파일·모델·LoRA 등 · `pixelfx` 는 `effect` · `fps` · `options`) |
 
 ## 로컬 ComfyUI — `comfyui` 어댑터
 
@@ -181,6 +183,38 @@ artgen library index                                          # 색인 다시 �
 
 **다른 어댑터**: `mock` 은 시드 기반 사인파 WAV(루프는 이음매 없음) · `manual` 은 받은함의 `*.wav` · `command` 는 외부 프로그램이 `{out_dir}` 에 16bit WAV 를 쓰는 계약이다 (`{duration}` 토큰). 이 셋은 후처리를 거치지 않는다.
 
+## 픽셀아트 VFX 시트 — `pixelfx` 어댑터
+
+이미지를 생성하지 않는다. [pixelfx](https://github.com/patch-gg/pixelfx)(MIT)의 코드 효과 244종(불 · 폭발 · 마법 · 날씨 · UI · 타격 등) 중 하나를 시드와 팔레트로 렌더해 **애니메이션 스프라이트 시트**를 굽는다. GPU · 모델 · 네트워크가 필요 없고, 같은 시드면 같은 바이트가 나온다. ComfyUI 가 약한 프레임 애니메이션 VFX 를 맡는다.
+
+**준비**: Node 18+ 와 `python .agent/tools/setup/prereq.py install pixelfx` (고정 커밋 zip 을 크기 · SHA256 확인 후 `art-source/pixelfx/` 에 푼다 — 렌더에 필요한 `src` · `tools` · `docs` · 라이선스만, MIT 밖인 갤러리 폰트는 받지 않는다. git 무시). 효과 목록은 `node art-source/pixelfx/tools/list.mjs`, 눈으로 고르려면 [갤러리](https://patch-gg.github.io/pixelfx/).
+
+```json
+"category": "vfx",
+"prompt": { "subject": "frost nova burst", "palette": ["#BFE9FF", "#4FA8D8", "#1C3B57"] },
+"output": { "width": 64, "height": 64, "transparent": true, "variants": 3, "seed": 7 },
+"unity": { "dest": "Assets/Art/Vfx/frost_nova.png", "import": { "pixelsPerUnit": 32 } },
+"providerOptions": { "pixelfx": { "effect": "ice/frost-nova", "fps": 12 } }
+```
+
+```bash
+artgen generate design/assets/requests/ASSET-030.json --provider pixelfx
+```
+
+| `providerOptions.pixelfx` | 뜻 |
+|---|---|
+| `effect` | 효과 id `<분류>/<이름>` (필수). 패턴 · 분류 전체는 받지 않는다 — pixelfx 도구는 없는 id 에도 성공으로 끝나서 어댑터가 파일로 확인한다 |
+| `fps` | 굽는 프레임률 1~60 (기본 효과 값, 보통 30). 시트 메모리는 프레임 수에 비례한다 — `ice/frost-nova` 는 30fps 103프레임이 2592×2304(비압축 약 24MB), 12~15fps 면 절반 이하. 픽셀아트는 낮은 fps 가 원래 느낌에 가깝다 |
+| `options` | 효과 옵션 그대로 (예: `{"light": 0.6}`). `palette` 를 넣으면 `prompt.palette` 보다 우선 |
+
+- **팔레트**: `prompt.palette`(아트 바이블 의미 색)를 밝기 순(어두운 → 밝은)으로 정렬해 효과의 색 램프로 넘긴다 — 프롬프트 힌트가 아니라 실제로 그 색으로 그린다. 효과마다 고정 색(횃불 손잡이 등)은 남는다.
+- **크기**: 시트 크기는 효과 · fps 가 정한다. `output.width/height` 와 비교하지 않는다 (스키마상 필수라 아무 값이나 둔다).
+- **변형**: 시드만 다른 같은 효과. 변형마다 `variant_NN.png`(투명 시트) · `variant_NN.sheet.json`(Aseprite 형식 프레임 · `meta.pixelfx` 의 fps · loop · frameSize · pivot · columns · 타격 타이밍 `act`) · `variant_NN.source.json`(출처)을 쓴다. `run.json` 출력 항목에 `sheet` 요약이 붙는다.
+- **검사**: 생성 뒤 `tools/check.mjs` 로 효과를 검사해(캔버스 밖 픽셀 · 루프 이음새 · 시드 없는 난수 · 느린 프레임) 결과를 `run.json` warnings 에 남긴다. 실패도 경고로만 남긴다 — 렌더 결과는 있다. 끄려면 `providers.pixelfx.check: false`.
+- **빛**: 원본의 더하기 합성 빛 번짐은 투명 시트에서 반투명 알파로 구워진다. 일반 알파 블렌드로 그리면 갤러리보다 덜 빛나 보인다 — 빛이 주인 효과는 additive 머티리얼 · 블렌드 모드로 그린다 (임포트 설정이 아니라 렌더러 쪽 결정).
+- **승격**: PNG 옆에 같은 이름의 `.json`(프레임 데이터, `meta.image` 는 승격 파일명)을 함께 둔다. 둘 중 하나라도 있으면 `--force` 가 필요하고 둘 다 백업한다. 출처는 `credits.json` 에 남는다 — 효과가 Sprite Fusion(MIT, Hugo Duprez)에서 온 것이면 그 표기도 함께.
+- **설정** (`providers.pixelfx`): `dir`(기본 `art-source/pixelfx`) · `node`(기본 `node`) · `timeoutSec`(300) · `check`(true).
+
 ## 사람 아티스트 납품 — `manual` 어댑터
 
 이미지를 생성하지 않고 **사람이 그린 PNG 를 받는다.** 검수 · 선택 · 승격 · Unity 임포트는 AI 생성물과 똑같이 처리된다. 그래서 AI 와 사람의 에셋을 한 프로젝트에서 섞어 쓸 수 있다.
@@ -264,7 +298,10 @@ python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.j
 - 오디오 항목(`kind: "audio"`)은 `OnPreprocessAudio` 가 적용한다. 대상: forceToMono · loadInBackground · 기본 샘플 설정(loadType · compressionFormat · quality · preloadAudioData). 루프 재생 여부는 임포트 설정이 아니라 `AudioSource.loop` 다 — dev 가 연결할 때 정한다.
 - `promote` 는 임포트 맵을 **먼저** 쓰고 그다음 파일을 복사한다. 그래서 첫 임포트부터 설정이 적용된다.
 - 설정만 바꾸고 파일이 그대로면 Unity 가 다시 임포트하지 않는다. 이때는 `promote --force` 로 다시 승격하거나 에디터에서 Reimport 한다. MCP 를 쓸 수 있으면 `manage_asset` 으로 처리한다.
-- 아직 범위 밖: 스프라이트 시트 자동 슬라이싱(`spriteMode: Multiple` 은 모드만 설정), 3D 메시·머티리얼, 음성(TTS).
+- **스프라이트 시트**(`pixelfx` 결과처럼 run.json 출력에 `sheet` 가 있는 것): 승격이 임포트 맵에 시트 기본값(`spriteMode: Multiple` · `filterMode: Point` · `compression: None` · 밉맵 끔 · 시트를 담는 `maxSize`)과 격자(`sheetFrames` · `sheetColumns` · `frameWidth` · `frameHeight` · `pivotX/Y` · `sheetName`)를 쓴다. 요청 `unity.import` 가 기본값을 덮어쓰지만 `maxSize` 가 시트보다 작으면 거부한다 (줄어든 시트는 프레임 좌표가 어긋난다). 임포터가 `<sheetName>_000` … 스프라이트로 자르고, 다시 승격해도 같은 이름의 spriteID 를 유지해 애니메이션 · 프리팹 참조가 깨지지 않는다.
+- 시트 자르기는 `com.unity.2d.sprite` 패키지(`ISpriteEditorDataProvider` — Unity 6.3 에서 `TextureImporter.spritesheet` 는 지원 중단)가 있을 때만 한다. asmdef `versionDefines` 로 패키지가 있을 때만 그 코드를 컴파일하므로, 없으면 컴파일 오류 없이 경고만 내고 Multiple 모드로 둔다 (Sprite Editor 의 Grid By Cell Size 로 수동). 2026-11-10 Unity 6000.3.24f1 batchmode 로 두 경우 모두 확인.
+- AnimationClip 은 만들지 않는다 — 프레임 순서 · fps · loop 는 승격된 `.json` 에 있다. dev 가 연결할 때 정한다.
+- 아직 범위 밖: 3D 메시·머티리얼, 음성(TTS).
 
 ## Godot · Unreal 승격
 
@@ -273,8 +310,8 @@ python .agent/tools/artgen/artgen.py generate design/assets/requests/ASSET-012.j
 | 엔진 | `unity.dest` (키 이름은 호환 때문에 그대로) | 승격이 하는 일 | 사람이 할 일 |
 |---|---|---|---|
 | Unity | `Assets/` 로 시작 | 임포트 맵 기록 → 파일 복사 → 위 임포터가 설정 적용 | 없음 |
-| Godot | 프로젝트 상대경로 (`.godot/` · `addons/` 밖, 예: `assets/vfx/x.png`) | 파일 복사 | 에디터가 자동 임포트한다. 필터 · 밉맵 · 압축은 Import 독에서 설정 |
-| Unreal | 프로젝트 상대경로 (예: `Content/Import/VFX/x.png`) | 파일 복사 | 에디터 Import 로 `.uasset` 을 만든다 (Auto Reimport 를 켰으면 `Content/` 아래는 자동). 압축 · LOD 그룹 설정 |
+| Godot | 프로젝트 상대경로 (`.godot/` · `addons/` 밖, 예: `assets/vfx/x.png`) | 파일 복사 (시트면 `.json` 도) | 에디터가 자동 임포트한다. 필터 · 밉맵 · 압축은 Import 독에서 설정. 시트는 `.json` 의 frameSize · columns 로 `SpriteFrames`(또는 `Sprite2D` hframes · vframes)를 만든다 |
+| Unreal | 프로젝트 상대경로 (예: `Content/Import/VFX/x.png`) | 파일 복사 (시트면 `.json` 도) | 에디터 Import 로 `.uasset` 을 만든다 (Auto Reimport 를 켰으면 `Content/` 아래는 자동). 압축 · LOD 그룹 설정. 시트는 Paper2D 의 Extract Sprites(Grid) 나 Flipbook 으로 |
 
 Godot · Unreal 은 `state.json` 의 `promoted.importManual: true` 로 남는다 — 임포트 설정까지 끝냈다는 뜻이 아니다. 엔진을 판정하지 못하면 승격을 거부한다.
 
@@ -284,4 +321,4 @@ Godot · Unreal 은 `state.json` 의 `promoted.importManual: true` 로 남는다
 python -m pytest .agent/tools/artgen/tests -q
 ```
 
-외부 의존성은 없다. 표준 라이브러리만 쓰고, 테스트에만 pytest 가 필요하다. 오디오 후처리 테스트 2개는 PyAV + numpy 인터프리터(`ARTGEN_TEST_AUDIO_PYTHON` 또는 ComfyUI 포터블 기본 경로)가 있을 때만 돈다.
+외부 의존성은 없다. 표준 라이브러리만 쓰고, 테스트에만 pytest 가 필요하다. 오디오 후처리 테스트 2개는 PyAV + numpy 인터프리터(`ARTGEN_TEST_AUDIO_PYTHON` 또는 ComfyUI 포터블 기본 경로)가 있을 때만 돈다. `pixelfx` 테스트는 Node 대신 같은 계약의 Python 스크립트로 돌고, 실제 렌더 결정론 테스트 1개는 `PIXELFX_DIR`(설치 폴더)와 Node 18+ 가 있을 때만 돈다.

@@ -21,6 +21,7 @@
     "mock": {},
     "manual": { "inboxDir": "production/artgen/_inbox" },
     "library": { "dir": "art-source/sound-library", "maxOverRatio": 1.5 },
+    "pixelfx": { "dir": "art-source/pixelfx", "node": "node", "timeoutSec": 300, "check": true },
     "comfyui": {
       "url": "http://127.0.0.1:8188",
       "graph": "sdxl",

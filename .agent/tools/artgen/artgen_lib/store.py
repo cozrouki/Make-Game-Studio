@@ -8,6 +8,7 @@
     state.json                       status: generated | selected | promoted | rejected
     review.md                        검수 기록 (스킬이 작성)
     v001/ job.json run.json variant_01.png ...
+                                     시트 어댑터(pixelfx): variant_01.sheet.json (프레임 데이터) · variant_01.source.json (출처)
                                      오디오: variant_01.wav (원본 오디오 어댑터면 variant_01.src.flac 도 남김)
 """
 import datetime
@@ -89,6 +90,65 @@ def detect_engine(root):
     return None
 
 
+def sheet_summary(sheet, width, height):
+    """Aseprite 형식 시트 JSON(meta.pixelfx 포함) → (요약, 문제 목록). 격자가 PNG 크기와 맞는지 확인한다."""
+    meta = sheet.get("meta", {}) if isinstance(sheet, dict) else {}
+    fx = meta.get("pixelfx", {})
+    frames = sheet.get("frames", []) if isinstance(sheet, dict) else []
+    try:
+        fw, fh = (int(v) for v in fx["frameSize"])
+        cols, n = int(fx["columns"]), int(fx.get("frames", len(frames)))
+    except (KeyError, TypeError, ValueError):
+        return None, ["시트 JSON 에 meta.pixelfx.frameSize · columns 없음 — 프레임 정보 미기록"]
+    problems = []
+    rows = -(-n // cols) if cols > 0 else 0
+    if n != len(frames):
+        problems.append(f"시트 프레임 수 {len(frames)} ≠ meta {n}")
+    if (cols * fw, rows * fh) != (width, height):
+        problems.append(f"시트 격자 {cols}x{rows} × {fw}x{fh} ≠ PNG {width}x{height}")
+    pivot = fx.get("pivot") or [fw / 2, fh / 2]
+    return {"frames": n, "columns": cols, "frameWidth": fw, "frameHeight": fh,
+            "fps": fx.get("fps"), "loop": bool(fx.get("loop")), "pivot": [pivot[0], pivot[1]],
+            "effect": fx.get("id")}, problems
+
+
+# 시트 기본 임포트 — 픽셀아트는 보간 · 압축 · 밉맵이 프레임 경계를 번지게 한다. 요청 unity.import 가 덮어쓸 수 있다
+SHEET_IMPORT_DEFAULTS = {"textureType": "Sprite", "spriteMode": "Multiple", "filterMode": "Point",
+                         "compression": "None", "mipmaps": False, "wrapMode": "Clamp", "alphaIsTransparency": True}
+MAX_TEXTURE = 16384
+
+
+def sheet_import_defaults(sheet):
+    rows = -(-sheet["frames"] // sheet["columns"])
+    need = max(sheet["columns"] * sheet["frameWidth"], rows * sheet["frameHeight"])
+    return dict(SHEET_IMPORT_DEFAULTS, maxSize=_pow2_at_least(need))
+
+
+def sheet_import_fields(sheet, settings, dest):
+    """ArtGenImportPostprocessor 가 시트를 자르는 데 쓰는 값. maxSize 가 시트보다 작으면 Unity 가 줄여서
+    프레임 좌표가 어긋나므로 거부한다."""
+    rows = -(-sheet["frames"] // sheet["columns"])
+    need = max(sheet["columns"] * sheet["frameWidth"], rows * sheet["frameHeight"])
+    if need > MAX_TEXTURE:
+        raise ArtgenError(f"시트가 {need}px — Unity 최대 텍스처 {MAX_TEXTURE}px 초과. fps 를 낮추거나 효과를 나눠 굽기")
+    if settings.get("maxSize", 0) < need:
+        raise ArtgenError(f"unity.import.maxSize {settings.get('maxSize')} < 시트 {need}px — 줄어든 시트는 프레임 좌표가 "
+                          f"어긋난다. maxSize 를 {_pow2_at_least(need)} 이상으로")
+    fw, fh = sheet["frameWidth"], sheet["frameHeight"]
+    px, py = sheet["pivot"]
+    # pixelfx pivot 은 프레임 왼쪽 위 기준 픽셀 · Unity 는 왼쪽 아래 기준 0~1
+    return {"sheetFrames": sheet["frames"], "sheetColumns": sheet["columns"], "frameWidth": fw, "frameHeight": fh,
+            "pivotX": round(px / fw, 6), "pivotY": round(1 - py / fh, 6),
+            "sheetName": os.path.splitext(os.path.basename(dest))[0]}
+
+
+def _pow2_at_least(n):
+    p = 32
+    while p < n:
+        p *= 2
+    return p
+
+
 class Store:
     def __init__(self, root, config):
         self.root = os.path.abspath(root)
@@ -125,7 +185,7 @@ class Store:
             # 카테고리별 출처 (예: 효과음은 생성하지 않고 라이브러리에서) — --provider 가 우선한다
             provider_name = self._audio_settings().get("providerByCategory", {}).get(request["category"])
         provider_name = provider_name or self.config["provider"]
-        provider = registry.create(provider_name, self.config, request)
+        provider = registry.create(provider_name, self.config, request, project_root=self.root)
         if kind not in provider.kinds:
             raise ArtgenError(f"provider '{provider_name}' 는 {kind} 요청을 지원하지 않음 (지원: {', '.join(provider.kinds)})")
         ok, msg = provider.check()
@@ -178,7 +238,8 @@ class Store:
         if audio:
             outputs, warnings = self._audio_outputs(paths, out, seeds, provider, vdir)
         else:
-            outputs, warnings = self._image_outputs(paths, out, seeds)
+            outputs, warnings = self._image_outputs(paths, out, seeds, provider)
+        warnings += list(getattr(provider, "run_warnings", []))
         if provider.honors_variants and len(outputs) != n:
             warnings.append(f"변형 수 {len(outputs)} ≠ 요청 {n}")
 
@@ -196,7 +257,7 @@ class Store:
         self._save_state(asset_id, state)
         return run
 
-    def _image_outputs(self, paths, out, seeds):
+    def _image_outputs(self, paths, out, seeds, provider=None):
         outputs, warnings = [], []
         for i, p in enumerate(paths):
             p = os.path.abspath(p)
@@ -205,12 +266,23 @@ class Store:
                 warnings.append(f"{os.path.basename(p)}: PNG 아님 또는 파일 없음")
                 continue
             w, h, alpha = info
-            if (w, h) != (out["width"], out["height"]):
+            if (w, h) != (out["width"], out["height"]) and not getattr(provider, "sized_by_source", False):
                 warnings.append(f"{os.path.basename(p)}: 크기 {w}x{h} ≠ 요청 {out['width']}x{out['height']}")
             if out["transparent"] and not alpha:
                 warnings.append(f"{os.path.basename(p)}: 투명 배경 요청했으나 알파 채널 없음")
-            outputs.append({"file": os.path.basename(p), "width": w, "height": h, "alpha": alpha,
-                            "seed": seeds[i] if i < len(seeds) else None, "sha256": _sha256(p)})
+            entry = {"file": os.path.basename(p), "width": w, "height": h, "alpha": alpha,
+                     "seed": seeds[i] if i < len(seeds) else None, "sha256": _sha256(p)}
+            stem = os.path.splitext(p)[0]
+            sheet = _read_json(stem + ".sheet.json")
+            if sheet is not None:
+                summary, problems = sheet_summary(sheet, w, h)
+                warnings += [f"{os.path.basename(p)}: {m}" for m in problems]
+                if summary:
+                    entry["sheet"] = summary
+            source = _read_json(stem + ".source.json")
+            if source:  # 기성 · 라이브러리 소스의 출처 · 라이선스 — 승격 때 credits.json 으로 옮긴다
+                entry["source"] = source
+            outputs.append(entry)
         return outputs, warnings
 
     # ---- 오디오 ----
@@ -319,41 +391,64 @@ class Store:
         if engine == "godot" and dest.split("/")[0] in (".godot", "addons"):
             raise ArtgenError("Godot dest 는 .godot/ · addons/ 밖이어야 한다")
 
-        src = os.path.join(self.asset_dir(asset_id), sel["version"], sel["file"])
-        dst = os.path.join(self.root, *dest.split("/"))
-        backup = None
-        if os.path.isfile(dst):
-            if not force:
-                raise ArtgenError(f"이미 존재: {dest} — 교체하려면 --force (기존 파일은 저장소에 백업)")
-            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            bdir = os.path.join(self.asset_dir(asset_id), "replaced")
-            os.makedirs(bdir, exist_ok=True)
-            backup = os.path.join(bdir, f"{stamp}-{os.path.basename(dst)}")
-            shutil.copy2(dst, backup)
         ext = os.path.splitext(sel["file"])[1].lower()
         if os.path.splitext(dest)[1].lower() != ext:
             raise ArtgenError(f"dest 확장자가 선택 파일({ext})과 다름: {dest}")
+        vdir = os.path.join(self.asset_dir(asset_id), sel["version"])
+        src = os.path.join(vdir, sel["file"])
+        dst = os.path.join(self.root, *dest.split("/"))
+        sheet = self._output_entry(asset_id, sel).get("sheet")
+        sheet_dest = os.path.splitext(dest)[0] + ".json" if sheet else None
+        sheet_dst = os.path.join(self.root, *sheet_dest.split("/")) if sheet else None
+        # 시트는 PNG 와 프레임 JSON 이 한 쌍 — 둘 중 하나라도 있으면 같이 교체한다
+        existing = [p for p in (dst, sheet_dst) if p and os.path.isfile(p)]
+        if existing and not force:
+            raise ArtgenError(f"이미 존재: {', '.join(_rel(self.root, p) for p in existing)} — 교체하려면 --force "
+                              "(기존 파일은 저장소에 백업)")
+        backups = []
+        if existing:
+            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            bdir = os.path.join(self.asset_dir(asset_id), "replaced")
+            os.makedirs(bdir, exist_ok=True)
+            for p in existing:
+                b = os.path.join(bdir, f"{stamp}-{os.path.basename(p)}")
+                shutil.copy2(p, b)
+                backups.append(b)
         if engine == "unity":
             # 임포트 맵을 먼저 써야 Unity 가 파일을 처음 볼 때 설정이 적용된다
             settings = import_defaults(request)
+            if sheet:
+                settings.update(sheet_import_defaults(sheet))
             settings.update(request.get("unity", {}).get("import", {}))
+            if sheet:
+                settings.update(sheet_import_fields(sheet, settings, dest))
             self._upsert_import_entry(dict(settings, path=dest, assetId=asset_id, kind=kind_of(request),
                                            sourceSha256=sel["sha256"]))
         os.makedirs(os.path.dirname(dst), exist_ok=True)
         shutil.copyfile(src, dst)
+        if sheet:
+            data = _read_json(os.path.splitext(src)[0] + ".sheet.json")
+            data.setdefault("meta", {})["image"] = os.path.basename(dst)
+            _write_json(sheet_dst, data)
         self._record_credit(asset_id, sel, dest)
 
+        backup = backups[0] if backups else None
         state.update(status="promoted", promoted={"dest": dest, "at": _now(), "version": sel["version"],
                                                   "file": sel["file"], "backup": _rel(self.root, backup) if backup else None,
                                                   "engine": engine, "importManual": engine != "unity"})
+        if sheet:
+            state["promoted"].update(sheetJson=sheet_dest, backups=[_rel(self.root, b) for b in backups])
         self._save_state(asset_id, state)
         return state
+
+    def _output_entry(self, asset_id, sel):
+        run = _read_json(os.path.join(self.asset_dir(asset_id), sel["version"], "run.json"), {})
+        return next((o for o in run.get("outputs", []) if o.get("file") == sel["file"]), {})
 
     def _record_credit(self, asset_id, sel, dest):
         """기성 소스(라이브러리)에서 온 파일이면 credits.json 에 출처 · 라이선스를 남긴다 — 출시 전 라이선스 점검 근거.
         같은 경로를 생성물로 다시 승격하면 이전 기록을 지운다."""
-        run = _read_json(os.path.join(self.asset_dir(asset_id), sel["version"], "run.json"), {})
-        source = next((o.get("source") for o in run.get("outputs", []) if o.get("file") == sel["file"]), None)
+        source = self._output_entry(asset_id, sel).get("source")
         path = os.path.join(self.dir, "credits.json")
         data = _read_json(path, {"version": 1, "entries": []})
         entries = [e for e in data["entries"] if e.get("path") != dest]

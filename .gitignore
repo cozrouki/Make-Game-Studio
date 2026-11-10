@@ -45,6 +45,8 @@ production/artgen/_inbox/
 .agent/tools/artgen/artgen.config.local.json
 # 효과음 라이브러리 원본 (prereq.py install sound-library 로 다시 받음 · 승격된 WAV 와 credits.json 은 추적)
 art-source/sound-library/
+# pixelfx 설치본 (prereq.py install pixelfx 로 다시 받음 · 승격된 시트와 credits.json 은 추적)
+art-source/pixelfx/
 # studio — 세션 이벤트 로그(로컬 감사용) · 로컬 설정
 production/studio/events.jsonl
 production/studio/PAUSED

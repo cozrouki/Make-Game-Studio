@@ -137,6 +137,14 @@
 - **이 통합으로 생긴 장치**: 상류 README 의 경고(에디터 안 Python 실행 · 권한 생략 금지)를 받아, 에디터 MCP 가 켜진 프로젝트에서 스튜디오 모드의 승인 없는 실행을 막는다 (`studio_dispatch.check_unattended_editor_mcp`). Godot MCP 에도 같이 적용
 - 2026-11-04 UE 5.8.4 런처 설치본에서 빈 프로젝트로 서버 기동 · MCP 호출(도구 묶음 67개)까지 실측. Claude Code 플러그인 · 에셋 편집은 미검증 (가이드에 명시)
 
+## 7-9. pixelfx / Patch (artgen 픽셀아트 VFX 시트 — **미포함**)
+
+- **저장소**: https://github.com/patch-gg/pixelfx — 고정 커밋 `044e12a45dc9cc312cec50ee606dfc98afe5adc2` (v0.3.1, 2026-11-09)
+- **라이선스**: **MIT** (Copyright (c) 2026 Patch). 저장소 `NOTICE.md`: 효과 다수가 Sprite Fusion pixel art VFX(MIT, Hugo Duprez)를, `src/core/act.js` 가 Hollow Crown(MIT, rehan-remade)을 개작. `gallery/fonts` 의 Patch Pixel 폰트는 MIT 밖
+- **사용 유형**: **재배포하지 않음.** `prereq.py install pixelfx` 가 사용자 확인 뒤 GitHub 의 고정 커밋 zip(크기 · SHA256 확인)을 받아 대상 프로젝트 `art-source/pixelfx/`(git 무시)에 `src` · `tools` · `docs` · 라이선스 파일만 푼다 — 폰트가 든 `gallery/` 는 받지 않는다. 템플릿에는 어댑터(`.agent/tools/artgen/artgen_lib/providers/pixelfx.py`, 자체 작성 — Node 로 상류 `tools/render.mjs` · `check.mjs` 를 실행)만 있다
+- **게임 출시물**: 구운 시트 PNG 는 상류 코드가 그린 결과물이다. 승격하면 `production/artgen/credits.json` 에 출처 · 라이선스 · 커밋과, 효과 파일 머리에 Sprite Fusion 표기가 있으면 그 저작자도 함께 남는다 — 출시 크레딧 근거
+- 2026-11-10 실측: Node 22.14 로 렌더 · 같은 시드 같은 바이트 · 효과 검사 244/244 통과, Unity 6000.3.24f1 batchmode 로 시트 자르기 확인
+
 ## 7-7. Godot 문서 · 기여 문서 / Godot Engine 커뮤니티 (`ko-godot-doc` 작성 원칙 — 옮겨 고쳐 씀)
 
 - **원문**: godotengine/godot-contributing-docs — "Contribute documentation"(ways_to_contribute/development) · "Writing guidelines"(development/documentation/docs_writing_guidelines). 문서 주석 문법은 Godot 4.7 문서 "GDScript documentation comments" (docs.godotengine.org)
@@ -177,4 +185,5 @@
 | 2026-10-30 | mattpocock/skills (MIT) 4종 번역 · Unity 맞춤: `ko-diagnose` · `ko-grill` · `ko-tdd` · `ko-agent-retro` | `THIRD_PARTY_LICENSES.md` §9 |
 | 2026-11-04 | Godot .NET 판 L3: Godot-MCP (Apache-2.0, 미포함 — prereq 가 사용자 확인 후 설치, 로컬 서버 기본) · `ko-godot-doc` (godot-contributing-docs CC BY 3.0 원칙 개작) · `ko-godot-ref` · `ko-godot-license` (Godot 4.7 문서 근거) + `.agent/tools/godot/` | 2.2.0 |
 | 2026-11-04 | Unreal 5.8+ L3: 엔진 MCP 플러그인 + Epic 공식 Claude Code 플러그인 (MIT, 미포함 — 마켓 설치) 점검 · 안내, 에디터 MCP + 승인 없는 실행 차단 장치 | 2.3.0 |
+| 2026-11-10 | artgen `pixelfx` 어댑터: patch-gg/pixelfx (MIT, 미포함 — prereq 가 고정 커밋 설치, 갤러리 폰트 제외) 픽셀아트 VFX 시트 + Unity 시트 자르기 | 2.4.0 |
 | 2026-10-23 | 외부 카탈로그 3종: marketingskills (MIT, 포함) · awesome-gamedev-agent-skills (Apache-2.0, Unity 관련만 포함) · game-design-skills-bundle (PolyForm NC, 미포함 — 선택 설치). `/ext` 진입 스킬 · `scripts/sync-catalog.py` | 라이선스는 각 저장소 LICENSE 원문으로 확인 |

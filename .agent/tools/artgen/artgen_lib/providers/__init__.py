@@ -20,11 +20,13 @@ def discover():
     return found
 
 
-def create(name, config, request=None):
+def create(name, config, request=None, project_root=""):
     classes = discover()
     if name not in classes:
         raise ArtgenError(f"알 수 없는 provider '{name}' (사용 가능: {', '.join(sorted(classes))})")
     options = dict(config.get("providers", {}).get(name, {}))
     if request:
         options.update(request.get("providerOptions", {}).get(name, {}))
-    return classes[name](options)
+    provider = classes[name](options)
+    provider.project_root = project_root
+    return provider

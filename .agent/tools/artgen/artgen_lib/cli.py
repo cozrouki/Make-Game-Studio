@@ -21,7 +21,7 @@ def _print(args, data, text):
 def cmd_providers(args, cfg):
     rows = []
     for name, cls in sorted(registry.discover().items()):
-        p = registry.create(name, cfg)
+        p = registry.create(name, cfg, project_root=os.path.abspath(args.root))
         ok, msg = p.check()
         rows.append({"name": name, "active": name == cfg["provider"], "ready": ok, "message": msg,
                      "description": cls.description, "capabilities": p.capabilities,

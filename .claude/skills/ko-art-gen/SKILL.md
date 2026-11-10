@@ -65,6 +65,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 | `unity.dest` | 스펙의 Naming 을 따르며 Unity `Assets/<게임폴더>/Art/<Category>/...png` · Godot `assets/<게임폴더>/art/<category>/...png` · Unreal `Content/Import/<게임폴더>/<Category>/...png` 형태 |
 | `unity.import` | (Unity 만 적용) 카테고리 기본값(아래 표)에 아트 바이블 §8 · 성능 예산을 반영한다. Godot · Unreal 에서도 적어 두면 사람이 엔진 임포트 설정을 맞출 때 기준이 된다 |
 | `source` | spec · artBible · gdd 경로 (추적성) |
+| `providerOptions.pixelfx` | **픽셀아트 애니메이션 VFX**(불 · 폭발 · 마법 · 타격 · 날씨 · 픽업 등)이고 아트 바이블이 픽셀아트면 생성 대신 이것을 쓴다 — `{"effect": "<분류>/<이름>", "fps": 12}` 로 적고 `--provider pixelfx` 로 생성한다. 효과는 `node art-source/pixelfx/tools/list.mjs` 목록의 설명을 스펙과 대조해 2~3개 후보를 고르고, `--auto` 가 아니면 사용자에게 고르게 한다. 팔레트는 `prompt.palette` 가 그대로 효과 색이 되고, 크기는 효과가 정하므로 `output` 크기는 검수 기준이 아니다. 준비가 안 됐으면(`artgen providers` 에서 pixelfx N/A) `/ko-prereq` 의 `pixelfx` 를 안내한다 (`.agent/tools/artgen/README.md` §픽셀아트 VFX 시트) |
 
 카테고리별 `unity.import` 기본값 (아트 바이블과 충돌하면 **아트 바이블이 우선**한다):
 
@@ -75,7 +76,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 | texture | Default | Trilinear | true | Repeat | Normal |
 | concept | Default | Bilinear | false | Clamp | None (참고용, 런타임 미사용 경로 권장) |
 
-`maxSize` 는 출력 크기 이상인 가장 작은 2의 거듭제곱으로 한다 (예: 300px → 512).
+`maxSize` 는 출력 크기 이상인 가장 작은 2의 거듭제곱으로 한다 (예: 300px → 512). pixelfx 시트는 승격이 Point · 비압축 · Multiple · 시트를 담는 maxSize 를 자동으로 넣고 프레임별 스프라이트로 자른다 — `pixelsPerUnit` 만 아트 바이블에 맞춰 적는다.
 
 **오디오 요청** (`schema/example-audio-request.json` 참고) — 이미지 필드(palette · width · height · transparent)를 쓰지 않는다.
 
@@ -105,6 +106,8 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 ## Phase 4: 검수 (기획 의도 대조)
 
 `run.json` 의 `placeholder` 가 true(mock)이면 **기술 항목만** 채점하고 시각 항목은 "N/A (placeholder)" 로 적는다. 다음으로 넘어가되 재생성은 하지 않는다.
+
+pixelfx 시트는 시트 PNG 전체 대신 `node art-source/pixelfx/tools/render.mjs <효과> --seed <시드> --opts '<run.json 의 options JSON>' --out <임시 폴더>` 가 만드는 `contact.png`(대표 프레임 16장)를 Read 로 본다. 프레임 정합은 렌더러가 보장하므로 기술 항목은 `run.json` warnings(`pixelfx check`)로 채점하고, 시각 항목은 팔레트 · 실루엣 판독성 · 아트 바이블 톤을 본다.
 
 그 외에는 각 변형 PNG 를 **Read 로 직접 보고** `.agent/tools/artgen/README.md` §검수 루브릭 5축으로 1~5점을 매긴다.
 - 판독성은 게임 내 표시 크기를 기준으로 판단한다. 스펙의 표시 크기를 떠올려 축소했을 때를 가정한다.

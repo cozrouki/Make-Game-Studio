@@ -50,8 +50,15 @@ class Provider:
     # True 면 오디오 요청의 durationSec 를 상한으로만 쓴다 (기성 소리 — 짧으면 무음으로 늘리지 않음)
     duration_is_max = False
 
-    def __init__(self, options):
+    # True 면 결과 크기를 소스(효과 · 라이브러리)가 정한다 — 요청 output.width/height 와 비교하지 않는다
+    sized_by_source = False
+
+    def __init__(self, options, project_root=""):
         self.options = options or {}
+        # 게임 프로젝트 루트 — 설정의 상대경로(라이브러리 폴더 등)를 check() 에서도 풀 수 있게 레지스트리가 넣는다
+        self.project_root = project_root
+        # 생성 1회의 추가 경고 — 저장소가 run.json warnings 에 합친다 (예: 외부 검사 도구 결과)
+        self.run_warnings = []
 
     def check(self):
         """(사용 가능 여부, 메시지). 네트워크 호출 없이 설정만 점검하는 것을 권장."""

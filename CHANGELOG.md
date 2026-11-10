@@ -12,6 +12,27 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.4.0 — 2026-11-10
+
+**새 기능 (부)**
+- **artgen `pixelfx` 어댑터 — 픽셀아트 애니메이션 VFX 시트 (GPU 불필요)** — [patch-gg/pixelfx](https://github.com/patch-gg/pixelfx)(MIT)의
+  코드 효과 244종(불 · 폭발 · 마법 · 타격 · 날씨 · UI 등) 중 하나를 시드 · 팔레트로 렌더해 투명 스프라이트 시트 + 프레임 JSON 을 굽는다.
+  요청 `providerOptions.pixelfx`: `effect`(필수) · `fps` · `options`. `prompt.palette` 를 밝기 순 색 램프로 넘겨 **실제로 그 색으로** 그린다.
+  같은 시드면 같은 바이트. 생성 뒤 상류 `check.mjs` 결과를 `run.json` 경고로 남기고, 출처(커밋 · Sprite Fusion 표기 포함)는 승격 때
+  `credits.json` 으로. 없는 효과 id 에도 상류 도구가 성공으로 끝나서 어댑터가 파일로 먼저 확인한다
+- **스프라이트 시트 승격 · Unity 시트 자르기** — `run.json` 출력에 `sheet` 요약이 있으면 승격이 PNG 옆에 프레임 `.json` 을 함께 두고
+  (둘 다 `--force` · 백업 대상), Unity 임포트 맵에 시트 기본값(Multiple · Point · 비압축 · 밉맵 끔 · 시트를 담는 `maxSize`)과 격자를 쓴다.
+  `maxSize` 를 시트보다 작게 주면 거부한다. 임포터는 `com.unity.2d.sprite` 의 `ISpriteEditorDataProvider` 로 `<이름>_000` … 을 자르고
+  다시 승격해도 spriteID 를 유지한다 (Unity 6.3 에서 `TextureImporter.spritesheet` 는 지원 중단). 패키지가 없으면 asmdef `versionDefines` 로
+  그 코드를 빼고 경고만 낸다. Unity 6000.3.24f1 batchmode 로 두 경우 모두 확인 (103프레임 좌표 · pivot · 재임포트 ID 유지)
+- `/ko-prereq` 선택 항목 `pixelfx` (art) — 고정 커밋 zip 을 크기 · SHA256 확인 후 `art-source/pixelfx/` 에 푼다 (MIT 밖인 갤러리 폰트는 받지 않음).
+  Node 18+ · 고정 커밋 여부를 점검한다
+- 어댑터 계약 추가(기존 어댑터 영향 없음): `Provider.project_root` · `sized_by_source` · `run_warnings`
+- 도구 테스트 449개 (pixelfx 22 — 실제 렌더 결정론 1개는 `PIXELFX_DIR` + Node 가 있을 때만, prereq 4)
+
+**기존 프로젝트**: `.gitignore` 에 `art-source/pixelfx/` 를 직접 추가한다 (`studio.py upgrade` 는 `.gitignore` 를 고치지 않는다 — `install.ps1 -Force` 는 넣는다).
+Unity 프로젝트는 승격할 때 `Assets/ArtGen/Editor/` 의 임포터 · asmdef 를 템플릿 것으로 다시 복사해야 시트가 잘린다.
+
 ## 2.3.1 — 2026-11-05
 
 **고침 (수)**

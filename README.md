@@ -260,6 +260,7 @@ python scripts/sync-catalog.py gamedesign --fetch --accept-license noncommercial
 | (선택) ComfyUI 0.42+ 포터블 + NVIDIA GPU (VRAM 8GB 이상 권장) | artgen 로컬 이미지 · 음악 생성 (`comfyui` 어댑터). 모델 저장에 기본 그래프 기준 약 18GB (SDXL 7GB · ACE-Step 10GB · VAE · BiRefNet), Z-Image 를 쓰면 +21GB. 오디오 후처리는 포터블에 딸린 Python(PyAV · numpy)을 쓴다 |
 | (Android 대상일 때) Unity Android Build Support 모듈 · adb | 기기 프로파일링 · Play 정책 점검 (`/ext` android 카탈로그). `technical-preferences.md` 의 Target Platforms 에 Android 가 있으면 `/ko-prereq` 가 점검 |
 | (선택) 효과음 라이브러리 | Kenney 오디오 팩 8종(CC0, 약 60MB) — `prereq.py install sound-library` 가 받아 색인 |
+| (선택) pixelfx + Node 18+ | 픽셀아트 VFX 244종을 스프라이트 시트로 굽기(MIT, 약 13MB, GPU 불필요) — `prereq.py install pixelfx`, artgen `pixelfx` 어댑터 |
 | 엔진 에디터 — Unity (+ MCPForUnity) · Godot (PATH, + gdUnit4) · Unreal (Epic Games Launcher) | 테스트 실행 · 에셋 임포트 확인 · (Unity) L3 에디터 자동화 |
 
 ## 크로스툴 호환 (Claude Code · Codex · Copilot · Cursor · Gemini · OpenCode · Windsurf · Antigravity)

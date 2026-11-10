@@ -3,10 +3,15 @@
 // 설계 문서: .agent/tools/artgen/README.md §Unity 임포트
 //
 // 설치: /ko-art-gen 이 최초 승격 시 Assets/ArtGen/Editor/ 로 복사한다 (Editor 전용 asmdef 포함).
+// 스프라이트 시트(pixelfx 등 sheetFrames > 0)는 com.unity.2d.sprite 패키지가 있으면 프레임별 스프라이트로 자른다
+// (ArtGen.Editor.asmdef versionDefines → ARTGEN_2D_SPRITE). 패키지가 없으면 경고만 내고 Multiple 모드로 둔다.
 using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+#if ARTGEN_2D_SPRITE
+using UnityEditor.U2D.Sprites;
+#endif
 using UnityEngine;
 
 namespace ArtGen.Editor
@@ -40,6 +45,15 @@ namespace ArtGen.Editor
             public string wrapMode;
             public bool alphaIsTransparency;
             public bool sRGB;
+
+            // 스프라이트 시트 — artgen_lib/store.py sheet_import_fields 와 이름을 맞출 것. sheetFrames 0 = 시트 아님
+            public int sheetFrames;
+            public int sheetColumns;
+            public int frameWidth;
+            public int frameHeight;
+            public float pivotX;
+            public float pivotY;
+            public string sheetName;
 
             // 오디오 — artgen_lib/request.py AUDIO_IMPORT_DEFAULTS 와 이름을 맞출 것
             public string loadType;
@@ -82,6 +96,72 @@ namespace ArtGen.Editor
             }
 
             importer.textureCompression = ParseCompression(entry.compression, entry);
+
+            if (entry.sheetFrames > 0 && importer.textureType == TextureImporterType.Sprite
+                && importer.spriteImportMode == SpriteImportMode.Multiple)
+            {
+                SliceSheet(entry);
+            }
+        }
+
+        // 프레임 격자 → 스프라이트 사각형. 시트 JSON 은 왼쪽 위 기준, Unity 는 왼쪽 아래 기준이라 y 를 뒤집는다.
+        // 같은 이름의 스프라이트는 기존 spriteID 를 재사용한다 — 다시 승격해도 애니메이션 · 프리팹 참조가 유지된다.
+        private void SliceSheet(Entry entry)
+        {
+            if (entry.sheetColumns <= 0 || entry.frameWidth <= 0 || entry.frameHeight <= 0)
+            {
+                Debug.LogWarning($"[ArtGen] {entry.assetId} {entry.path}: 시트 정보 불완전 — 자르기 생략");
+                return;
+            }
+#if ARTGEN_2D_SPRITE
+            var factory = new SpriteDataProviderFactories();
+            factory.Init();
+            ISpriteEditorDataProvider dataProvider =
+                factory.GetSpriteEditorDataProviderFromObject(assetImporter);
+            if (dataProvider == null)
+            {
+                Debug.LogWarning($"[ArtGen] {entry.assetId} {entry.path}: 스프라이트 데이터 제공자 없음 — 자르기 생략");
+                return;
+            }
+
+            dataProvider.InitSpriteEditorDataProvider();
+            var previous = new Dictionary<string, GUID>();
+            foreach (SpriteRect old in dataProvider.GetSpriteRects())
+            {
+                previous[old.name] = old.spriteID;
+            }
+
+            string prefix = string.IsNullOrEmpty(entry.sheetName) ? "frame" : entry.sheetName;
+            int rows = (entry.sheetFrames + entry.sheetColumns - 1) / entry.sheetColumns;
+            int sheetHeight = rows * entry.frameHeight;
+            var rects = new SpriteRect[entry.sheetFrames];
+            var pairs = new List<SpriteNameFileIdPair>(entry.sheetFrames);
+            for (int i = 0; i < entry.sheetFrames; i++)
+            {
+                int col = i % entry.sheetColumns;
+                int row = i / entry.sheetColumns;
+                string name = $"{prefix}_{i:D3}";
+                GUID id = previous.TryGetValue(name, out GUID kept) ? kept : GUID.Generate();
+                rects[i] = new SpriteRect
+                {
+                    name = name,
+                    spriteID = id,
+                    rect = new Rect(col * entry.frameWidth, sheetHeight - (row + 1) * entry.frameHeight,
+                                    entry.frameWidth, entry.frameHeight),
+                    alignment = SpriteAlignment.Custom,
+                    pivot = new Vector2(entry.pivotX, entry.pivotY),
+                };
+                pairs.Add(new SpriteNameFileIdPair(name, id));
+            }
+
+            dataProvider.SetSpriteRects(rects);
+            var names = dataProvider.GetDataProvider<ISpriteNameFileIdDataProvider>();
+            names?.SetNameFileIdPairs(pairs);
+            dataProvider.Apply();
+#else
+            Debug.LogWarning($"[ArtGen] {entry.assetId} {entry.path}: com.unity.2d.sprite 패키지 없음 — 시트 자동 자르기 생략. " +
+                             $"패키지를 설치하고 Reimport 하거나, Sprite Editor 에서 Grid By Cell Size {entry.frameWidth}x{entry.frameHeight} 로 자른다");
+#endif
         }
 
         private void OnPreprocessAudio()

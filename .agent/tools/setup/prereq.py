@@ -893,6 +893,87 @@ def i_library(ctx, dry):
     return f"팩 {len(added)}개 추가 · 색인 {len(index['entries'])}개"
 
 
+# pixelfx — 코드 픽셀아트 VFX (MIT). 2026-11-10 커밋 044e12a 를 Node 22.14 로 실측: 시트 렌더 · 같은 시드 같은 바이트
+PIXELFX = {"commit": "044e12a45dc9cc312cec50ee606dfc98afe5adc2", "size": 12785192,
+           "sha256": "f425fc217b1c04a84a6414eba6984f6d4805451e440e1906e3cfe32cc8d61bd2",
+           # 렌더 · 검사에 필요한 것만 푼다. gallery/ 의 폰트는 MIT 밖(NOTICE.md)이라 받지 않는다
+           "keep": ("src", "tools", "docs", "LICENSE", "NOTICE.md", "README.md", "package.json")}
+MIN_NODE = (18, 0)
+
+
+def _pixelfx_dir(ctx):
+    d = ctx.cfg.get("providers", {}).get("pixelfx", {}).get("dir", "art-source/pixelfx")
+    return os.path.normpath(d if os.path.isabs(d) else os.path.join(ctx.root, d))
+
+
+def _node_ver(ctx):
+    node = ctx.cfg.get("providers", {}).get("pixelfx", {}).get("node", "node")
+    code, out = _run([node, "--version"])
+    m = re.match(r"v(\d+)\.(\d+)", out.strip()) if code == 0 else None
+    return (int(m.group(1)), int(m.group(2))) if m else None
+
+
+def c_pixelfx(ctx):
+    root = _pixelfx_dir(ctx)
+    if not os.path.isfile(os.path.join(root, "tools", "render.mjs")):
+        return "missing", f"pixelfx 없음: {root} — 픽셀아트 VFX 시트(provider pixelfx)를 못 굽는다"
+    ver = _node_ver(ctx)
+    if ver is None or ver < MIN_NODE:
+        have = f"Node {ver[0]}.{ver[1]}" if ver else "Node 없음"
+        return "warn", f"{have} — pixelfx 는 Node {MIN_NODE[0]}+ 필요 (winget install OpenJS.NodeJS.LTS)"
+    try:
+        with open(os.path.join(root, ".pixelfx-commit"), encoding="utf-8") as f:
+            commit = f.read().strip()
+    except OSError:
+        commit = ""
+    if commit != PIXELFX["commit"]:
+        return "warn", (f"고정 커밋 {PIXELFX['commit'][:7]} 이 아님 ({commit[:7] or '직접 받은 폴더'}) — 결과가 실측과 다를 수 "
+                        f"있다. 폴더를 지우고 prereq.py install pixelfx")
+    return "ok", f"{root} · 커밋 {commit[:7]} · Node {ver[0]}.{ver[1]}"
+
+
+def i_pixelfx(ctx, dry):
+    p = PIXELFX
+    url = f"https://codeload.github.com/patch-gg/pixelfx/zip/{p['commit']}"
+    dest = _pixelfx_dir(ctx)
+    if dry:
+        return f"{url} → {dest} ({', '.join(p['keep'])})"
+    if os.path.exists(dest) and os.listdir(dest):
+        raise RuntimeError(f"{dest} 가 비어 있지 않음 — 확인 후 지우고 다시")
+    import tempfile
+    import zipfile
+    tmp = tempfile.mkdtemp(prefix="pixelfx-")
+    try:
+        zpath = os.path.join(tmp, "pixelfx.zip")
+        download(url, zpath, p["size"], p["sha256"])
+        staging = dest + ".part"
+        shutil.rmtree(staging, ignore_errors=True)
+        prefix = f"pixelfx-{p['commit']}/"
+        with zipfile.ZipFile(zpath) as z:
+            for info in z.infolist():
+                rel = info.filename[len(prefix):] if info.filename.startswith(prefix) else ""
+                parts = rel.split("/")
+                if not rel or parts[0] not in p["keep"] or ".." in parts or rel.startswith("/") or ":" in rel:
+                    continue
+                target = os.path.join(staging, *[x for x in parts if x])
+                if info.is_dir():
+                    os.makedirs(target, exist_ok=True)
+                    continue
+                os.makedirs(os.path.dirname(target), exist_ok=True)
+                with z.open(info) as src, open(target, "wb") as out:
+                    shutil.copyfileobj(src, out)
+        with open(os.path.join(staging, ".pixelfx-commit"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(p["commit"] + "\n")
+        if os.path.isdir(dest):
+            os.rmdir(dest)  # 빈 폴더만 (위에서 확인)
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        os.replace(staging, dest)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    note = "" if (_node_ver(ctx) or (0, 0)) >= MIN_NODE else f" — Node {MIN_NODE[0]}+ 도 필요 (winget install OpenJS.NodeJS.LTS)"
+    return f"pixelfx {p['commit'][:7]} → {dest}{note}"
+
+
 def kenney_link(pack):
     """kenney.nl 의 '기부 없이 계속' 과 같은 경로 — 서명된 일회용 다운로드 URL 을 받는다."""
     hid = f"assets/{pack}".encode().hex()
@@ -1011,6 +1092,8 @@ ITEMS = [
          "PyAV · numpy 가 있는 Python 경로를 artgen.config.local.json audio.python 에"),
     Item("sound-library", "생성", {"art"}, "효과음 라이브러리 (Kenney CC0 팩)", c_library, i_library,
          "python .agent/tools/artgen/artgen.py library add <zip> --name .. --license ..", 60_000_000, "CC0-1.0"),
+    Item("pixelfx", "생성", {"art"}, "(선택) pixelfx 픽셀아트 VFX (Node 18+ · provider pixelfx)", c_pixelfx, i_pixelfx,
+         "python .agent/tools/setup/prereq.py install pixelfx", PIXELFX["size"], "MIT"),
     Item("local-config", "생성", {"art"}, "artgen 로컬 설정 (provider=comfyui)", c_local_config, i_local_config, ""),
     Item("comfyui-server", "생성", {"art"}, "ComfyUI 서버 실행 중", c_comfy_server, None, "run_nvidia_gpu.bat"),
     Item("stable-audio", "사용자 결정", {"art"}, "(선택) Stable Audio 효과음 생성 모델",
@@ -1025,7 +1108,7 @@ ITEMS = [
 ]
 REQUIRED_SKIP = {"vscode", "comfyui-server", "stable-audio", "gamedesign", "gdpractice", "pytest", "adb-device", "protobuf",
                  "graphify", "dotnet-sdk", "godot-mcp-addon", "godot-mcp-json",
-                 "ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin"}
+                 "ue-mcp-plugins", "ue-mcp-json", "ue-claude-plugin", "pixelfx"}
 # 선택 항목은 missing 이어도 실패로 보지 않고, install 을 항목 없이 실행할 때도 설치하지 않는다 (이름을 줘야 설치)  # missing 이어도 실패로 보지 않음
 
 

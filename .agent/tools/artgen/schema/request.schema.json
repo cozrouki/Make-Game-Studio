@@ -83,7 +83,7 @@
     },
     "providerOptions": {
       "type": "object",
-      "description": "백엔드별 전달값. 키 = provider 이름. 예: {\"comfyui\": {\"workflow\": \"sprite_v2.json\"}}",
+      "description": "백엔드별 전달값. 키 = provider 이름. 예: {\"comfyui\": {\"workflow\": \"sprite_v2.json\"}} · {\"pixelfx\": {\"effect\": \"ice/frost-nova\", \"fps\": 12}}",
       "additionalProperties": { "type": "object" }
     },
     "history": {
