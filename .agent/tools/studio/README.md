@@ -176,6 +176,7 @@ python .agent/tools/studio/studio.py dispatch dev --agent codex      # 실행 (C
 | **M1, M2 …** | planning (`gate add`) | 마일스톤 리뷰 문서 | 다음 마일스톤 |
 
 - **G1 은 고르기다.** planning 이 컨셉 후보 2~3안(`templates/concept-candidates.md`)을 쓰고, art 가 후보마다 같은 화면 3종(핵심 플레이 · 결정적 순간 · 메타/UI, ID `ASSET-9xyy`)을 만들어 비교 보드로 묶는다. 사용자가 화면을 보고 하나를 고르거나 조합하면, planning 이 그때 `game-concept.md` · `game-pillars.md` 를 확정한다 (G2 에서 함께 검사).
+- **이미 만들어진 게임**에 스튜디오 모드를 붙이면 G1 은 "기존 컨셉 고정" 이 기본이다 (디렉터가 사용자에게 확인 후 결정 기록). 후보 1안 = 현행 컨셉, 보드 = 기존 캡처, 컨셉 · 필러 문서는 코드 · 기존 문서에서 역작성. 그래픽 · 장르 방향 전환은 G2 에서 다룬다 (`roles/director.md` · `roles/planning.md` 의 "이미 만들어진 게임").
 
 - 티켓에 `gate` 를 지정하면 그 게이트가 승인되기 전에는 **착수할 수 없다** (`update --status in-progress` 거부).
 - 승인과 반려는 `--by director` 로만 할 수 있다. 역할 세션이 스스로 승인하지 않는다. 디렉터 세션은 사용자와 합의한 뒤 `--decided user` 로 승인한다.

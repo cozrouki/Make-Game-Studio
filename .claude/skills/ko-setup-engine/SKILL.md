@@ -148,6 +148,7 @@ technical-preferences.md 섹션 순서 (upstream 스킬들이 이 제목으로 �
 - 세션 시작 훅의 `🛠️ 엔진:` 줄과 엔진 레퍼런스 불일치 경고가 사라졌는지 다음 세션에서 확인하라고 안내한다.
 - `doc/work_log.md` 최상단에 한 줄 기록 제안: `[<tag>] /ko-setup-engine — <엔진 버전> · <렌더러> · 명명 실측 · 플랫폼 <답>`
 - 엔진·패키지를 업그레이드하면 이 스킬을 다시 실행하라고 안내 (기존 사람 작성 섹션은 보존됨).
+- **스튜디오 모드 프로젝트**(`production/studio/roster.json` 이 있음)면: `CLAUDE.md` 는 프로토콜 파일이라 현황판에 "프로토콜 미승인 변경" 이 뜬다. 이 스킬의 변경은 사용자 승인을 거친 정상 변경이므로, 디렉터 세션(또는 사용자)이 `python .agent/tools/studio/studio.py protocol ack --by director --note "/ko-setup-engine Technology Stack"` 으로 기준선을 갱신하라고 안내한다. 역할 세션은 직접 ack 하지 않는다 (디렉터 권한). 결정 기록이 필요하면 디렉터가 `production/studio/decisions.md` 에 남긴다.
 
 ## 관련
 

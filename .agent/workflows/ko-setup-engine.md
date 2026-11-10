@@ -21,4 +21,4 @@ description: 엔진 설정 자동화 — 기존 Unity · Godot · Unreal 프로�
 
 **5. 미리보기 → 승인 → 작성** — `project.yaml`(정본 — 5.5.2 · 5.5.3 절차) + `.claude/docs/technical-preferences.md` + `CLAUDE.md` `## Technology Stack` · `ENGINE-REFERENCE-IMPORT` 줄. 기존 파일의 사람 작성 섹션(Forbidden Patterns·Allowed Libraries·ADR 로그)은 보존. `- **Engine**:` 형식 유지.
 
-**6. 후처리** — `doc/work_log.md` 최상단에 `[<tag>] /ko-setup-engine — <엔진 버전> · <렌더러> · 플랫폼 <답>` 한 줄.
+**6. 후처리** — `doc/work_log.md` 최상단에 `[<tag>] /ko-setup-engine — <엔진 버전> · <렌더러> · 플랫폼 <답>` 한 줄. 스튜디오 모드 프로젝트(`production/studio/roster.json`)면 `CLAUDE.md` 변경이 "프로토콜 미승인 변경" 으로 뜨므로 디렉터가 `python .agent/tools/studio/studio.py protocol ack --by director --note "/ko-setup-engine Technology Stack"` 로 기준선을 갱신하라고 안내한다 (역할 세션은 ack 하지 않음).

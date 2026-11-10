@@ -85,6 +85,17 @@ def test_shared_files_are_not_orphans_or_overlaps(repo):
     assert a["orphans"] == [] and a["overlaps"] == {}
 
 
+def test_install_generated_and_ide_files_have_owners(repo):
+    # 설치가 만드는 파일(출처 지문 · 버전 · 라이선스 사본)은 디렉터, Unity 가 만드는 솔루션 · 프로젝트 파일은 dev
+    for rel in (".agent/PROVENANCE.md", ".agent/VERSION", ".agent/licenses/LICENSE", "Game.slnx", "Game.sln",
+                "Assembly-CSharp.csproj"):
+        _touch(repo.root, rel)
+    a = M.audit(repo)
+    assert a["orphans"] == [] and a["overlaps"] == {}
+    assert ".agent/VERSION" in repo.changed_files("director")
+    assert "Game.slnx" in repo.changed_files("dev") and "Assembly-CSharp.csproj" in repo.changed_files("dev")
+
+
 # ---- C. 프로토콜 지문 ----
 def test_protocol_first_call_sets_baseline_then_detects_change(repo):
     assert M.protocol_state(repo)["dirty"] is False                 # 최초 = 기준선
@@ -164,6 +175,32 @@ def test_upgrade_unions_director_owns(repo, tmp_path):
     assert ".agent/catalogs" in owns          # 템플릿의 새 도구 폴더가 들어온다
     assert "docs/director-notes" in owns      # 프로젝트 항목은 유지
     assert len(owns) == len(set(owns))
+
+
+def test_upgrade_adds_new_role_owns_once(repo, tmp_path):
+    # 프로젝트: 예전 템플릿의 dev 영역(솔루션 파일 항목 없음) + 디렉터가 docs/architecture 를 뺀 결정
+    cfg_path = os.path.join(repo.root, ".agent", "tools", "studio", "studio.config.json")
+    cfg = json.load(open(cfg_path, encoding="utf-8"))
+    dev = cfg["roles"]["dev"]
+    dev["owns"] = [x for x in dev["owns"] if x not in (":(glob)*.sln", ":(glob)*.slnx", ":(glob)*.csproj",
+                                                       "docs/architecture")]
+    json.dump(cfg, open(cfg_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    template = str(tmp_path / "template")
+    shutil.copytree(TOOL_DIR, os.path.join(template, ".agent", "tools", "studio"),
+                    ignore=shutil.ignore_patterns("__pycache__", "tests", "*.local.json"))
+
+    M.upgrade(repo, template)
+    merged = json.load(open(cfg_path, encoding="utf-8"))
+    owns = merged["roles"]["dev"]["owns"]
+    assert ":(glob)*.slnx" in owns and ":(glob)*.csproj" in owns    # 템플릿이 새로 더한 항목은 들어온다
+    assert "docs/architecture" not in owns                           # 디렉터가 뺀 기존 항목은 되살리지 않는다
+    assert "dev:*::(glob)*.slnx" in merged["ownsAddsApplied"]
+
+    # 디렉터가 새 항목을 다시 빼면 다음 upgrade 에서 되살리지 않는다
+    merged["roles"]["dev"]["owns"].remove(":(glob)*.slnx")
+    json.dump(merged, open(cfg_path, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    M.upgrade(repo, template)
+    assert ":(glob)*.slnx" not in json.load(open(cfg_path, encoding="utf-8"))["roles"]["dev"]["owns"]
 
 
 def test_upgrade_rejects_non_template(repo, tmp_path):

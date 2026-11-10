@@ -61,6 +61,11 @@
 - 선택지(`AskUserQuestion`): 후보 A / B / C / 조합(어느 후보의 무엇) — "다시" (후보 재작성)는 Other 로 받는다.
 - 결정: 고르면 `gate approve G1 --decided user --note "선택: B (+ A 의 메타 화면) — <사용자 원문>"`, 그리고 planning `task` "컨셉 확정: <선택>" 티켓(사용자 원문 인용)을 낸다. 모두 아니면 `gate reject G1` 과 무엇이 빠졌는지(새 축 · 아이디어 해석)를 적는다.
 
+**G1 — 이미 만들어진 게임** (기존 프로젝트에 스튜디오 모드를 붙인 경우 — 코드 · 플레이 가능한 빌드 · 기존 기획 문서가 있음)
+- 후보 비교는 하지 않는 것이 기본이다. 사용자에게 "기존 컨셉 고정(권장) / 컨셉 재검토(후보 비교)" 를 묻고, 고정이면 결정 기록에 남긴다 (예: "D-00N G1 은 기존 컨셉으로 승인, 비교 생략 — 근거: 이미 출시 · 개발 중인 게임"). 방향 전환(그래픽 스타일 · 장르 축 등)이 함께 있으면 그것은 G1 이 아니라 **G2 의 아트 디렉션 · 필러 재작성**으로 보낸다.
+- planning 에 `task` "G1 산출물 (기존 컨셉 고정)" 을 낸다: `candidates.md` 는 후보 1안 = 현행 컨셉과 비교 생략 사유, `board.md` 는 새 생성 없이 현행 화면 캡처(art 영역 — planning 이 art 에 요청). planning 이 `gate request G1` 을 내면 결정 기록대로 `gate approve G1 --decided user --note "기존 컨셉 고정 — D-00N"` (사용자 합의는 결정 기록 시점에 받았다).
+- G2 에서 planning 이 `game-concept.md` · `game-pillars.md` 를 **코드 · 기존 문서에서 역작성**한다 (`/reverse-document`, `/adopt`). 새로 지어내지 않는다.
+
 ### 지시 발행 (사용자 아이디어 → 티켓)
 - 비전 · 범위 결정은 planning 으로 보낸다. planning 이 문서로 만들고 art · dev 로 나눈다. 디렉터가 art · dev 에 직접 작업을 배정하는 것은 **긴급 버그 · 정지 해제 후 정리 · planning 이 막혔을 때**로 한정한다.
 - 티켓은 `new --from director` 로 낸다. 본문은 `/studio-ticket` 과 같은 원칙을 따른다: 사용자 원문 보존.

@@ -19,7 +19,7 @@ import random
 import shutil
 import subprocess
 
-from . import ArtgenError, audioutil
+from . import ArtgenError, audioutil, pixelart
 from . import providers as registry
 from .pngutil import read_info
 from .providers.base import Job
@@ -116,6 +116,8 @@ def sheet_summary(sheet, width, height):
 SHEET_IMPORT_DEFAULTS = {"textureType": "Sprite", "spriteMode": "Multiple", "filterMode": "Point",
                          "compression": "None", "mipmaps": False, "wrapMode": "Clamp", "alphaIsTransparency": True}
 MAX_TEXTURE = 16384
+# output.pixelate 결과 — 시트가 아닌 단일 픽셀아트. 보간 · 압축 · 밉맵이 픽셀 경계를 번지게 한다
+PIXEL_IMPORT_DEFAULTS = {"filterMode": "Point", "compression": "None", "mipmaps": False}
 
 
 def sheet_import_defaults(sheet):
@@ -238,7 +240,7 @@ class Store:
         if audio:
             outputs, warnings = self._audio_outputs(paths, out, seeds, provider, vdir)
         else:
-            outputs, warnings = self._image_outputs(paths, out, seeds, provider)
+            outputs, warnings = self._image_outputs(paths, out, seeds, provider, request)
         warnings += list(getattr(provider, "run_warnings", []))
         if provider.honors_variants and len(outputs) != n:
             warnings.append(f"변형 수 {len(outputs)} ≠ 요청 {n}")
@@ -257,22 +259,47 @@ class Store:
         self._save_state(asset_id, state)
         return run
 
-    def _image_outputs(self, paths, out, seeds, provider=None):
+    def _image_outputs(self, paths, out, seeds, provider=None, request=None):
         outputs, warnings = [], []
+        px_opts = out.get("pixelate")
         for i, p in enumerate(paths):
             p = os.path.abspath(p)
             info = read_info(p) if os.path.isfile(p) else None
             if info is None:
                 warnings.append(f"{os.path.basename(p)}: PNG 아님 또는 파일 없음")
                 continue
+            stem = os.path.splitext(p)[0]
+            pix = None
+            if px_opts and os.path.isfile(stem + ".sheet.json"):
+                warnings.append(f"{os.path.basename(p)}: 스프라이트 시트에는 output.pixelate 를 적용하지 않음 (이미 픽셀아트)")
+            elif px_opts:
+                # 원본은 variant_NN.src.png 로 남기고 픽셀아트 결과를 variant_NN.png 로 쓴다 (재처리 · 비교용)
+                src = stem + ".src.png"
+                os.replace(p, src)
+                pal = px_opts.get("palette")
+                if pal == "prompt":
+                    pal = (request or {}).get("prompt", {}).get("palette") or None
+                try:
+                    pix = pixelart.pixelate(src, p, px_opts["width"], px_opts["height"], palette=pal,
+                                            colors=px_opts.get("colors", 16), dither=px_opts.get("dither", False),
+                                            alpha_threshold=px_opts.get("alphaThreshold", 128),
+                                            scale=px_opts.get("scale", 1), method=px_opts.get("method", "mode"))
+                except ValueError as e:
+                    raise ArtgenError(f"{os.path.basename(p)}: 픽셀아트 후처리 실패 — {e}")
+                info = read_info(p)
             w, h, alpha = info
-            if (w, h) != (out["width"], out["height"]) and not getattr(provider, "sized_by_source", False):
-                warnings.append(f"{os.path.basename(p)}: 크기 {w}x{h} ≠ 요청 {out['width']}x{out['height']}")
+            expect = ((px_opts["width"] * px_opts.get("scale", 1), px_opts["height"] * px_opts.get("scale", 1))
+                      if pix else (out["width"], out["height"]))
+            if (w, h) != expect and not getattr(provider, "sized_by_source", False):
+                warnings.append(f"{os.path.basename(p)}: 크기 {w}x{h} ≠ 요청 {expect[0]}x{expect[1]}")
+            if pix and pix["transparentPixels"] == 0 and out["transparent"]:
+                warnings.append(f"{os.path.basename(p)}: 픽셀아트화 뒤 투명 픽셀 0 — 배경 제거가 안 된 원본 (removeBackground 확인)")
             if out["transparent"] and not alpha:
                 warnings.append(f"{os.path.basename(p)}: 투명 배경 요청했으나 알파 채널 없음")
             entry = {"file": os.path.basename(p), "width": w, "height": h, "alpha": alpha,
                      "seed": seeds[i] if i < len(seeds) else None, "sha256": _sha256(p)}
-            stem = os.path.splitext(p)[0]
+            if pix:
+                entry["pixelate"] = pix
             sheet = _read_json(stem + ".sheet.json")
             if sheet is not None:
                 summary, problems = sheet_summary(sheet, w, h)
@@ -419,6 +446,8 @@ class Store:
             settings = import_defaults(request)
             if sheet:
                 settings.update(sheet_import_defaults(sheet))
+            elif self._output_entry(asset_id, sel).get("pixelate"):
+                settings.update(PIXEL_IMPORT_DEFAULTS)
             settings.update(request.get("unity", {}).get("import", {}))
             if sheet:
                 settings.update(sheet_import_fields(sheet, settings, dest))

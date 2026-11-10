@@ -87,6 +87,10 @@ SECTION_INSERTS = [("AGENTS.md", "## §3-1.", "## §4."),
 UNION_LISTS = ("directorOwns",)  # 병합 시 프로젝트 값으로 덮지 않고 템플릿 항목을 더하는 목록
 # 프로젝트 값이 우선하는 깊은 병합 대상 (디렉터 결정 보존). standard.json · lint.config.json 은 스킬 · 헌장이
 # "프로젝트가 고쳐 쓴다" 고 안내하는 기준값 · 차단 규칙이라 교체하면 프로젝트 결정이 사라진다
+# 역할 쓰기 영역(roles.<역할>.owns)은 프로젝트 값이 이긴다 — 디렉터가 뺀 항목을 되살리지 않으려고 합집합을 쓰지 않는다.
+# 대신 템플릿이 나중에 더한 항목만 여기 적어 두면 upgrade 가 한 번 더하고 ownsAddsApplied 에 기록한다
+# (기록된 항목은 디렉터가 다시 빼도 다음 upgrade 에서 되살리지 않는다). (역할, 엔진 또는 None, 항목)
+OWNS_ADDED = [("dev", None, ":(glob)*.sln"), ("dev", None, ":(glob)*.slnx"), ("dev", None, ":(glob)*.csproj")]  # 2.4.2
 MERGE_JSON = [".agent/tools/studio/studio.config.json", ".agent/tools/artgen/artgen.config.json",
               ".agent/tools/design/standard.json", ".agent/tools/lint/lint.config.json"]
 SKIP_NAMES = ("__pycache__", ".pytest_cache")
@@ -94,6 +98,20 @@ SKIP_NAMES = ("__pycache__", ".pytest_cache")
 
 def _rel(path):
     return path.replace("\\", "/")
+
+
+def _apply_owns_added(cfg):
+    """OWNS_ADDED 중 아직 적용하지 않은 항목을 역할 영역에 더한다 (한 번만)."""
+    applied = cfg.setdefault("ownsAddsApplied", [])
+    for role, engine, item in OWNS_ADDED:
+        key = f"{role}:{engine or '*'}:{item}"
+        rdef = (cfg.get("roles") or {}).get(role)
+        if key in applied or not isinstance(rdef, dict):
+            continue
+        holder, k = (rdef, "owns") if engine is None else (rdef.get("ownsByEngine") or {}, engine)
+        if isinstance(holder.get(k), list) and item not in holder[k]:
+            holder[k] = holder[k] + [item]
+        applied.append(key)
 
 
 def _hash(path):
@@ -381,6 +399,8 @@ def upgrade(st, template, by=DIRECTOR, dry_run=False):
             for key in UNION_LISTS:
                 if isinstance(tpl.get(key), list) and isinstance(mine.get(key), list):
                     result[key] = mine[key] + [x for x in tpl[key] if x not in mine[key]]
+            if rel.endswith("studio/studio.config.json"):
+                _apply_owns_added(result)
             new_keys = sorted(set(result) - set(mine))
             if result != mine:
                 plan["merge"].append({"file": rel, "newTopLevelKeys": new_keys})

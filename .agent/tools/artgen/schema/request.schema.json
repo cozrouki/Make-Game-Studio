@@ -49,7 +49,23 @@
         "channels": { "enum": [1, 2], "description": "오디오: 기본 sfx 1 · 그 외 2" },
         "sampleRate": { "enum": [44100, 48000], "default": 44100 },
         "variants": { "type": "integer", "minimum": 1, "maximum": 16, "description": "생략 시 config.defaults.variants" },
-        "seed": { "type": ["integer", "null"], "minimum": 0, "description": "null = 무작위 (run.json 에 기록되어 재현 가능)" }
+        "seed": { "type": ["integer", "null"], "minimum": 0, "description": "null = 무작위 (run.json 에 기록되어 재현 가능)" },
+        "pixelate": {
+          "type": "object",
+          "description": "이미지 전용 — 생성 결과를 격자 크기 픽셀아트로 (artgen_lib/pixelart.py). 원본은 variant_NN.src.png 로 남는다. 스프라이트 시트(pixelfx)에는 적용하지 않음",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 4, "description": "픽셀 격자 가로 (output.width 이하)" },
+            "height": { "type": "integer", "minimum": 4, "description": "픽셀 격자 세로 (output.height 이하)" },
+            "palette": { "oneOf": [{ "const": "prompt" }, { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" } }], "description": "\"prompt\" = prompt.palette, 목록 = 아트 바이블 제한 팔레트 전체. 없으면 적응 팔레트" },
+            "colors": { "type": "integer", "minimum": 2, "maximum": 64, "description": "palette 가 없을 때 적응 팔레트 색 수 (기본 16)" },
+            "method": { "enum": ["mode", "average"], "description": "mode(기본) = 원본에서 양자화 후 칸마다 최빈색 — 윤곽이 또렷 · average = 면적 평균 후 양자화" },
+            "dither": { "type": "boolean", "description": "순서 디더 (average 에서만)" },
+            "alphaThreshold": { "type": "integer", "minimum": 1, "maximum": 255, "description": "이 값 이상만 불투명 (기본 128) — 결과 알파는 0 또는 255" },
+            "scale": { "type": "integer", "minimum": 1, "maximum": 16, "description": "최근접 정수 배 확대 (기본 1 — 엔진에서 Point 필터 · PPU 로 키우는 것을 권장)" }
+          }
+        }
       }
     },
     "references": { "type": "array", "items": { "type": "string" }, "description": "참조 이미지 (프로젝트 루트 상대). 백엔드가 지원할 때만 사용" },

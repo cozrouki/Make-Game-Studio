@@ -191,6 +191,24 @@ def test_bad_effect_is_rejected_before_render(tmp_path, cfg, fake_pixelfx, effec
     assert not (fake_pixelfx / "argv.log").exists()
 
 
+def test_trim_margin_is_validated(tmp_path, cfg, fake_pixelfx):
+    req_path = _project(tmp_path, trimMargin=99)
+    with pytest.raises(ArtgenError, match="trimMargin"):
+        Store(str(tmp_path), cfg).generate(_load(req_path), req_path, provider_name="pixelfx")
+
+
+def test_trim_runs_by_default_and_can_be_turned_off(tmp_path, cfg, fake_pixelfx, monkeypatch):
+    calls = []
+    monkeypatch.setattr(pfx, "trim_sheet", lambda png, js, margin=1: calls.append((os.path.basename(png), margin)))
+    req_path = _project(tmp_path, trimMargin=2)
+    Store(str(tmp_path), cfg).generate(_load(req_path), req_path, provider_name="pixelfx")
+    assert calls == [("variant_01.png", 2), ("variant_02.png", 2)]
+    calls.clear()
+    req_path = _project(tmp_path, trim=False)
+    Store(str(tmp_path), cfg).generate(_load(req_path), req_path, provider_name="pixelfx")
+    assert calls == []
+
+
 def test_bad_fps_is_rejected(tmp_path, cfg, fake_pixelfx):
     req_path = _project(tmp_path, fps=0)
     with pytest.raises(ArtgenError, match="fps"):
@@ -311,3 +329,19 @@ def test_real_pixelfx_same_seed_same_bytes(tmp_path):
     assert a["outputs"][0]["sha256"] == b["outputs"][0]["sha256"]
     assert a["outputs"][0]["sheet"]["fps"] == 12
     assert not [w for w in a["warnings"] if "실패" in w]
+
+
+@pytest.mark.skipif(not REAL or not shutil.which("node"), reason="PIXELFX_DIR 와 Node 18+ 가 있을 때만")
+def test_real_pixelfx_one_shot_is_trimmed(tmp_path):
+    # plasma-explosion — 한 번 재생, 캔버스 224x200 에 여백 · 끝의 빈 프레임이 있다
+    c = load_config()
+    c.setdefault("providers", {})["pixelfx"] = {"dir": REAL}
+    req_path = _project(tmp_path, effect="explosions/plasma-explosion", fps=15)
+    run = Store(str(tmp_path), c).generate(_load(req_path), req_path, provider_name="pixelfx", variants=1)
+    vdir = tmp_path / run["outDir"]
+    trim = json.loads((vdir / "variant_01.sheet.json").read_text(encoding="utf-8"))["meta"]["pixelfx"]["trim"]
+    assert trim["from"] == [224, 200] and trim["bytes"][1] < trim["bytes"][0]
+    assert trim["frames"][1] <= trim["frames"][0]
+    sheet = run["outputs"][0]["sheet"]
+    assert [sheet["frameWidth"], sheet["frameHeight"]] == trim["to"] and sheet["frames"] == trim["frames"][1]
+    assert not [w for w in run["warnings"] if "격자" in w]

@@ -26,6 +26,13 @@ C4. art 의 `review` 티켓(비교 보드 `production/artgen/concept/board.md`)�
 C5. `design-red-team-audit`(번들이 있으면)를 후보 전체에 1회 돌리고 결과를 `candidates.md` §5 에 반영한다.
 C6. `gate request G1` 을 하고 `to: director, type: gate` 티켓을 발행한다. 본문: 후보별 한 문장 피치, 비교 보드 경로, planning 권장안과 근거, 조합 가능성.
 
+### G1 전 — 이미 만들어진 게임 (기존 컨셉 고정)
+디렉터 결정 기록이 "기존 컨셉 고정" 이면 C2~C5 를 하지 않는다.
+C2'. `templates/concept-candidates.md` 로 `design/concept/candidates.md` 를 쓰되 후보는 1안 = 현행 컨셉이다. 근거는 코드 · 기존 기획 문서 · 스토어 문구에서 인용하고, 비교를 생략한 사유(결정 번호)를 첫머리에 적는다.
+C3'. art 에 `task` "G1 비교 보드 — 현행 화면" 을 낸다: 새로 생성하지 않고 기존 캡처(스크린숏 · 에디터 캡처)로 `production/artgen/concept/board.md` 를 만든다. 방향 전환이 예정돼 있으면 전환 전 화면을 출발점으로 남긴다.
+C6'. 둘이 준비되면 `gate request G1` + 디렉터 `gate` 티켓 (본문: 결정 번호 · 두 파일 경로).
+C7'. G1 승인 뒤 `game-concept.md` · `game-pillars.md` 는 **역작성**한다 (`/reverse-document` · `/adopt` — 코드와 기존 문서에 있는 것만, 빈 곳은 질문으로 남김). 방향 전환 결정이 있으면 그 결정을 반영한 판이 G2 산출물이다.
+
 ### G1 승인 후 — 컨셉 확정
 G1 승인 note(와 디렉터의 planning `task` 티켓)에 사용자가 고른 후보 · 조합 · 조건이 있다.
 C7. 고른 후보로 `design/gdd/game-concept.md`, `design/gdd/game-pillars.md` 를 쓴다. 조합이면 무엇을 어디서 가져왔는지 문서 첫머리에 적는다. 고르지 않은 후보는 `candidates.md` 에 그대로 남긴다 (나중에 방향을 바꿀 때 근거).

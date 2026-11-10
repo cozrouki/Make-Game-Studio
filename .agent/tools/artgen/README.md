@@ -29,7 +29,7 @@
 | `.agent/tools/artgen/artgen.config.local.json` | 로컬 설정 — 백엔드 선택·엔드포인트 | **무시** |
 | `design/assets/requests/ASSET-NNN.json` | 생성 요청 (기획 → 그래픽의 계약) | 추적 |
 | `production/artgen/ASSET-NNN/state.json` · `review.md` | 상태 · 검수 기록 | 추적 |
-| `production/artgen/ASSET-NNN/v###/` · `replaced/` | 생성 원본 · 교체 백업 (용량 큼) | **무시** |
+| `production/artgen/ASSET-NNN/v###/` · `replaced/` | 생성 원본 · 교체 백업 (용량 큼, `pixelate` 원본 `.src.png` 포함) | **무시** |
 | `production/artgen/import-map.json` | Unity 임포트 설정 (팀원 재임포트에 필요) | 추적 |
 | `production/artgen/credits.json` | 기성 소스(효과음 라이브러리 · pixelfx)의 출처 · 라이선스 | 추적 |
 | `art-source/pixelfx/` | pixelfx 설치본 (`prereq.py install pixelfx`) | **무시** |
@@ -206,6 +206,7 @@ artgen generate design/assets/requests/ASSET-030.json --provider pixelfx
 | `effect` | 효과 id `<분류>/<이름>` (필수). 패턴 · 분류 전체는 받지 않는다 — pixelfx 도구는 없는 id 에도 성공으로 끝나서 어댑터가 파일로 확인한다 |
 | `fps` | 굽는 프레임률 1~60 (기본 효과 값, 보통 30). 시트 메모리는 프레임 수에 비례한다 — `ice/frost-nova` 는 30fps 103프레임이 2592×2304(비압축 약 24MB), 12~15fps 면 절반 이하. 픽셀아트는 낮은 fps 가 원래 느낌에 가깝다 |
 | `options` | 효과 옵션 그대로 (예: `{"light": 0.6}`). `palette` 를 넣으면 `prompt.palette` 보다 우선 |
+| `trim` · `trimMargin` | 기본 켬 · 1px. 모든 프레임에 공통인 빈 여백을 잘라내고(pivot 보정), 한 번 재생 효과 끝의 빈 프레임을 버린다. 효과 캔버스는 캐릭터 옆 시점 기준이라 여백이 크다 — `ice/frost-nova` 는 288×192 → 257×143, 시트 24MB → 15MB. 결과는 `sheet.json` `meta.pixelfx.trim`. 픽셀아트는 줄이면 깨지므로 크기는 바꾸지 않는다 (게임 속 크기는 PPU) |
 
 - **팔레트**: `prompt.palette`(아트 바이블 의미 색)를 밝기 순(어두운 → 밝은)으로 정렬해 효과의 색 램프로 넘긴다 — 프롬프트 힌트가 아니라 실제로 그 색으로 그린다. 효과마다 고정 색(횃불 손잡이 등)은 남는다.
 - **크기**: 시트 크기는 효과 · fps 가 정한다. `output.width/height` 와 비교하지 않는다 (스키마상 필수라 아무 값이나 둔다).
@@ -214,6 +215,32 @@ artgen generate design/assets/requests/ASSET-030.json --provider pixelfx
 - **빛**: 원본의 더하기 합성 빛 번짐은 투명 시트에서 반투명 알파로 구워진다. 일반 알파 블렌드로 그리면 갤러리보다 덜 빛나 보인다 — 빛이 주인 효과는 additive 머티리얼 · 블렌드 모드로 그린다 (임포트 설정이 아니라 렌더러 쪽 결정).
 - **승격**: PNG 옆에 같은 이름의 `.json`(프레임 데이터, `meta.image` 는 승격 파일명)을 함께 둔다. 둘 중 하나라도 있으면 `--force` 가 필요하고 둘 다 백업한다. 출처는 `credits.json` 에 남는다 — 효과가 Sprite Fusion(MIT, Hugo Duprez)에서 온 것이면 그 표기도 함께.
 - **설정** (`providers.pixelfx`): `dir`(기본 `art-source/pixelfx`) · `node`(기본 `node`) · `timeoutSec`(300) · `check`(true).
+
+## 픽셀아트 후처리 — `output.pixelate` (어느 어댑터든)
+
+SDXL 같은 생성 모델은 격자에 맞춘 제한 팔레트 픽셀아트를 바로 내지 못한다. 요청에 `output.pixelate` 를 넣으면 생성 직후 결과를 격자 크기 픽셀아트로 바꾼다. 원본은 `variant_NN.src.png` 로 남는다 (다시 처리 · 비교용).
+
+```json
+"output": { "width": 1024, "height": 1024, "transparent": true, "variants": 4,
+            "pixelate": { "width": 64, "height": 64, "palette": "prompt" } }
+```
+
+| 키 | 뜻 |
+|---|---|
+| `width` · `height` | 픽셀 격자 크기 (필수, 생성 크기 이하). 결과 PNG 가 이 크기다 |
+| `palette` | `"prompt"` = `prompt.palette`, `#RRGGBB` 목록 = 아트 바이블의 **제한 팔레트 전체**(의미 색 2~5개만이면 너무 거칠다). 없으면 적응 팔레트 |
+| `colors` | 적응 팔레트 색 수 (2~64, 기본 16) |
+| `method` | `mode`(기본) = 원본 해상도에서 팔레트로 양자화한 뒤 칸마다 최빈색 — 윤곽이 또렷하고 중간색이 생기지 않는다. `average` = 칸마다 면적 평균 후 양자화 — 부드럽지만 뭉개진다 |
+| `dither` | 순서 디더 (`average` 에서만) |
+| `alphaThreshold` | 이 값 이상만 불투명 (기본 128). 결과 알파는 0 · 255 둘뿐 (`mode` 는 칸의 절반 이상이 투명이면 투명) |
+| `scale` | 최근접 정수 배 확대 (기본 1). 엔진에서 Point 필터 · PPU 로 키우는 편이 낫다 |
+
+- 승격하면 Unity 임포트 맵에 `filterMode: Point` · `compression: None` · 밉맵 끔이 기본으로 들어간다 (요청 `unity.import` 가 우선).
+- 검수는 결과(`variant_NN.png`)를 보고 하고, 원본과 나란히 봐야 하면 `.src.png` 를 함께 연다. 결과 크기는 `pixelate` 크기와 비교한다 (생성 크기 아님).
+- 투명 배경 요청인데 결과에 투명 픽셀이 하나도 없으면 경고한다 — 배경 제거(`removeBackground`)가 안 된 원본이다.
+- 생성 프롬프트 쪽에서도 도와야 한다: 스타일 토큰에 "pixel art, flat colors, clean silhouette, limited palette" 류를 넣고, 배경은 제거한다. 후처리는 색 · 격자를 강제할 뿐 형태를 만들지 않는다.
+- 2026-11-10 SDXL 결과(1024²)로 확인: 64² 변환 약 2초, `mode` 가 `average` 보다 윤곽이 또렷했다.
+- 스프라이트 시트(`pixelfx`)에는 적용하지 않는다 (이미 픽셀아트 — 경고만).
 
 ## 사람 아티스트 납품 — `manual` 어댑터
 

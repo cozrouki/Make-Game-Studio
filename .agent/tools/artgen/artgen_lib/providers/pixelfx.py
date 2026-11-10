@@ -11,6 +11,9 @@
     options   효과에 넘길 값 (선택, 예: {"light": 0.6}) — palette 를 주면 prompt.palette 보다 우선
     fps       굽는 프레임률 (선택, 1~60 · 기본은 효과 값 보통 30). 시트 메모리 = 프레임 수에 비례 — 12~15 로 줄이면
               픽셀아트 느낌은 그대로이고 텍스처는 절반 이하가 된다
+    trim      모든 프레임에 공통인 빈 여백 자르기 + 한 번 재생 효과 끝의 빈 프레임 버리기 (기본 true, pivot 보정).
+              효과 캔버스는 캐릭터 옆 시점 기준이라 여백이 크다. 기록: sheet.json meta.pixelfx.trim
+    trimMargin 자른 뒤 남길 여백 px (기본 1 — 스프라이트 메시 가장자리 번짐 방지)
 
 prompt.palette 는 밝기 순(어두운 → 밝은)으로 정렬해 효과의 색 램프로 넘긴다. 효과마다 고정 색(손잡이 · 돌 등)은
 바뀌지 않는다. 시트 크기는 효과가 정한다 — 요청 output.width/height 와 비교하지 않는다 (sized_by_source).
@@ -28,6 +31,7 @@ import shutil
 import subprocess
 
 from .. import ArtgenError
+from ..pixelart import trim_sheet
 from .base import Provider
 
 EFFECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*$")
@@ -133,6 +137,9 @@ class PixelfxProvider(Provider):
             raise ArtgenError(msg)
         effect, src = self._effect(job, root)
         opts = self._opts(job)
+        margin = job.options.get("trimMargin", 1)
+        if not isinstance(margin, int) or isinstance(margin, bool) or not 0 <= margin <= 16:
+            raise ArtgenError("providerOptions.pixelfx.trimMargin 은 0~16 정수")
         fps = job.options.get("fps")
         if fps is not None and (not isinstance(fps, int) or isinstance(fps, bool) or not 1 <= fps <= 60):
             raise ArtgenError("providerOptions.pixelfx.fps 는 1~60 정수")
@@ -162,6 +169,8 @@ class PixelfxProvider(Provider):
             sheet["meta"].setdefault("pixelfx", {}).update(seed=seed, options=opts)
             os.replace(sheet_png, stem + ".png")
             _write_json(stem + ".sheet.json", sheet)
+            if job.options.get("trim", True):
+                trim_sheet(stem + ".png", stem + ".sheet.json", margin=int(job.options.get("trimMargin", 1)))
             _write_json(stem + ".source.json", source)
             shutil.rmtree(work, ignore_errors=True)  # 다음 변형이 이전 시트를 집지 않게
             paths.append(stem + ".png")

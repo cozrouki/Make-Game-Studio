@@ -65,6 +65,7 @@ CLI 호출은 줄여서 `artgen` 이라고 쓴다. 실제 명령은 `python .age
 | `unity.dest` | 스펙의 Naming 을 따르며 Unity `Assets/<게임폴더>/Art/<Category>/...png` · Godot `assets/<게임폴더>/art/<category>/...png` · Unreal `Content/Import/<게임폴더>/<Category>/...png` 형태 |
 | `unity.import` | (Unity 만 적용) 카테고리 기본값(아래 표)에 아트 바이블 §8 · 성능 예산을 반영한다. Godot · Unreal 에서도 적어 두면 사람이 엔진 임포트 설정을 맞출 때 기준이 된다 |
 | `source` | spec · artBible · gdd 경로 (추적성) |
+| `output.pixelate` | **아트 바이블이 픽셀아트**이고 이미지 생성(comfyui 등)을 쓰면 넣는다: `{"width": <게임 속 격자>, "height": …, "palette": <아트 바이블 제한 팔레트 전체 hex 목록>}`. 격자 크기는 스펙의 표시 크기 ÷ 픽셀 배율(아트 바이블). 생성 크기(`output.width/height`)는 모델 기본(SDXL 1024)으로 두고, 스타일 토큰에 pixel art · flat colors · limited palette 를 넣는다. 검수는 결과 PNG 로 한다 (`.agent/tools/artgen/README.md` §픽셀아트 후처리) |
 | `providerOptions.pixelfx` | **픽셀아트 애니메이션 VFX**(불 · 폭발 · 마법 · 타격 · 날씨 · 픽업 등)이고 아트 바이블이 픽셀아트면 생성 대신 이것을 쓴다 — `{"effect": "<분류>/<이름>", "fps": 12}` 로 적고 `--provider pixelfx` 로 생성한다. 효과는 `node art-source/pixelfx/tools/list.mjs` 목록의 설명을 스펙과 대조해 2~3개 후보를 고르고, `--auto` 가 아니면 사용자에게 고르게 한다. 팔레트는 `prompt.palette` 가 그대로 효과 색이 되고, 크기는 효과가 정하므로 `output` 크기는 검수 기준이 아니다. 준비가 안 됐으면(`artgen providers` 에서 pixelfx N/A) `/ko-prereq` 의 `pixelfx` 를 안내한다 (`.agent/tools/artgen/README.md` §픽셀아트 VFX 시트) |
 
 카테고리별 `unity.import` 기본값 (아트 바이블과 충돌하면 **아트 바이블이 우선**한다):

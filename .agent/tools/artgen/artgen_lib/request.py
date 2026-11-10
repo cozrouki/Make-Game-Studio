@@ -141,6 +141,11 @@ def validate_request(req):
             e.append("output.seed 는 0 이상 정수 또는 null")
         if "transparent" in o and not isinstance(o["transparent"], bool):
             e.append("output.transparent 는 bool")
+        if "pixelate" in o:
+            e += _validate_pixelate(o["pixelate"], o)
+
+    if isinstance(o, dict) and isinstance(o.get("pixelate"), dict) and o["pixelate"].get("palette") == "prompt"             and not (isinstance(p, dict) and p.get("palette")):
+        e.append("output.pixelate.palette 가 \"prompt\" 인데 prompt.palette 가 비어 있다")
 
     u = req.get("unity")
     if u is not None:
@@ -184,6 +189,39 @@ def validate_request(req):
     return e
 
 
+PIXELATE_KEYS = {"width", "height", "palette", "colors", "dither", "alphaThreshold", "scale", "method"}
+
+
+def _validate_pixelate(px, o):
+    """output.pixelate — 생성 이미지를 격자 크기 픽셀아트로 (artgen_lib/pixelart.py)."""
+    if not isinstance(px, dict):
+        return ["output.pixelate 는 객체 ({width, height, palette?, colors?, dither?, alphaThreshold?, scale?})"]
+    e = [f"output.pixelate.{k} 는 알 수 없는 키 (허용: {sorted(PIXELATE_KEYS)})" for k in px if k not in PIXELATE_KEYS]
+    for key, limit in (("width", o.get("width")), ("height", o.get("height"))):
+        v = px.get(key)
+        if not isinstance(v, int) or isinstance(v, bool) or v < 4:
+            e.append(f"output.pixelate.{key} 는 4 이상 정수 (픽셀 격자 크기)")
+        elif isinstance(limit, int) and v > limit:
+            e.append(f"output.pixelate.{key} {v} 가 생성 크기 output.{key} {limit} 보다 크다")
+    pal = px.get("palette")
+    if pal is not None and pal != "prompt" and not (
+            isinstance(pal, list) and pal and all(isinstance(c, str) and HEX_RE.match(c) for c in pal)):
+        e.append("output.pixelate.palette 는 '#RRGGBB' 목록 또는 \"prompt\"(prompt.palette 사용)")
+    if "colors" in px and (not isinstance(px["colors"], int) or isinstance(px["colors"], bool) or not 2 <= px["colors"] <= 64):
+        e.append("output.pixelate.colors 는 2~64 정수 (palette 가 없을 때 적응 팔레트 색 수)")
+    if "dither" in px and not isinstance(px["dither"], bool):
+        e.append("output.pixelate.dither 는 bool")
+    if "method" in px and px["method"] not in ("mode", "average"):
+        e.append("output.pixelate.method 는 mode(기본 · 칸마다 최빈색) 또는 average(면적 평균)")
+    if px.get("dither") and px.get("method", "mode") != "average":
+        e.append("output.pixelate.dither 는 method \"average\" 에서만 쓴다")
+    if "alphaThreshold" in px and (not isinstance(px["alphaThreshold"], int) or not 1 <= px["alphaThreshold"] <= 255):
+        e.append("output.pixelate.alphaThreshold 는 1~255 정수")
+    if "scale" in px and (not isinstance(px["scale"], int) or isinstance(px["scale"], bool) or not 1 <= px["scale"] <= 16):
+        e.append("output.pixelate.scale 은 1~16 정수 (최근접 확대 배수, 기본 1)")
+    return e
+
+
 def _validate_audio_prompt(p):
     e = []
     if p.get("palette"):
@@ -216,7 +254,7 @@ def _validate_audio_output(o):
         e.append("output.variants 는 1~16 정수")
     if "seed" in o and o["seed"] is not None and (not isinstance(o["seed"], int) or o["seed"] < 0):
         e.append("output.seed 는 0 이상 정수 또는 null")
-    for key in ("width", "height", "transparent"):
+    for key in ("width", "height", "transparent", "pixelate"):
         if key in o:
             e.append(f"output.{key} 는 이미지 전용 (오디오 요청에서 빼기)")
     return e

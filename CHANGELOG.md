@@ -12,6 +12,30 @@
 - **스튜디오 모드를 쓰지 않는 프로젝트**: `scripts/install.ps1 -Target <프로젝트> -Force` 로 다시 설치한다 (`.claude.backup-<시각>/` 백업,
   `*.local.json` · `project.yaml` · 레지스트리 보존). AGENTS.md 게임 폴더 매핑은 `-Games` 로 다시 넣는다.
 
+## 2.5.0 — 2026-11-10
+
+GamePorject(이미 만들어진 Unity 게임, 네온 픽셀아트 전환 중)에 스튜디오 모드를 붙여 돌리며 찾은 보완.
+
+**새 기능 (부)**
+- **artgen 픽셀아트 후처리 `output.pixelate`** — SDXL 등 생성 결과를 격자 크기 픽셀아트로: 팔레트(아트 바이블 제한 팔레트 ·
+  `"prompt"` · 적응 N색)로 양자화하고 칸마다 최빈색(`mode`, 기본 — 윤곽이 또렷) 또는 면적 평균(`average` + 순서 디더), 알파 이진화.
+  원본은 `variant_NN.src.png` 로 남고, 승격 때 Unity 임포트 기본값이 Point · 비압축 · 밉맵 끔. 지금까지 `prompt.palette` 는 프롬프트
+  힌트였는데, 이제 실제 색 제약이 된다. 표준 라이브러리 PNG 디코더(`pngutil.read_rgba` — 8bit 그레이 · RGB · RGBA · 팔레트, 필터 5종)
+  추가. SDXL 1024² → 64² 약 2초
+- **pixelfx 시트 다듬기 (기본 켬)** — 모든 프레임에 공통인 빈 여백을 잘라내고(pivot 보정) 한 번 재생 효과 끝의 빈 프레임을 버린다.
+  `ice/frost-nova` 288×192 → 257×143 · 시트 24MB → 15MB. `providerOptions.pixelfx.trim` · `trimMargin`
+- **스튜디오 — 이미 만들어진 게임의 G1** — 디렉터 · planning · art 헌장과 README 에 "기존 컨셉 고정" 경로: 후보 1안 = 현행 컨셉,
+  보드 = 기존 캡처, 컨셉 · 필러는 코드 · 기존 문서에서 역작성, 그래픽 · 장르 방향 전환은 G2 에서
+
+**고침 (수)**
+- `studio.py audit` 이 설치가 만든 `.agent/PROVENANCE.md` · `.agent/VERSION` · `.agent/licenses/` 와 Unity 가 만드는 `*.sln` ·
+  `*.slnx` · `*.csproj` 를 "주인 없는 변경" 으로 계속 경고하던 것 → 앞의 셋은 디렉터, 뒤의 셋은 dev 영역. 기존 프로젝트는 upgrade 가
+  새 영역 항목을 **한 번만** 더하고 `ownsAddsApplied` 에 기록한다 (디렉터가 뺀 항목을 되살리지 않도록 역할 영역은 합집합을 쓰지 않음)
+- `/ko-setup-engine` 이 스튜디오 모드에서 `CLAUDE.md` 를 고치면 "프로토콜 미승인 변경" 이 뜨는데 안내가 없던 것 → 디렉터의
+  `studio.py protocol ack` 를 안내
+- 도구 테스트: artgen 137 (픽셀아트 25 · pixelfx 25 — 실제 pixelfx 렌더 2개는 `PIXELFX_DIR` + Node 가 있을 때만), studio 136.
+  새 테스트는 대상 코드를 일부러 깨서 실패하는 것을 확인했다 (Average 필터 · 끝 빈 프레임 · 저장소 연결 · 소유 영역 · upgrade 1회 추가)
+
 ## 2.4.1 — 2026-11-10
 
 **고침 (수)**
